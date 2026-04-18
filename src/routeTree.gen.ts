@@ -9,38 +9,123 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VictoryRouteImport } from './routes/victory'
+import { Route as VaultRouteImport } from './routes/vault'
+import { Route as FailureRouteImport } from './routes/failure'
+import { Route as DoorRouteImport } from './routes/door'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PuzzleIdRouteImport } from './routes/puzzle.$id'
 
+const VictoryRoute = VictoryRouteImport.update({
+  id: '/victory',
+  path: '/victory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VaultRoute = VaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FailureRoute = FailureRouteImport.update({
+  id: '/failure',
+  path: '/failure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoorRoute = DoorRouteImport.update({
+  id: '/door',
+  path: '/door',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PuzzleIdRoute = PuzzleIdRouteImport.update({
+  id: '/puzzle/$id',
+  path: '/puzzle/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/door': typeof DoorRoute
+  '/failure': typeof FailureRoute
+  '/vault': typeof VaultRoute
+  '/victory': typeof VictoryRoute
+  '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/door': typeof DoorRoute
+  '/failure': typeof FailureRoute
+  '/vault': typeof VaultRoute
+  '/victory': typeof VictoryRoute
+  '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/door': typeof DoorRoute
+  '/failure': typeof FailureRoute
+  '/vault': typeof VaultRoute
+  '/victory': typeof VictoryRoute
+  '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/door' | '/failure' | '/vault' | '/victory' | '/puzzle/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/door' | '/failure' | '/vault' | '/victory' | '/puzzle/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/door'
+    | '/failure'
+    | '/vault'
+    | '/victory'
+    | '/puzzle/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DoorRoute: typeof DoorRoute
+  FailureRoute: typeof FailureRoute
+  VaultRoute: typeof VaultRoute
+  VictoryRoute: typeof VictoryRoute
+  PuzzleIdRoute: typeof PuzzleIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/victory': {
+      id: '/victory'
+      path: '/victory'
+      fullPath: '/victory'
+      preLoaderRoute: typeof VictoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vault': {
+      id: '/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof VaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/failure': {
+      id: '/failure'
+      path: '/failure'
+      fullPath: '/failure'
+      preLoaderRoute: typeof FailureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/door': {
+      id: '/door'
+      path: '/door'
+      fullPath: '/door'
+      preLoaderRoute: typeof DoorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +133,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/puzzle/$id': {
+      id: '/puzzle/$id'
+      path: '/puzzle/$id'
+      fullPath: '/puzzle/$id'
+      preLoaderRoute: typeof PuzzleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DoorRoute: DoorRoute,
+  FailureRoute: FailureRoute,
+  VaultRoute: VaultRoute,
+  VictoryRoute: VictoryRoute,
+  PuzzleIdRoute: PuzzleIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
