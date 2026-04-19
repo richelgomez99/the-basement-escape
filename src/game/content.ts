@@ -9,6 +9,14 @@ export const ADMIN_DEFAULT_PASSWORD = "glorious2025";
 
 export type Hint = { tier: 1 | 2 | 3; label: string; text: string };
 
+export type MusicQuestion = {
+  prompt: string;
+  hint?: string;
+  answer: string;
+  acceptable?: string[];
+  audioUrl?: string; // public URL (Supabase storage) for MP3 clip
+};
+
 export type Puzzle = {
   id: number;
   title: string;
@@ -18,6 +26,7 @@ export type Puzzle = {
   answer: string; // canonical answer (case-insensitive compare)
   acceptable?: string[]; // optional alt answers
   hints: Hint[];
+  musicQuestions?: MusicQuestion[]; // puzzle 8
 };
 
 export const DEFAULT_PUZZLES: Puzzle[] = [
@@ -114,14 +123,67 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
   },
   {
     id: 8,
-    title: "Voices in the Wilderness",
-    flavor: "Four voices — four censored words. Their first letters spell the key.",
-    artifact: "O",
-    answer: "hope",
+    title: "Songs of the Saints",
+    flavor: "Five gospel music challenges. Wrong answers cost 30 seconds. Pass them all to claim the artifact.",
+    artifact: "I",
+    answer: "i",
+    acceptable: ["i"],
+    musicQuestions: [
+      {
+        prompt:
+          "___ released by Donald Lawrence in 2004 samples ___ released by Michael Jackson in 2001.",
+        hint: "Two-part answer: gospel song, then MJ song. Separate with a comma.",
+        answer: "healed, you rock my world",
+        acceptable: [
+          "healed, you rock my world",
+          "healed and you rock my world",
+          "healed / you rock my world",
+        ],
+        audioUrl: "",
+      },
+      {
+        prompt: "Finish the lyric: \"Melodies from heaven, ___ ___ ___ ___.\"",
+        hint: "Four words. Title of the song.",
+        answer: "rain down on me",
+        acceptable: ["rain down on me"],
+        audioUrl: "",
+      },
+      {
+        prompt: "What group released \"Optimistic\" in 1991?",
+        hint: "Minneapolis-based gospel ensemble.",
+        answer: "sounds of blackness",
+        acceptable: ["sounds of blackness", "the sounds of blackness"],
+        audioUrl: "",
+      },
+      {
+        prompt: "10 seconds — name that song AND artist.",
+        hint: "Format: Song - Artist (e.g. \"Praise Him in Advance - Marvin Sapp\").",
+        answer: "praise him in advance - marvin sapp",
+        acceptable: [
+          "praise him in advance - marvin sapp",
+          "marvin sapp - praise him in advance",
+          "praise him in advance, marvin sapp",
+          "marvin sapp, praise him in advance",
+        ],
+        audioUrl: "",
+      },
+      {
+        prompt: "10 seconds — name that song AND artist.",
+        hint: "Hezekiah Walker classic. Format: Song - Artist.",
+        answer: "wonderful is your name - hezekiah walker",
+        acceptable: [
+          "wonderful is your name - hezekiah walker",
+          "hezekiah walker - wonderful is your name",
+          "wonderful is your name, hezekiah walker",
+          "hezekiah walker, wonderful is your name",
+        ],
+        audioUrl: "",
+      },
+    ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Each clip has one word replaced with *BEEP*." },
-      { tier: 2, label: "Direction", text: "Words: HEAR, OBEY, PRAY, ENDURE. Take the first letters." },
-      { tier: 3, label: "Bypass", text: "The code is: HOPE" },
+      { tier: 1, label: "Nudge", text: "Each wrong guess costs 30 seconds — read carefully." },
+      { tier: 2, label: "Direction", text: "Q1 is two songs (gospel + MJ). Q4/Q5 want both song and artist." },
+      { tier: 3, label: "Bypass", text: "After all 5, the artifact letter is: I" },
     ],
   },
   {
