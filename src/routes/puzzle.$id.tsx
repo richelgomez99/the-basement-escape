@@ -369,9 +369,10 @@ function StainedGlass() {
 function VoicesInWilderness() {
   const puzzle = getPuzzles()[7];
   const clips = [
-    "Trust in the Lord, for He is your *BEEP*.",
-    "Children, *BEEP* your father and mother.",
-    "Without ceasing, *BEEP* for one another.",
+    "Trust in the Lord, for He is your *BEEP*.",          // HEAR? actually HOPE
+    "Children, *BEEP* your father and mother.",            // OBEY
+    "Without ceasing, *BEEP* for one another.",            // PRAY
+    "Through trial, *BEEP* to the very end.",              // ENDURE
   ];
   return (
     <div className="space-y-4">
@@ -391,7 +392,7 @@ function VoicesInWilderness() {
       <p className="text-center text-xs text-muted-foreground">
         Take the first letter of each censored word.
       </p>
-      <AnswerForm puzzle={puzzle} placeholder="3-letter code" />
+      <AnswerForm puzzle={puzzle} placeholder="4-letter code" />
     </div>
   );
 }
@@ -399,6 +400,7 @@ function VoicesInWilderness() {
 /* ---------- Puzzle 9: Timeline ---------- */
 type Event = { id: string; label: string; moses: boolean; order?: number };
 function Timeline() {
+  const puzzle = getPuzzles()[8];
   const all: Event[] = [
     { id: "basket", label: "Hidden in a basket", moses: true, order: 1 },
     { id: "babel", label: "Tower of Babel", moses: false },
@@ -411,14 +413,16 @@ function Timeline() {
   const [removed, setRemoved] = useState<string[]>([]);
   const [order, setOrder] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [done, setDone] = useState(false);
 
   const visible = all.filter((e) => !removed.includes(e.id) && !order.includes(e.id));
 
   function remove(id: string) {
+    if (done) return;
     const e = all.find((x) => x.id === id)!;
     if (e.moses) {
-      setError(`"${e.label}" belongs to Moses!`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${e.label}" belongs to Moses! −30 seconds.`);
       return;
     }
     setError("");
@@ -426,23 +430,24 @@ function Timeline() {
   }
 
   function pick(id: string) {
+    if (done) return;
     const e = all.find((x) => x.id === id)!;
     if (!e.moses) {
-      setError(`"${e.label}" doesn't belong. Remove it instead.`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
     const expected = all.filter((x) => x.moses).sort((a, b) => a.order! - b.order!);
     if (expected[order.length].id !== id) {
-      setError("Wrong order. Restart.");
-      setOrder([]);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`Out of order. −30 seconds.`);
       return;
     }
     setError("");
     const next = [...order, id];
     setOrder(next);
     if (next.length === 5) {
-      markSolved(9);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setDone(true);
     }
   }
 
@@ -450,7 +455,7 @@ function Timeline() {
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
         Tap to <strong className="text-gold">order</strong> Moses events. Tap ✕ to{" "}
-        <strong className="text-destructive">remove</strong> imposters.
+        <strong className="text-destructive">remove</strong> imposters. Wrong moves = −30s.
       </p>
       <div className="space-y-2">
         {visible.map((e) => (
@@ -458,13 +463,14 @@ function Timeline() {
             key={e.id}
             className="flex items-center justify-between rounded border border-border bg-background/40 p-3"
           >
-            <button onClick={() => pick(e.id)} className="text-left flex-1 hover:text-gold">
+            <button onClick={() => pick(e.id)} className="text-left flex-1 hover:text-gold" disabled={done}>
               {e.label}
             </button>
             <button
               onClick={() => remove(e.id)}
               className="ml-2 text-destructive hover:text-destructive/80"
               aria-label="remove"
+              disabled={done}
             >
               ✕
             </button>
@@ -482,6 +488,12 @@ function Timeline() {
         </div>
       )}
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
+      {done && (
+        <>
+          <p className="text-center text-sm text-gold">Timeline complete. Type the order to lock it in.</p>
+          <AnswerForm puzzle={puzzle} placeholder="Type: 12345" inputMode="numeric" />
+        </>
+      )}
     </div>
   );
 }
