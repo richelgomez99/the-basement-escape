@@ -308,6 +308,7 @@ function Editor() {
               puzzle={p}
               onChange={(patch) => updatePuzzle(p.id, patch)}
               onHintChange={(tier, patch) => updateHint(p.id, tier, patch)}
+              onMusicChange={(qIdx, patch) => updateMusicQuestion(p.id, qIdx, patch)}
               onReset={() => resetPuzzle(p.id)}
             />
           ))}
