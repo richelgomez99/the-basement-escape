@@ -68,11 +68,11 @@ function PuzzleRoute() {
 function HiddenSymbols() {
   const puzzle = getPuzzles()[1];
   const symbols = [
-    { id: "dove", x: 50, y: 18, label: "🕊️" },
-    { id: "fish", x: 50, y: 86, label: "🐟" },
-    { id: "cross", x: 50, y: 65, label: "✝️" },
-    { id: "lamb", x: 78, y: 78, label: "🐑" },
-    { id: "bread", x: 46, y: 62, label: "🍞" },
+    { id: "dove", x: 50, y: 22, label: "🕊️" },
+    { id: "fish", x: 35, y: 72, label: "🐟" },
+    { id: "cross", x: 50, y: 60, label: "✝️" },
+    { id: "lamb", x: 72, y: 70, label: "🐑" },
+    { id: "bread", x: 50, y: 50, label: "🍞" },
   ];
   const [found, setFound] = useState<string[]>([]);
   const allFound = found.length === symbols.length;
@@ -190,16 +190,20 @@ function Library() {
 
 /* ---------- Puzzle 4: Path of the Righteous ---------- */
 function PathOfRighteous() {
+  const puzzle = getPuzzles()[3];
   const cols = 3;
   const rows = 4;
-  const safe = new Set([1, 4, 7, 10]); // middle column
+  // Zigzag: row0 col0 (left), row1 col1 (center), row2 col2 (right), row3 col1 (center)
+  const safeByRow = [0, 1, 2, 1];
+  const safe = new Set(safeByRow.map((c, r) => r * cols + c));
   const [step, setStep] = useState(0);
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [crossed, setCrossed] = useState(false);
+  const [trail, setTrail] = useState<number[]>([]);
 
   function step_(idx: number) {
-    if (locked) return;
+    if (locked || crossed) return;
     const row = Math.floor(idx / cols);
     if (row !== step) {
       setError("Step in order, row by row.");
@@ -212,6 +216,7 @@ function PathOfRighteous() {
       setTimeout(() => {
         setLocked(false);
         setStep(0);
+        setTrail([]);
         setError("");
       }, 1500);
       return;
@@ -219,25 +224,25 @@ function PathOfRighteous() {
     setError("");
     const nextStep = step + 1;
     setStep(nextStep);
+    setTrail([...trail, idx]);
     if (nextStep === rows) {
-      markSolved(4);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setCrossed(true);
     }
   }
 
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Cross row by row. Choose wisely.
+        Cross row by row. The narrow way is hidden — wrong stones cost 30 seconds.
       </p>
       <div className={`mx-auto grid grid-cols-3 gap-2 max-w-sm ${locked ? "pointer-events-none opacity-60" : ""}`}>
         {Array.from({ length: rows * cols }).map((_, i) => {
-          const safeStone = safe.has(i);
-          const reached = i < step * cols ? safeStone : false;
+          const reached = trail.includes(i);
           return (
             <button
               key={i}
               onClick={() => step_(i)}
+              disabled={crossed}
               className={`aspect-square rounded border-2 transition ${
                 reached
                   ? "border-gold bg-gold/20"
@@ -249,8 +254,15 @@ function PathOfRighteous() {
         })}
       </div>
       <div className="text-center text-sm">
-        {error ? <span className="text-destructive">{error}</span> : <span className="text-muted-foreground">Row {step + 1} of {rows}</span>}
+        {error ? (
+          <span className="text-destructive">{error}</span>
+        ) : crossed ? (
+          <span className="text-gold">You crossed safely. Now name the way.</span>
+        ) : (
+          <span className="text-muted-foreground">Row {step + 1} of {rows}</span>
+        )}
       </div>
+      {crossed && <AnswerForm puzzle={puzzle} placeholder="The way is ______" />}
     </div>
   );
 }
@@ -273,73 +285,81 @@ function NameThatTune() {
 
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
-  const target = ["T", "R", "U", "T", "H"];
-  const initialPool = ["U", "H", "R", "T", "T"];
-  const [pool, setPool] = useState<string[]>(initialPool);
-  const [slots, setSlots] = useState<(string | null)[]>([null, null, null, null, null]);
-  const navigate = useNavigate();
+  const puzzle = getPuzzles()[6];
+  // 9 pieces, indexed 0-8 in correct order. Letters T-R-U-T-H overlay 5 of them.
+  // Correct positions: piece i belongs at grid position i.
+  const letterMap: Record<number, string> = { 0: "T", 2: "R", 4: "U", 6: "T", 8: "H" };
+  // Initial shuffle (deterministic for fairness)
+  const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
+  const [order, setOrder] = useState<number[]>(initialOrder);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [solved, setSolvedLocal] = useState(false);
 
-  function place(letter: string, poolIdx: number) {
-    const i = slots.findIndex((s) => s === null);
-    if (i === -1) return;
-    const newSlots = [...slots];
-    newSlots[i] = letter;
-    setSlots(newSlots);
-    setPool(pool.filter((_, idx) => idx !== poolIdx));
-    if (newSlots.every((s, idx) => s === target[idx])) {
-      markSolved(7);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+  function tap(gridIdx: number) {
+    if (solved) return;
+    if (selected === null) {
+      setSelected(gridIdx);
+      return;
+    }
+    if (selected === gridIdx) {
+      setSelected(null);
+      return;
+    }
+    const next = [...order];
+    [next[selected], next[gridIdx]] = [next[gridIdx], next[selected]];
+    setOrder(next);
+    setSelected(null);
+    if (next.every((piece, pos) => piece === pos)) {
+      setSolvedLocal(true);
     }
   }
-  function reset() {
-    setSlots([null, null, null, null, null]);
-    setPool(initialPool);
-  }
-  const wrong = slots.every((s) => s !== null) && !slots.every((s, idx) => s === target[idx]);
 
   return (
     <div className="space-y-4">
+      <p className="text-center text-sm text-muted-foreground">
+        Tap two pieces to swap them. Reassemble the window — letters will appear.
+      </p>
       <div
-        className="relative mx-auto rounded-lg overflow-hidden border border-gold/30"
-        style={{ maxWidth: 360, aspectRatio: "4/5" }}
+        className="relative mx-auto grid grid-cols-3 gap-1 rounded-lg overflow-hidden border border-gold/30 bg-background/40"
+        style={{ maxWidth: 360, aspectRatio: "1/1" }}
       >
-        <img
-          src={stainedGlass}
-          alt="Broken stained glass window"
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
-        />
+        {order.map((piece, gridIdx) => {
+          const row = Math.floor(piece / 3);
+          const col = piece % 3;
+          const isSel = selected === gridIdx;
+          const letter = letterMap[piece];
+          return (
+            <button
+              key={gridIdx}
+              onClick={() => tap(gridIdx)}
+              className={`relative aspect-square overflow-hidden transition ${
+                isSel ? "ring-4 ring-gold scale-95" : "hover:opacity-90"
+              }`}
+              style={{
+                backgroundImage: `url(${stainedGlass})`,
+                backgroundSize: "300% 300%",
+                backgroundPosition: `${col * 50}% ${row * 50}%`,
+              }}
+              aria-label={`piece-${piece}`}
+            >
+              {solved && letter && (
+                <span className="absolute inset-0 flex items-center justify-center font-display text-3xl text-gold drop-shadow-[0_0_8px_black]">
+                  {letter}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
-      <div className="flex justify-center gap-2">
-        {slots.map((s, i) => (
-          <div
-            key={i}
-            className={`flex h-14 w-14 items-center justify-center rounded border-2 font-display text-2xl ${
-              s ? "border-gold bg-gold/10 text-gold" : "border-border bg-background/40"
-            }`}
-          >
-            {s ?? ""}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center gap-2 flex-wrap">
-        {pool.map((l, i) => (
-          <button
-            key={i}
-            onClick={() => place(l, i)}
-            className="h-12 w-12 rounded border-2 border-gold/40 bg-background/40 font-display text-xl hover:bg-gold/10"
-          >
-            {l}
-          </button>
-        ))}
-      </div>
-      {wrong && (
-        <div className="text-center">
-          <p className="text-sm text-destructive">Pieces don't fit. Try again.</p>
-          <Button variant="outline" size="sm" onClick={reset} className="mt-2">
-            Reset shards
-          </Button>
-        </div>
+      {solved ? (
+        <>
+          <p className="text-center text-sm text-gold">The window reveals a word.</p>
+          <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
+        </>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">
+          Reassemble the window to reveal the answer.
+        </p>
       )}
     </div>
   );
@@ -349,9 +369,10 @@ function StainedGlass() {
 function VoicesInWilderness() {
   const puzzle = getPuzzles()[7];
   const clips = [
-    "Trust in the Lord, for He is your *BEEP*.",
-    "Children, *BEEP* your father and mother.",
-    "Without ceasing, *BEEP* for one another.",
+    "Trust in the Lord, for He is your *BEEP*.",          // HEAR? actually HOPE
+    "Children, *BEEP* your father and mother.",            // OBEY
+    "Without ceasing, *BEEP* for one another.",            // PRAY
+    "Through trial, *BEEP* to the very end.",              // ENDURE
   ];
   return (
     <div className="space-y-4">
@@ -371,7 +392,7 @@ function VoicesInWilderness() {
       <p className="text-center text-xs text-muted-foreground">
         Take the first letter of each censored word.
       </p>
-      <AnswerForm puzzle={puzzle} placeholder="3-letter code" />
+      <AnswerForm puzzle={puzzle} placeholder="4-letter code" />
     </div>
   );
 }
@@ -379,6 +400,7 @@ function VoicesInWilderness() {
 /* ---------- Puzzle 9: Timeline ---------- */
 type Event = { id: string; label: string; moses: boolean; order?: number };
 function Timeline() {
+  const puzzle = getPuzzles()[8];
   const all: Event[] = [
     { id: "basket", label: "Hidden in a basket", moses: true, order: 1 },
     { id: "babel", label: "Tower of Babel", moses: false },
@@ -391,14 +413,16 @@ function Timeline() {
   const [removed, setRemoved] = useState<string[]>([]);
   const [order, setOrder] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [done, setDone] = useState(false);
 
   const visible = all.filter((e) => !removed.includes(e.id) && !order.includes(e.id));
 
   function remove(id: string) {
+    if (done) return;
     const e = all.find((x) => x.id === id)!;
     if (e.moses) {
-      setError(`"${e.label}" belongs to Moses!`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${e.label}" belongs to Moses! −30 seconds.`);
       return;
     }
     setError("");
@@ -406,23 +430,24 @@ function Timeline() {
   }
 
   function pick(id: string) {
+    if (done) return;
     const e = all.find((x) => x.id === id)!;
     if (!e.moses) {
-      setError(`"${e.label}" doesn't belong. Remove it instead.`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
     const expected = all.filter((x) => x.moses).sort((a, b) => a.order! - b.order!);
     if (expected[order.length].id !== id) {
-      setError("Wrong order. Restart.");
-      setOrder([]);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`Out of order. −30 seconds.`);
       return;
     }
     setError("");
     const next = [...order, id];
     setOrder(next);
     if (next.length === 5) {
-      markSolved(9);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setDone(true);
     }
   }
 
@@ -430,7 +455,7 @@ function Timeline() {
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
         Tap to <strong className="text-gold">order</strong> Moses events. Tap ✕ to{" "}
-        <strong className="text-destructive">remove</strong> imposters.
+        <strong className="text-destructive">remove</strong> imposters. Wrong moves = −30s.
       </p>
       <div className="space-y-2">
         {visible.map((e) => (
@@ -438,13 +463,14 @@ function Timeline() {
             key={e.id}
             className="flex items-center justify-between rounded border border-border bg-background/40 p-3"
           >
-            <button onClick={() => pick(e.id)} className="text-left flex-1 hover:text-gold">
+            <button onClick={() => pick(e.id)} className="text-left flex-1 hover:text-gold" disabled={done}>
               {e.label}
             </button>
             <button
               onClick={() => remove(e.id)}
               className="ml-2 text-destructive hover:text-destructive/80"
               aria-label="remove"
+              disabled={done}
             >
               ✕
             </button>
@@ -462,6 +488,12 @@ function Timeline() {
         </div>
       )}
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
+      {done && (
+        <>
+          <p className="text-center text-sm text-gold">Timeline complete. Type the order to lock it in.</p>
+          <AnswerForm puzzle={puzzle} placeholder="Type: 12345" inputMode="numeric" />
+        </>
+      )}
     </div>
   );
 }
