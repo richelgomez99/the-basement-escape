@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_DEFAULT_PASSWORD,
   clearOverrides,
@@ -12,6 +13,7 @@ import {
   getVaultCode,
   saveOverrides,
   type Hint,
+  type MusicQuestion,
   type Puzzle,
 } from "@/game/content";
 
@@ -118,6 +120,16 @@ function Editor() {
     );
   }
 
+  function updateMusicQuestion(id: number, qIdx: number, patch: Partial<MusicQuestion>) {
+    setPuzzles((prev) =>
+      prev.map((p) => {
+        if (p.id !== id || !p.musicQuestions) return p;
+        const next = p.musicQuestions.map((q, i) => (i === qIdx ? { ...q, ...patch } : q));
+        return { ...p, musicQuestions: next };
+      })
+    );
+  }
+
   function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> {
     const out: Partial<Record<number, Partial<Puzzle>>> = {};
     puzzles.forEach((p) => {
@@ -134,6 +146,11 @@ function Editor() {
         return !dh || h.label !== dh.label || h.text !== dh.text;
       });
       if (hintsChanged) diff.hints = p.hints;
+      if (p.musicQuestions || def.musicQuestions) {
+        const a = JSON.stringify(p.musicQuestions ?? []);
+        const b = JSON.stringify(def.musicQuestions ?? []);
+        if (a !== b) diff.musicQuestions = p.musicQuestions;
+      }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
     return out;
@@ -291,6 +308,7 @@ function Editor() {
               puzzle={p}
               onChange={(patch) => updatePuzzle(p.id, patch)}
               onHintChange={(tier, patch) => updateHint(p.id, tier, patch)}
+              onMusicChange={(qIdx, patch) => updateMusicQuestion(p.id, qIdx, patch)}
               onReset={() => resetPuzzle(p.id)}
             />
           ))}
@@ -310,11 +328,13 @@ function PuzzleEditor({
   puzzle,
   onChange,
   onHintChange,
+  onMusicChange,
   onReset,
 }: {
   puzzle: Puzzle;
   onChange: (patch: Partial<Puzzle>) => void;
   onHintChange: (tier: 1 | 2 | 3, patch: Partial<Hint>) => void;
+  onMusicChange: (qIdx: number, patch: Partial<MusicQuestion>) => void;
   onReset: () => void;
 }) {
   return (
@@ -393,6 +413,155 @@ function PuzzleEditor({
           </div>
         ))}
       </div>
+
+      {puzzle.musicQuestions && (
+        <MusicQuestionsEditor
+          puzzleId={puzzle.id}
+          questions={puzzle.musicQuestions}
+          onChange={onMusicChange}
+        />
+      )}
+    </div>
+  );
+}
+
+function MusicQuestionsEditor({
+  puzzleId,
+  questions,
+  onChange,
+}: {
+  puzzleId: number;
+  questions: MusicQuestion[];
+  onChange: (qIdx: number, patch: Partial<MusicQuestion>) => void;
+}) {
+  return (
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4">
+      <div className="font-display text-xs uppercase tracking-widest text-gold mb-3">
+        Music Questions ({questions.length})
+      </div>
+      <div className="space-y-4">
+        {questions.map((q, i) => (
+          <MusicQuestionRow
+            key={i}
+            puzzleId={puzzleId}
+            qIdx={i}
+            question={q}
+            onChange={(patch) => onChange(i, patch)}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-3">
+        Tip: leave audio empty for text-only questions. Click Save changes above to persist edits.
+      </p>
+    </div>
+  );
+}
+
+function MusicQuestionRow({
+  puzzleId,
+  qIdx,
+  question,
+  onChange,
+}: {
+  puzzleId: number;
+  qIdx: number;
+  question: MusicQuestion;
+  onChange: (patch: Partial<MusicQuestion>) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    setUploadErr("");
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
+      const path = `puzzle${puzzleId}/q${qIdx + 1}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("music-round")
+        .upload(path, file, { upsert: true, contentType: file.type || "audio/mpeg" });
+      if (error) throw error;
+      const { data } = supabase.storage.from("music-round").getPublicUrl(path);
+      onChange({ audioUrl: data.publicUrl });
+    } catch (e: any) {
+      setUploadErr(e.message ?? "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="rounded border border-border bg-background/40 p-3 space-y-2">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">
+        Question {qIdx + 1}
+      </div>
+      <Field label="Prompt">
+        <Textarea
+          value={question.prompt}
+          onChange={(e) => onChange({ prompt: e.target.value })}
+          rows={2}
+        />
+      </Field>
+      <div className="grid gap-2 md:grid-cols-2">
+        <Field label="Canonical answer">
+          <Input
+            value={question.answer}
+            onChange={(e) => onChange({ answer: e.target.value })}
+          />
+        </Field>
+        <Field label="Hint (shown under audio)">
+          <Input
+            value={question.hint ?? ""}
+            onChange={(e) => onChange({ hint: e.target.value })}
+          />
+        </Field>
+      </div>
+      <Field label="Acceptable alternates (comma-separated)">
+        <Input
+          value={(question.acceptable ?? []).join(", ")}
+          onChange={(e) =>
+            onChange({
+              acceptable: e.target.value
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+            })
+          }
+        />
+      </Field>
+      <Field label="Audio clip (MP3)">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+                e.target.value = "";
+              }}
+              disabled={uploading}
+            />
+            <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm hover:bg-accent">
+              {uploading ? "Uploading…" : question.audioUrl ? "Replace MP3" : "Upload MP3"}
+            </span>
+          </label>
+          {question.audioUrl && (
+            <>
+              <audio controls src={question.audioUrl} className="h-9 max-w-xs" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onChange({ audioUrl: "" })}
+              >
+                Remove
+              </Button>
+            </>
+          )}
+        </div>
+        {uploadErr && <div className="text-xs text-destructive mt-1">{uploadErr}</div>}
+      </Field>
     </div>
   );
 }

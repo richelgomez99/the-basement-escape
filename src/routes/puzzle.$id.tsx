@@ -58,7 +58,7 @@ function PuzzleRoute() {
         <AnswerForm puzzle={puzzle} placeholder="Enter a number" inputMode="numeric" />
       )}
       {puzzle.id === 7 && <StainedGlass />}
-      {puzzle.id === 8 && <VoicesInWilderness />}
+      {puzzle.id === 8 && <MusicRound />}
       {puzzle.id === 9 && <Timeline />}
     </PuzzleShell>
   );
@@ -365,34 +365,107 @@ function StainedGlass() {
   );
 }
 
-/* ---------- Puzzle 8: Voices in the Wilderness ---------- */
-function VoicesInWilderness() {
+/* ---------- Puzzle 8: Songs of the Saints (Music Round) ---------- */
+function MusicRound() {
   const puzzle = getPuzzles()[7];
-  const clips = [
-    "Trust in the Lord, for He is your *BEEP*.",          // HEAR? actually HOPE
-    "Children, *BEEP* your father and mother.",            // OBEY
-    "Without ceasing, *BEEP* for one another.",            // PRAY
-    "Through trial, *BEEP* to the very end.",              // ENDURE
-  ];
+  const questions = puzzle.musicQuestions ?? [];
+  const [idx, setIdx] = useState(0);
+  const [val, setVal] = useState("");
+  const [error, setError] = useState("");
+  const [shake, setShake] = useState(false);
+  const [done, setDone] = useState(false);
+
+  if (questions.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        No music questions configured. Set them up in /admin.
+      </p>
+    );
+  }
+
+  const current = questions[idx];
+
+  function normalize(s: string) {
+    return s.trim().toLowerCase().replace(/\s+/g, " ");
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const norm = normalize(val);
+    const ok =
+      norm === normalize(current.answer) ||
+      (current.acceptable ?? []).some((a) => normalize(a) === norm);
+    if (!ok) {
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError("Not quite. −30 seconds.");
+      setShake(true);
+      setTimeout(() => setShake(false), 450);
+      return;
+    }
+    setError("");
+    setVal("");
+    if (idx + 1 >= questions.length) {
+      setDone(true);
+    } else {
+      setIdx(idx + 1);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="space-y-4">
+        <p className="text-center text-gold font-display">
+          All five answered. The artifact is yours.
+        </p>
+        <AnswerForm puzzle={puzzle} placeholder="Type the artifact letter" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        {clips.map((c, i) => (
-          <div key={i} className="rounded border border-gold/30 bg-background/40 p-3">
-            <div className="font-display text-xs uppercase tracking-widest text-gold">
-              Voice {i + 1}
-            </div>
-            <p className="mt-1 italic">"{c}"</p>
-            <audio controls className="mt-2 w-full max-w-sm">
-              <source src="" />
-            </audio>
-          </div>
-        ))}
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          Question {idx + 1} of {questions.length}
+        </span>
+        <span className="text-destructive">Wrong answer = −30s</span>
       </div>
-      <p className="text-center text-xs text-muted-foreground">
-        Take the first letter of each censored word.
-      </p>
-      <AnswerForm puzzle={puzzle} placeholder="4-letter code" />
+
+      <div className="rounded border border-gold/30 bg-background/40 p-4 space-y-3">
+        <p className="font-display text-lg">{current.prompt}</p>
+        {current.audioUrl ? (
+          <audio
+            key={current.audioUrl}
+            controls
+            className="w-full"
+            src={current.audioUrl}
+          />
+        ) : (
+          <p className="text-xs italic text-muted-foreground">
+            (No audio uploaded yet — host can add one in /admin)
+          </p>
+        )}
+        {current.hint && (
+          <p className="text-xs text-muted-foreground italic">{current.hint}</p>
+        )}
+      </div>
+
+      <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
+        <input
+          autoFocus
+          value={val}
+          onChange={(e) => {
+            setVal(e.target.value);
+            setError("");
+          }}
+          placeholder="Your answer"
+          className="flex h-12 w-full rounded-md border border-gold/40 bg-background/60 px-3 py-2 text-lg shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+        {error && <div className="text-sm text-destructive">{error}</div>}
+        <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
+          Submit
+        </Button>
+      </form>
     </div>
   );
 }
