@@ -190,16 +190,20 @@ function Library() {
 
 /* ---------- Puzzle 4: Path of the Righteous ---------- */
 function PathOfRighteous() {
+  const puzzle = getPuzzles()[3];
   const cols = 3;
   const rows = 4;
-  const safe = new Set([1, 4, 7, 10]); // middle column
+  // Zigzag: row0 col0 (left), row1 col1 (center), row2 col2 (right), row3 col1 (center)
+  const safeByRow = [0, 1, 2, 1];
+  const safe = new Set(safeByRow.map((c, r) => r * cols + c));
   const [step, setStep] = useState(0);
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [crossed, setCrossed] = useState(false);
+  const [trail, setTrail] = useState<number[]>([]);
 
   function step_(idx: number) {
-    if (locked) return;
+    if (locked || crossed) return;
     const row = Math.floor(idx / cols);
     if (row !== step) {
       setError("Step in order, row by row.");
@@ -212,6 +216,7 @@ function PathOfRighteous() {
       setTimeout(() => {
         setLocked(false);
         setStep(0);
+        setTrail([]);
         setError("");
       }, 1500);
       return;
@@ -219,25 +224,25 @@ function PathOfRighteous() {
     setError("");
     const nextStep = step + 1;
     setStep(nextStep);
+    setTrail([...trail, idx]);
     if (nextStep === rows) {
-      markSolved(4);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setCrossed(true);
     }
   }
 
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Cross row by row. Choose wisely.
+        Cross row by row. The narrow way is hidden — wrong stones cost 30 seconds.
       </p>
       <div className={`mx-auto grid grid-cols-3 gap-2 max-w-sm ${locked ? "pointer-events-none opacity-60" : ""}`}>
         {Array.from({ length: rows * cols }).map((_, i) => {
-          const safeStone = safe.has(i);
-          const reached = i < step * cols ? safeStone : false;
+          const reached = trail.includes(i);
           return (
             <button
               key={i}
               onClick={() => step_(i)}
+              disabled={crossed}
               className={`aspect-square rounded border-2 transition ${
                 reached
                   ? "border-gold bg-gold/20"
@@ -249,8 +254,15 @@ function PathOfRighteous() {
         })}
       </div>
       <div className="text-center text-sm">
-        {error ? <span className="text-destructive">{error}</span> : <span className="text-muted-foreground">Row {step + 1} of {rows}</span>}
+        {error ? (
+          <span className="text-destructive">{error}</span>
+        ) : crossed ? (
+          <span className="text-gold">You crossed safely. Now name the way.</span>
+        ) : (
+          <span className="text-muted-foreground">Row {step + 1} of {rows}</span>
+        )}
       </div>
+      {crossed && <AnswerForm puzzle={puzzle} placeholder="The way is ______" />}
     </div>
   );
 }
