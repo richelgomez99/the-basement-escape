@@ -285,73 +285,81 @@ function NameThatTune() {
 
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
-  const target = ["T", "R", "U", "T", "H"];
-  const initialPool = ["U", "H", "R", "T", "T"];
-  const [pool, setPool] = useState<string[]>(initialPool);
-  const [slots, setSlots] = useState<(string | null)[]>([null, null, null, null, null]);
-  const navigate = useNavigate();
+  const puzzle = getPuzzles()[6];
+  // 9 pieces, indexed 0-8 in correct order. Letters T-R-U-T-H overlay 5 of them.
+  // Correct positions: piece i belongs at grid position i.
+  const letterMap: Record<number, string> = { 0: "T", 2: "R", 4: "U", 6: "T", 8: "H" };
+  // Initial shuffle (deterministic for fairness)
+  const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
+  const [order, setOrder] = useState<number[]>(initialOrder);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [solved, setSolvedLocal] = useState(false);
 
-  function place(letter: string, poolIdx: number) {
-    const i = slots.findIndex((s) => s === null);
-    if (i === -1) return;
-    const newSlots = [...slots];
-    newSlots[i] = letter;
-    setSlots(newSlots);
-    setPool(pool.filter((_, idx) => idx !== poolIdx));
-    if (newSlots.every((s, idx) => s === target[idx])) {
-      markSolved(7);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+  function tap(gridIdx: number) {
+    if (solved) return;
+    if (selected === null) {
+      setSelected(gridIdx);
+      return;
+    }
+    if (selected === gridIdx) {
+      setSelected(null);
+      return;
+    }
+    const next = [...order];
+    [next[selected], next[gridIdx]] = [next[gridIdx], next[selected]];
+    setOrder(next);
+    setSelected(null);
+    if (next.every((piece, pos) => piece === pos)) {
+      setSolvedLocal(true);
     }
   }
-  function reset() {
-    setSlots([null, null, null, null, null]);
-    setPool(initialPool);
-  }
-  const wrong = slots.every((s) => s !== null) && !slots.every((s, idx) => s === target[idx]);
 
   return (
     <div className="space-y-4">
+      <p className="text-center text-sm text-muted-foreground">
+        Tap two pieces to swap them. Reassemble the window — letters will appear.
+      </p>
       <div
-        className="relative mx-auto rounded-lg overflow-hidden border border-gold/30"
-        style={{ maxWidth: 360, aspectRatio: "4/5" }}
+        className="relative mx-auto grid grid-cols-3 gap-1 rounded-lg overflow-hidden border border-gold/30 bg-background/40"
+        style={{ maxWidth: 360, aspectRatio: "1/1" }}
       >
-        <img
-          src={stainedGlass}
-          alt="Broken stained glass window"
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
-        />
+        {order.map((piece, gridIdx) => {
+          const row = Math.floor(piece / 3);
+          const col = piece % 3;
+          const isSel = selected === gridIdx;
+          const letter = letterMap[piece];
+          return (
+            <button
+              key={gridIdx}
+              onClick={() => tap(gridIdx)}
+              className={`relative aspect-square overflow-hidden transition ${
+                isSel ? "ring-4 ring-gold scale-95" : "hover:opacity-90"
+              }`}
+              style={{
+                backgroundImage: `url(${stainedGlass})`,
+                backgroundSize: "300% 300%",
+                backgroundPosition: `${col * 50}% ${row * 50}%`,
+              }}
+              aria-label={`piece-${piece}`}
+            >
+              {solved && letter && (
+                <span className="absolute inset-0 flex items-center justify-center font-display text-3xl text-gold drop-shadow-[0_0_8px_black]">
+                  {letter}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
-      <div className="flex justify-center gap-2">
-        {slots.map((s, i) => (
-          <div
-            key={i}
-            className={`flex h-14 w-14 items-center justify-center rounded border-2 font-display text-2xl ${
-              s ? "border-gold bg-gold/10 text-gold" : "border-border bg-background/40"
-            }`}
-          >
-            {s ?? ""}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center gap-2 flex-wrap">
-        {pool.map((l, i) => (
-          <button
-            key={i}
-            onClick={() => place(l, i)}
-            className="h-12 w-12 rounded border-2 border-gold/40 bg-background/40 font-display text-xl hover:bg-gold/10"
-          >
-            {l}
-          </button>
-        ))}
-      </div>
-      {wrong && (
-        <div className="text-center">
-          <p className="text-sm text-destructive">Pieces don't fit. Try again.</p>
-          <Button variant="outline" size="sm" onClick={reset} className="mt-2">
-            Reset shards
-          </Button>
-        </div>
+      {solved ? (
+        <>
+          <p className="text-center text-sm text-gold">The window reveals a word.</p>
+          <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
+        </>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">
+          Reassemble the window to reveal the answer.
+        </p>
       )}
     </div>
   );
