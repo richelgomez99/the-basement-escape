@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ADMIN_DEFAULT_PASSWORD,
   clearOverrides,
@@ -12,6 +13,7 @@ import {
   getVaultCode,
   saveOverrides,
   type Hint,
+  type MusicQuestion,
   type Puzzle,
 } from "@/game/content";
 
