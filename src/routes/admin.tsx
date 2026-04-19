@@ -120,6 +120,16 @@ function Editor() {
     );
   }
 
+  function updateMusicQuestion(id: number, qIdx: number, patch: Partial<MusicQuestion>) {
+    setPuzzles((prev) =>
+      prev.map((p) => {
+        if (p.id !== id || !p.musicQuestions) return p;
+        const next = p.musicQuestions.map((q, i) => (i === qIdx ? { ...q, ...patch } : q));
+        return { ...p, musicQuestions: next };
+      })
+    );
+  }
+
   function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> {
     const out: Partial<Record<number, Partial<Puzzle>>> = {};
     puzzles.forEach((p) => {
@@ -136,6 +146,11 @@ function Editor() {
         return !dh || h.label !== dh.label || h.text !== dh.text;
       });
       if (hintsChanged) diff.hints = p.hints;
+      if (p.musicQuestions || def.musicQuestions) {
+        const a = JSON.stringify(p.musicQuestions ?? []);
+        const b = JSON.stringify(def.musicQuestions ?? []);
+        if (a !== b) diff.musicQuestions = p.musicQuestions;
+      }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
     return out;
