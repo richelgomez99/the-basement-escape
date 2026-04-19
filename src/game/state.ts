@@ -22,6 +22,7 @@ function read<T>(key: string, fallback: T): T {
 function write(key: string, value: unknown) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, JSON.stringify(value));
+  window.dispatchEvent(new Event("be_state"));
 }
 
 export function getTeamName() {
@@ -40,20 +41,25 @@ export function startGame(name: string) {
 export function resetGame() {
   if (typeof window === "undefined") return;
   Object.values(KEYS).forEach((k) => window.localStorage.removeItem(k));
+  window.dispatchEvent(new Event("be_state"));
 }
 export function getSolved(): number[] {
   return read<number[]>(KEYS.solved, []);
+}
+export function isUnlocked(id: number): boolean {
+  // Strictly sequential: lock N is unlocked iff 1..N-1 are all solved.
+  const solved = new Set(getSolved());
+  for (let i = 1; i < id; i++) if (!solved.has(i)) return false;
+  return true;
 }
 export function markSolved(id: number) {
   const s = new Set(getSolved());
   s.add(id);
   write(KEYS.solved, Array.from(s).sort((a, b) => a - b));
-  window.dispatchEvent(new Event("be_state"));
 }
 export function addPenalty(seconds: number) {
   const cur = read<number>(KEYS.penalty, 0);
   write(KEYS.penalty, cur + seconds);
-  window.dispatchEvent(new Event("be_state"));
 }
 export function getRemainingSeconds(): number {
   const start = read<number>(KEYS.start, 0);

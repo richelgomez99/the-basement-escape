@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
-import { PUZZLES, RECALL_PENALTY_SECONDS } from "@/game/content";
+import { getPuzzles, RECALL_PENALTY_SECONDS } from "@/game/content";
 import {
   addPenalty,
   getTeamName,
@@ -30,6 +30,7 @@ function DoorScreen() {
   const { solved } = useCountdown();
   const [team, setTeam] = useState("");
   const [recallOpen, setRecallOpen] = useState(false);
+  const puzzles = getPuzzles();
 
   useEffect(() => {
     if (!isGameStarted()) {
@@ -39,7 +40,13 @@ function DoorScreen() {
     setTeam(getTeamName());
   }, [navigate]);
 
-  const allSolved = solved.length === PUZZLES.length;
+  const allSolved = solved.length === puzzles.length;
+  const solvedSet = new Set(solved);
+  // Sequential availability: lock N available iff 1..N-1 all solved.
+  function isAvailable(id: number) {
+    for (let i = 1; i < id; i++) if (!solvedSet.has(i)) return false;
+    return true;
+  }
 
   return (
     <div className="min-h-screen px-4 py-6 md:px-8">
@@ -55,37 +62,56 @@ function DoorScreen() {
         <div className="text-center">
           <h1 className="font-display text-3xl md:text-5xl">The Door</h1>
           <p className="mt-2 text-muted-foreground">
-            {solved.length} of {PUZZLES.length} locks opened
+            {solved.length} of {puzzles.length} locks opened
           </p>
         </div>
 
         <div className="mt-8 stone-panel rounded-2xl p-6 md:p-10">
           <div className="grid grid-cols-3 gap-4 md:gap-6">
-            {PUZZLES.map((p) => {
-              const isSolved = solved.includes(p.id);
-              return (
-                <Link
-                  key={p.id}
-                  to="/puzzle/$id"
-                  params={{ id: String(p.id) }}
+            {puzzles.map((p) => {
+              const isSolved = solvedSet.has(p.id);
+              const available = isAvailable(p.id);
+
+              const tile = (
+                <div
                   className={`group relative aspect-square rounded-lg border-2 p-3 md:p-5 transition-all flex flex-col items-center justify-center text-center ${
                     isSolved
                       ? "border-gold bg-gold/10 gold-glow"
-                      : "border-border bg-background/50 hover:border-gold/60 hover:bg-background/80"
+                      : available
+                        ? "border-border bg-background/50 hover:border-gold/60 hover:bg-background/80 cursor-pointer"
+                        : "border-border/40 bg-background/20 opacity-50 cursor-not-allowed"
                   }`}
                 >
-                  <LockIcon solved={isSolved} />
+                  <LockIcon solved={isSolved} chained={!available && !isSolved} />
                   <div
                     className={`mt-2 font-display text-xs md:text-sm ${
-                      isSolved ? "text-gold" : "text-muted-foreground"
+                      isSolved
+                        ? "text-gold"
+                        : available
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/60"
                     }`}
                   >
                     Lock {p.id}
                   </div>
-                  <div className="mt-1 text-[10px] md:text-xs text-muted-foreground line-clamp-2">
-                    {p.title.replace(/^.*— /, "")}
+                  <div
+                    className={`mt-1 text-[10px] md:text-xs line-clamp-2 ${
+                      available ? "text-muted-foreground" : "text-muted-foreground/50"
+                    }`}
+                  >
+                    {available || isSolved ? p.title.replace(/^.*— /, "") : "Sealed"}
                   </div>
+                </div>
+              );
+
+              return available ? (
+                <Link key={p.id} to="/puzzle/$id" params={{ id: String(p.id) }}>
+                  {tile}
                 </Link>
+              ) : (
+                <div key={p.id} aria-disabled="true" title="Solve previous locks first">
+                  {tile}
+                </div>
               );
             })}
           </div>
@@ -143,7 +169,23 @@ function DoorScreen() {
   );
 }
 
-function LockIcon({ solved }: { solved: boolean }) {
+function LockIcon({ solved, chained }: { solved: boolean; chained?: boolean }) {
+  if (chained) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className="h-8 w-8 md:h-10 md:w-10 text-muted-foreground/60"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <circle cx="7" cy="9" r="3" />
+        <circle cx="13" cy="14" r="3" />
+        <circle cx="19" cy="9" r="3" />
+        <path d="M9.5 10.5l1.5 1.5M15.5 15.5l1.5-1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
   return (
     <svg
       viewBox="0 0 24 24"

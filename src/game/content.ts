@@ -1,9 +1,11 @@
-// Single source of truth for puzzle content. Edit values to customize.
+// Single source of truth for puzzle content. Edit values via /admin or here.
 // Artifacts concatenated in puzzle order form the final vault code.
 
 export const GAME_DURATION_SECONDS = 60 * 60; // 60 minutes
 export const RECALL_PENALTY_SECONDS = 120; // 2 minutes
 export const TRAP_PENALTY_SECONDS = 30;
+
+export const ADMIN_DEFAULT_PASSWORD = "glorious2025";
 
 export type Hint = { tier: 1 | 2 | 3; label: string; text: string };
 
@@ -18,7 +20,7 @@ export type Puzzle = {
   hints: Hint[];
 };
 
-export const PUZZLES: Puzzle[] = [
+export const DEFAULT_PUZZLES: Puzzle[] = [
   {
     id: 1,
     title: "Warm-up — Fill in the Blank",
@@ -62,7 +64,7 @@ export const PUZZLES: Puzzle[] = [
   {
     id: 4,
     title: "Path of the Righteous",
-    flavor: "Cross the stones without falling. Each wrong step costs 30 seconds.",
+    flavor: "Cross the stones in order. A wrong step costs you 30 seconds.",
     scripture: "The path of the just is as the shining light. — Proverbs 4:18",
     artifact: "I",
     answer: "i",
@@ -115,7 +117,6 @@ export const PUZZLES: Puzzle[] = [
     title: "Voices in the Wilderness",
     flavor: "Three voices — three censored words. Their first letters spell the key.",
     artifact: "H",
-    // The three censored words are: Hope, Obey, Pray → "HOP" → final letter for artifact: H (first)
     answer: "hop",
     hints: [
       { tier: 1, label: "Nudge", text: "Each clip has one word replaced with *BEEP*." },
@@ -128,8 +129,6 @@ export const PUZZLES: Puzzle[] = [
     title: "The Timeline",
     flavor: "Order the life of Moses. Remove any event that doesn't belong.",
     artifact: "5",
-    // Order: Basket(1), Burning Bush(2), Plagues(3), Red Sea(4), Ten Commandments(5).
-    // Decoys: Abraham's covenant, Tower of Babel.
     answer: "12345",
     hints: [
       { tier: 1, label: "Nudge", text: "Two events belong to Abraham/Babel — drop them." },
@@ -139,7 +138,56 @@ export const PUZZLES: Puzzle[] = [
   },
 ];
 
-export const VAULT_CODE = PUZZLES.map((p) => p.artifact).join("");
+const OVERRIDES_KEY = "be_content_overrides";
+
+function readOverrides(): Partial<Record<number, Partial<Puzzle>>> {
+  if (typeof window === "undefined") return {};
+  try {
+    const v = window.localStorage.getItem(OVERRIDES_KEY);
+    return v ? JSON.parse(v) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getPuzzles(): Puzzle[] {
+  const overrides = readOverrides();
+  return DEFAULT_PUZZLES.map((p) => {
+    const o = overrides[p.id];
+    if (!o) return p;
+    return { ...p, ...o, hints: o.hints ?? p.hints };
+  });
+}
+
+export function getPuzzle(id: number): Puzzle | undefined {
+  return getPuzzles().find((p) => p.id === id);
+}
+
+export function saveOverrides(overrides: Partial<Record<number, Partial<Puzzle>>>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  window.dispatchEvent(new Event("be_content"));
+}
+
+export function getOverrides() {
+  return readOverrides();
+}
+
+export function clearOverrides() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(OVERRIDES_KEY);
+  window.dispatchEvent(new Event("be_content"));
+}
+
+export function getVaultCode(): string {
+  return getPuzzles()
+    .map((p) => p.artifact)
+    .join("");
+}
+
+// Backwards-compatible exports (computed from defaults; UI should prefer getPuzzles())
+export const PUZZLES = DEFAULT_PUZZLES;
+export const VAULT_CODE = DEFAULT_PUZZLES.map((p) => p.artifact).join("");
 // = "EL4IG4TH5"
 
 export const KEY_VERSE =

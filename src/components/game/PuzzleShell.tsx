@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Timer } from "./Timer";
 import { HintBox } from "./HintBox";
-import type { Puzzle } from "@/game/content";
+import { getPuzzles, type Puzzle } from "@/game/content";
 import { Button } from "@/components/ui/button";
 
 export function PuzzleShell({
@@ -11,6 +11,7 @@ export function PuzzleShell({
   puzzle: Puzzle;
   children: React.ReactNode;
 }) {
+  const total = getPuzzles().length;
   return (
     <div className="min-h-screen px-4 py-6 md:px-8">
       <header className="mx-auto flex max-w-4xl items-center justify-between">
@@ -25,7 +26,7 @@ export function PuzzleShell({
       <main className="mx-auto mt-8 max-w-3xl space-y-6">
         <div className="text-center">
           <div className="font-display text-xs uppercase tracking-[0.3em] text-gold">
-            Lock {puzzle.id} of 9
+            Lock {puzzle.id} of {total}
           </div>
           <h1 className="mt-2 font-display text-3xl md:text-4xl">{puzzle.title}</h1>
           <p className="mt-3 text-muted-foreground italic">{puzzle.flavor}</p>
