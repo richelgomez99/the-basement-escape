@@ -68,11 +68,11 @@ function PuzzleRoute() {
 function HiddenSymbols() {
   const puzzle = getPuzzles()[1];
   const symbols = [
-    { id: "dove", x: 50, y: 18, label: "🕊️" },
-    { id: "fish", x: 50, y: 86, label: "🐟" },
-    { id: "cross", x: 50, y: 65, label: "✝️" },
-    { id: "lamb", x: 78, y: 78, label: "🐑" },
-    { id: "bread", x: 46, y: 62, label: "🍞" },
+    { id: "dove", x: 50, y: 22, label: "🕊️" },
+    { id: "fish", x: 35, y: 72, label: "🐟" },
+    { id: "cross", x: 50, y: 60, label: "✝️" },
+    { id: "lamb", x: 72, y: 70, label: "🐑" },
+    { id: "bread", x: 50, y: 50, label: "🍞" },
   ];
   const [found, setFound] = useState<string[]>([]);
   const allFound = found.length === symbols.length;
