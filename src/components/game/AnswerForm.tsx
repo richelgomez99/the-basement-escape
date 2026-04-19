@@ -10,10 +10,12 @@ export function AnswerForm({
   puzzle,
   placeholder = "Your answer",
   inputMode,
+  onSolved,
 }: {
   puzzle: Puzzle;
   placeholder?: string;
   inputMode?: "text" | "numeric";
+  onSolved?: () => void;
 }) {
   const [val, setVal] = useState("");
   const [shake, setShake] = useState(false);
@@ -24,6 +26,7 @@ export function AnswerForm({
     e.preventDefault();
     if (checkAnswer(val, puzzle)) {
       markSolved(puzzle.id);
+      onSolved?.();
       navigate({ to: "/door" });
     } else {
       setShake(true);

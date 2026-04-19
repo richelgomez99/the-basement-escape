@@ -13,6 +13,7 @@ import { Route as VictoryRouteImport } from './routes/victory'
 import { Route as VaultRouteImport } from './routes/vault'
 import { Route as FailureRouteImport } from './routes/failure'
 import { Route as DoorRouteImport } from './routes/door'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PuzzleIdRouteImport } from './routes/puzzle.$id'
 
@@ -36,6 +37,11 @@ const DoorRoute = DoorRouteImport.update({
   path: '/door',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const PuzzleIdRoute = PuzzleIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
@@ -74,12 +83,27 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/door' | '/failure' | '/vault' | '/victory' | '/puzzle/$id'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/door'
+    | '/failure'
+    | '/vault'
+    | '/victory'
+    | '/puzzle/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/door' | '/failure' | '/vault' | '/victory' | '/puzzle/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/door'
+    | '/failure'
+    | '/vault'
+    | '/victory'
+    | '/puzzle/$id'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/door'
     | '/failure'
     | '/vault'
@@ -89,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   DoorRoute: typeof DoorRoute
   FailureRoute: typeof FailureRoute
   VaultRoute: typeof VaultRoute
@@ -126,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -145,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   DoorRoute: DoorRoute,
   FailureRoute: FailureRoute,
   VaultRoute: VaultRoute,

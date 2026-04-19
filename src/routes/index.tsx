@@ -1,8 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { startGame, resetGame } from "@/game/state";
+import { isGameStarted, resetGame, startGame } from "@/game/state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,12 +33,29 @@ export const Route = createFileRoute("/")({
 
 function TitleScreen() {
   const [team, setTeam] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [confirmStartOpen, setConfirmStartOpen] = useState(false);
+  const [inProgress, setInProgress] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setInProgress(isGameStarted());
+  }, []);
 
   function begin(e: React.FormEvent) {
     e.preventDefault();
     if (!team.trim()) return;
+    if (inProgress) {
+      setConfirmStartOpen(true);
+      return;
+    }
     startGame(team.trim());
+    navigate({ to: "/door" });
+  }
+
+  function confirmStart() {
+    startGame(team.trim());
+    setConfirmStartOpen(false);
     navigate({ to: "/door" });
   }
 
@@ -65,20 +90,81 @@ function TitleScreen() {
         >
           BEGIN
         </Button>
+        {inProgress && (
+          <Link
+            to="/door"
+            className="block text-center text-xs text-gold hover:underline"
+          >
+            ← Resume current game
+          </Link>
+        )}
         <button
           type="button"
-          onClick={() => {
-            if (confirm("Reset the game for a new team?")) resetGame();
-          }}
+          onClick={() => setResetOpen(true)}
           className="block w-full text-center text-xs text-muted-foreground hover:text-gold"
         >
           Reset game (host)
         </button>
+        <Link
+          to="/admin"
+          className="block w-full text-center text-[10px] uppercase tracking-widest text-muted-foreground/60 hover:text-gold"
+        >
+          Host admin
+        </Link>
       </form>
 
       <p className="mt-8 text-xs text-muted-foreground">
         Best played with one screen-share per team. The clock starts when you press BEGIN.
       </p>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset the game?</DialogTitle>
+            <DialogDescription>
+              This clears the current team's progress, timer, and solved locks. Puzzle content
+              edits in /admin are not affected.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                resetGame();
+                setInProgress(false);
+                setResetOpen(false);
+              }}
+            >
+              Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmStartOpen} onOpenChange={setConfirmStartOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>A game is already in progress</DialogTitle>
+            <DialogDescription>
+              Starting a new game will erase the current team's progress and timer. Continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmStartOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmStart}
+            >
+              Start new game
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,13 +1,18 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useCountdown } from "@/game/state";
+import { isFinished, isGameStarted, useCountdown } from "@/game/state";
 
 export function Timer({ redirectOnZero = true }: { redirectOnZero?: boolean }) {
   const { remaining, formatted } = useCountdown();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (redirectOnZero && remaining === 0) {
+    if (
+      redirectOnZero &&
+      remaining === 0 &&
+      isGameStarted() &&
+      !isFinished()
+    ) {
       navigate({ to: "/failure" });
     }
   }, [remaining, redirectOnZero, navigate]);

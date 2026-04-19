@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { PUZZLES, TRAP_PENALTY_SECONDS } from "@/game/content";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import { addPenalty, markSolved } from "@/game/state";
+import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import cathedralMural from "@/assets/cathedral-mural.jpg";
+import stainedGlass from "@/assets/stained-glass.jpg";
 
 export const Route = createFileRoute("/puzzle/$id")({
   component: PuzzleRoute,
@@ -21,7 +22,20 @@ export const Route = createFileRoute("/puzzle/$id")({
 
 function PuzzleRoute() {
   const { id } = Route.useParams();
-  const puzzle = PUZZLES.find((p) => p.id === Number(id));
+  const navigate = useNavigate();
+  const numId = Number(id);
+  const puzzle = getPuzzle(numId);
+
+  useEffect(() => {
+    if (!isGameStarted()) {
+      navigate({ to: "/" });
+      return;
+    }
+    if (!puzzle || !isUnlocked(numId)) {
+      navigate({ to: "/door" });
+    }
+  }, [puzzle, numId, navigate]);
+
   if (!puzzle) {
     return (
       <div className="p-10 text-center">
@@ -52,33 +66,29 @@ function PuzzleRoute() {
 
 /* ---------- Puzzle 2: Hidden in Plain Sight ---------- */
 function HiddenSymbols() {
+  const puzzle = getPuzzles()[1];
   const symbols = [
-    { id: "dove", x: 12, y: 22, label: "🕊️" },
-    { id: "fish", x: 78, y: 30, label: "🐟" },
-    { id: "cross", x: 50, y: 12, label: "✝️" },
-    { id: "lamb", x: 22, y: 75, label: "🐑" },
-    { id: "bread", x: 70, y: 78, label: "🍞" },
+    { id: "dove", x: 50, y: 18, label: "🕊️" },
+    { id: "fish", x: 50, y: 86, label: "🐟" },
+    { id: "cross", x: 50, y: 65, label: "✝️" },
+    { id: "lamb", x: 78, y: 78, label: "🐑" },
+    { id: "bread", x: 46, y: 62, label: "🍞" },
   ];
   const [found, setFound] = useState<string[]>([]);
-  const navigate = useNavigate();
   const allFound = found.length === symbols.length;
 
   return (
     <div className="space-y-4">
       <div
         className="relative w-full overflow-hidden rounded-lg border border-gold/30"
-        style={{
-          aspectRatio: "16/9",
-          background:
-            "radial-gradient(ellipse at center, oklch(0.32 0.08 300), oklch(0.16 0.04 300))",
-        }}
+        style={{ aspectRatio: "16/9" }}
       >
-        {/* Stained-glass-ish backdrop */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute left-1/4 top-0 h-full w-1 bg-gold/40" />
-          <div className="absolute left-1/2 top-0 h-full w-1 bg-gold/40" />
-          <div className="absolute left-3/4 top-0 h-full w-1 bg-gold/40" />
-        </div>
+        <img
+          src={cathedralMural}
+          alt="Cathedral mural with hidden sacred symbols"
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
         {symbols.map((s) => {
           const isFound = found.includes(s.id);
           return (
@@ -86,12 +96,14 @@ function HiddenSymbols() {
               key={s.id}
               onClick={() => !isFound && setFound((f) => [...f, s.id])}
               className={`absolute -translate-x-1/2 -translate-y-1/2 text-2xl md:text-3xl transition-all ${
-                isFound ? "scale-125 drop-shadow-[0_0_10px_gold]" : "opacity-50 hover:opacity-100"
+                isFound
+                  ? "scale-125 drop-shadow-[0_0_10px_gold] opacity-100"
+                  : "opacity-0 hover:opacity-100 w-10 h-10"
               }`}
               style={{ left: `${s.x}%`, top: `${s.y}%` }}
               aria-label={s.id}
             >
-              {s.label}
+              {isFound ? s.label : ""}
             </button>
           );
         })}
@@ -99,15 +111,13 @@ function HiddenSymbols() {
       <div className="text-center text-sm text-muted-foreground">
         Found {found.length} / {symbols.length}
       </div>
-      {allFound && (
-        <AnswerForm puzzle={PUZZLES[1]} placeholder="Five symbols, one word..." />
-      )}
-      {!allFound && (
+      {allFound ? (
+        <AnswerForm puzzle={puzzle} placeholder="Five symbols, one word..." />
+      ) : (
         <p className="text-center text-xs text-muted-foreground">
           Find all five symbols to unlock the answer field.
         </p>
       )}
-      <div className="hidden">{navigate.toString()}</div>
     </div>
   );
 }
@@ -180,11 +190,10 @@ function Library() {
 
 /* ---------- Puzzle 4: Path of the Righteous ---------- */
 function PathOfRighteous() {
-  // 3 cols x 4 rows. Safe = middle column (index 1) all rows.
   const cols = 3;
   const rows = 4;
   const safe = new Set([1, 4, 7, 10]); // middle column
-  const [step, setStep] = useState(0); // expected row
+  const [step, setStep] = useState(0);
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -248,15 +257,16 @@ function PathOfRighteous() {
 
 /* ---------- Puzzle 5: Name That Tune ---------- */
 function NameThatTune() {
+  const puzzle = getPuzzles()[4];
   return (
     <div className="space-y-4">
       <div className="rounded border border-dashed border-gold/40 p-4 text-center text-sm text-muted-foreground">
-        🎵 [Audio placeholder — replace this with a 5-second clip of "Amazing Grace"]
+        🎵 [Audio placeholder — host: replace with a 5-second clip of "Amazing Grace"]
         <audio controls className="mt-3 mx-auto w-full max-w-sm">
           <source src="" />
         </audio>
       </div>
-      <AnswerForm puzzle={PUZZLES[4]} placeholder="Name the hymn" />
+      <AnswerForm puzzle={puzzle} placeholder="Name the hymn" />
     </div>
   );
 }
@@ -264,17 +274,18 @@ function NameThatTune() {
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
   const target = ["T", "R", "U", "T", "H"];
-  const [pool, setPool] = useState<string[]>(["U", "H", "R", "T", "T"]);
+  const initialPool = ["U", "H", "R", "T", "T"];
+  const [pool, setPool] = useState<string[]>(initialPool);
   const [slots, setSlots] = useState<(string | null)[]>([null, null, null, null, null]);
   const navigate = useNavigate();
 
-  function place(letter: string) {
+  function place(letter: string, poolIdx: number) {
     const i = slots.findIndex((s) => s === null);
     if (i === -1) return;
     const newSlots = [...slots];
     newSlots[i] = letter;
     setSlots(newSlots);
-    setPool(pool.filter((l, idx) => !(l === letter && idx === pool.indexOf(letter))));
+    setPool(pool.filter((_, idx) => idx !== poolIdx));
     if (newSlots.every((s, idx) => s === target[idx])) {
       markSolved(7);
       setTimeout(() => navigate({ to: "/door" }), 600);
@@ -282,12 +293,23 @@ function StainedGlass() {
   }
   function reset() {
     setSlots([null, null, null, null, null]);
-    setPool(["U", "H", "R", "T", "T"]);
+    setPool(initialPool);
   }
   const wrong = slots.every((s) => s !== null) && !slots.every((s, idx) => s === target[idx]);
 
   return (
     <div className="space-y-4">
+      <div
+        className="relative mx-auto rounded-lg overflow-hidden border border-gold/30"
+        style={{ maxWidth: 360, aspectRatio: "4/5" }}
+      >
+        <img
+          src={stainedGlass}
+          alt="Broken stained glass window"
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover opacity-80"
+        />
+      </div>
       <div className="flex justify-center gap-2">
         {slots.map((s, i) => (
           <div
@@ -304,7 +326,7 @@ function StainedGlass() {
         {pool.map((l, i) => (
           <button
             key={i}
-            onClick={() => place(l)}
+            onClick={() => place(l, i)}
             className="h-12 w-12 rounded border-2 border-gold/40 bg-background/40 font-display text-xl hover:bg-gold/10"
           >
             {l}
@@ -325,6 +347,7 @@ function StainedGlass() {
 
 /* ---------- Puzzle 8: Voices in the Wilderness ---------- */
 function VoicesInWilderness() {
+  const puzzle = getPuzzles()[7];
   const clips = [
     "Trust in the Lord, for He is your *BEEP*.",
     "Children, *BEEP* your father and mother.",
@@ -348,7 +371,7 @@ function VoicesInWilderness() {
       <p className="text-center text-xs text-muted-foreground">
         Take the first letter of each censored word.
       </p>
-      <AnswerForm puzzle={PUZZLES[7]} placeholder="3-letter code" />
+      <AnswerForm puzzle={puzzle} placeholder="3-letter code" />
     </div>
   );
 }

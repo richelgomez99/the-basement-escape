@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PUZZLES, VAULT_CODE } from "@/game/content";
-import { setFinished } from "@/game/state";
+import { getPuzzles, getVaultCode } from "@/game/content";
+import { getSolved, isGameStarted, setFinished } from "@/game/state";
 
 export const Route = createFileRoute("/vault")({
   head: () => ({ meta: [{ title: "The Final Vault — The Basement Escape" }] }),
@@ -16,10 +16,21 @@ function Vault() {
   const [shake, setShake] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const puzzles = getPuzzles();
+
+  useEffect(() => {
+    if (!isGameStarted()) {
+      navigate({ to: "/" });
+      return;
+    }
+    if (getSolved().length < puzzles.length) {
+      navigate({ to: "/door" });
+    }
+  }, [navigate, puzzles.length]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (code.trim().toUpperCase() === VAULT_CODE.toUpperCase()) {
+    if (code.trim().toUpperCase() === getVaultCode().toUpperCase()) {
       setFinished(true);
       navigate({ to: "/victory" });
     } else {
@@ -51,7 +62,7 @@ function Vault() {
 
         <div className="stone-panel mt-8 rounded-xl p-6">
           <div className="grid grid-cols-9 gap-2">
-            {PUZZLES.map((p) => (
+            {puzzles.map((p) => (
               <div
                 key={p.id}
                 className="aspect-square rounded border border-gold/30 bg-background/40 flex items-center justify-center font-display text-lg text-gold"
@@ -72,8 +83,8 @@ function Vault() {
                 setCode(e.target.value.toUpperCase());
                 setError("");
               }}
-              maxLength={9}
-              placeholder="9-character code"
+              maxLength={puzzles.length}
+              placeholder={`${puzzles.length}-character code`}
               className="h-14 text-center text-2xl font-display tracking-[0.4em] border-gold/40 bg-background/60"
             />
             {error && <div className="text-sm text-destructive">{error}</div>}
