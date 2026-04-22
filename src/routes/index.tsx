@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isGameStarted, resetGame, startGame } from "@/game/state";
+import { getIntroText, loadOverridesFromCloud } from "@/game/content";
+import { INTRO_KEY } from "@/game/narration";
+import { NarrationPlayer } from "@/components/game/NarrationPlayer";
 import {
   Dialog,
   DialogContent,
@@ -36,10 +39,15 @@ function TitleScreen() {
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const [inProgress, setInProgress] = useState(false);
+  const [introText, setIntroText] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
     setInProgress(isGameStarted());
+    (async () => {
+      await loadOverridesFromCloud();
+      setIntroText(getIntroText());
+    })();
   }, []);
 
   function begin(e: React.FormEvent) {
