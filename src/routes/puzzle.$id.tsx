@@ -113,10 +113,12 @@ function PuzzleRoute() {
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
   const puzzle = getPuzzles()[2];
+  const totalPuzzles = getPuzzles().length;
   const cfg = puzzle.libraryConfig;
   const books = cfg?.books ?? [];
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
 
   const realOrdered = books
@@ -143,7 +145,7 @@ function Library() {
     setPicked(next);
     if (next.length === realOrdered.length) {
       markSolved(3);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setTimeout(() => setShowLetter(true), 400);
     }
   }
 
