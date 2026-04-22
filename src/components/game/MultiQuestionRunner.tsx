@@ -91,6 +91,14 @@ export function MultiQuestionRunner({
       </div>
 
       <div className="rounded border border-gold/30 bg-background/40 p-4 space-y-3">
+        {current.flavor && (
+          <p className="text-sm italic text-muted-foreground">{current.flavor}</p>
+        )}
+        {current.scripture && (
+          <blockquote className="border-l-2 border-gold/60 pl-3 text-sm italic text-foreground/90">
+            {current.scripture}
+          </blockquote>
+        )}
         <p className="font-display text-lg">{current.prompt}</p>
         {showAudio && current.audioUrl && (
           <audio key={current.audioUrl} controls className="w-full" src={current.audioUrl} />
@@ -100,10 +108,14 @@ export function MultiQuestionRunner({
             (No audio uploaded yet — host can add one in /admin)
           </p>
         )}
-        {current.hint && (
+        {(!current.hints || current.hints.every((h) => !h.text.trim())) && current.hint && (
           <p className="text-xs text-muted-foreground italic">{current.hint}</p>
         )}
       </div>
+
+      {current.hints && current.hints.some((h) => h.text.trim()) && (
+        <HintBox hints={current.hints.filter((h) => h.text.trim()) as typeof current.hints} />
+      )}
 
       <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
         <Input
