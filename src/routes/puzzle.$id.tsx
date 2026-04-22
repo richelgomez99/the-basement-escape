@@ -121,11 +121,13 @@ function PuzzleRoute() {
 
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
-  const puzzle = getPuzzles()[2];
+  const puzzle = getPuzzles().find((p) => p.id === 3)!;
   const totalPuzzles = getPuzzles().length;
   const cfg = puzzle.libraryConfig;
   const books = cfg?.books ?? [];
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(() =>
+    getPuzzleState<{ picked: string[] }>(3, { picked: [] }).picked ?? [],
+  );
   const [error, setError] = useState("");
   const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
@@ -134,10 +136,15 @@ function Library() {
     .filter((b) => b.real && typeof b.order === "number")
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+  useEffect(() => {
+    setPuzzleState(3, { picked });
+  }, [picked]);
+
   function pick(id: string) {
     const b = books.find((x) => x.id === id);
     if (!b) return;
     if (!b.real) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${b.name}" is not a book of the Bible. −30s.`);
       return;
@@ -145,6 +152,7 @@ function Library() {
     if (picked.includes(id)) return;
     const next = [...picked, id];
     if (realOrdered[next.length - 1]?.id !== id) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError("Wrong order. Start over with the first book. −30s.");
       setPicked([]);
@@ -153,6 +161,7 @@ function Library() {
     setError("");
     setPicked(next);
     if (next.length === realOrdered.length) {
+      playSfx("lock");
       markSolved(3);
       setTimeout(() => setShowLetter(true), 400);
     }
@@ -208,15 +217,20 @@ function Library() {
 
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
-  const puzzle = getPuzzles()[6];
+  const puzzle = getPuzzles().find((p) => p.id === 7)!;
   const cfg = puzzle.stainedGlassConfig;
   const letters = cfg?.letters ?? ["", "", "", "", "", "", "", "", ""];
   const imageUrl = cfg?.imageUrl?.trim() ? cfg.imageUrl : stainedGlass;
-  // Stable shuffled initial order — derived from a fixed permutation.
   const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
-  const [order, setOrder] = useState<number[]>(initialOrder);
+  const saved = getPuzzleState<{ order: number[] }>(7, { order: initialOrder });
+  const startOrder = Array.isArray(saved.order) && saved.order.length === 9 ? saved.order : initialOrder;
+  const [order, setOrder] = useState<number[]>(startOrder);
   const [selected, setSelected] = useState<number | null>(null);
-  const [solved, setSolvedLocal] = useState(false);
+  const [solved, setSolvedLocal] = useState(() => startOrder.every((p, i) => p === i));
+
+  useEffect(() => {
+    setPuzzleState(7, { order });
+  }, [order]);
 
   function tap(gridIdx: number) {
     if (solved) return;
