@@ -66,11 +66,19 @@ export function PathOfRighteous({
       }, 1200);
       return;
     }
+    if (trail.includes(idx)) return; // already tapped this stone
     setError("");
-    const next = step + 1;
-    setStep(next);
-    setTrail([...trail, idx]);
-    if (next === rows) setPhase("crossed");
+    const newTrail = [...trail, idx];
+    setTrail(newTrail);
+
+    // Advance row only when every safe stone in the current row has been tapped.
+    const safeInRow = safeColsForRow(config, row);
+    const tappedInRow = safeInRow.filter((c) => newTrail.includes(row * cols + c));
+    if (tappedInRow.length === safeInRow.length) {
+      const nextRow = step + 1;
+      setStep(nextRow);
+      if (nextRow === rows) setPhase("crossed");
+    }
   }
 
   const showSafe = phase === "preview" || phase === "recall";
