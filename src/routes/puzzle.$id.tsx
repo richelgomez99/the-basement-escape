@@ -275,11 +275,12 @@ function Timeline() {
   const [order, setOrder] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const visible = all.filter((e) => !removed.includes(e.id) && !order.includes(e.id));
+  const confirmEvent = confirmId ? all.find((x) => x.id === confirmId) ?? null : null;
 
-  function remove(id: string) {
-    if (done) return;
+  function doRemove(id: string) {
     const e = all.find((x) => x.id === id);
     if (!e) return;
     if (e.belongs) {
@@ -288,7 +289,7 @@ function Timeline() {
       return;
     }
     setError("");
-    setRemoved([...removed, id]);
+    setRemoved((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }
 
   function pick(id: string) {
@@ -332,11 +333,15 @@ function Timeline() {
             key={e.id}
             className="flex items-center justify-between rounded border border-border bg-background/40 p-3"
           >
-            <button onClick={() => pick(e.id)} className="text-left flex-1 hover:text-gold" disabled={done}>
+            <button
+              onClick={() => pick(e.id)}
+              className="text-left flex-1 hover:text-gold"
+              disabled={done}
+            >
               {e.label}
             </button>
             <button
-              onClick={() => remove(e.id)}
+              onClick={() => setConfirmId(e.id)}
               className="ml-2 text-destructive hover:text-destructive/80"
               aria-label="remove"
               disabled={done}
@@ -370,6 +375,36 @@ function Timeline() {
           />
         </>
       )}
+
+      <Dialog open={confirmId !== null} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove this event?</DialogTitle>
+            <DialogDescription>
+              You're about to remove{" "}
+              <strong className="text-foreground">"{confirmEvent?.label}"</strong> from the board. If
+              it actually belongs to the sequence, you'll lose{" "}
+              <strong className="text-destructive">30 seconds</strong>. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              className="border-destructive/60 text-destructive hover:bg-destructive/10"
+              onClick={() => {
+                const id = confirmId;
+                setConfirmId(null);
+                if (id) doRemove(id);
+              }}
+            >
+              Yes, remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
