@@ -339,6 +339,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         { id: "ten", label: "Ten Commandments", belongs: true, order: 5 },
       ],
     },
+  },
+];
 
 // Mirror musicQuestions ↔ questions for puzzle 8 backwards-compat
 DEFAULT_PUZZLES.forEach((p) => {
