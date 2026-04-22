@@ -7,6 +7,7 @@ import {
   addPenalty,
   getTeamName,
   isGameStarted,
+  resetGame,
   useCountdown,
 } from "@/game/state";
 import {
