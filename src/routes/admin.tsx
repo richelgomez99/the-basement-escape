@@ -952,17 +952,36 @@ function QuestionsEditor({
   puzzleId,
   questions,
   allowAudio,
+  seedAnswer,
+  seedAcceptable,
   onChange,
 }: {
   puzzleId: number;
   questions: Question[];
   allowAudio: boolean;
+  seedAnswer?: string;
+  seedAcceptable?: string[];
   onChange: (next: Question[]) => void;
 }) {
   function update(idx: number, patch: Partial<Question>) {
     onChange(questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
   }
   function add() {
+    // First time: seed with the puzzle's single-answer fields so the host doesn't
+    // have to retype them, plus an empty second question to show the pattern.
+    if (questions.length === 0 && (seedAnswer?.trim() || (seedAcceptable && seedAcceptable.length))) {
+      onChange([
+        {
+          prompt: "",
+          answer: seedAnswer ?? "",
+          acceptable: seedAcceptable ?? [],
+          hint: "",
+          audioUrl: "",
+        },
+        { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" },
+      ]);
+      return;
+    }
     onChange([...questions, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
   }
   function remove(idx: number) {
