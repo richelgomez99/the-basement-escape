@@ -4,7 +4,16 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import { addPenalty, getSolved, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import {
+  addPenalty,
+  getPuzzleState,
+  getSolved,
+  isGameStarted,
+  isUnlocked,
+  markSolved,
+  setPuzzleState,
+} from "@/game/state";
+import { playSfx } from "@/game/sfx";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
