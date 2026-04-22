@@ -260,9 +260,7 @@ function StainedGlass() {
         ) : (
           <>
             <p className="text-center text-sm text-gold">
-              {cfg?.revealedWord
-                ? `The window reveals: ${cfg.revealedWord}`
-                : "The window reveals a word."}
+              The window reveals a word — read the letters and type it below.
             </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
           </>
