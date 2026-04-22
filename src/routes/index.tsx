@@ -105,12 +105,6 @@ function TitleScreen() {
         >
           Reset game (host)
         </button>
-        <Link
-          to="/admin"
-          className="block w-full text-center text-[10px] uppercase tracking-widest text-muted-foreground/60 hover:text-gold"
-        >
-          Host admin
-        </Link>
       </form>
 
       <p className="mt-8 text-xs text-muted-foreground">
