@@ -91,9 +91,6 @@ export function MultiQuestionRunner({
       </div>
 
       <div className="rounded border border-gold/30 bg-background/40 p-4 space-y-3">
-        {current.flavor && (
-          <p className="text-sm italic text-muted-foreground">{current.flavor}</p>
-        )}
         {current.scripture && (
           <blockquote className="border-l-2 border-gold/60 pl-3 text-sm italic text-foreground/90">
             {current.scripture}
