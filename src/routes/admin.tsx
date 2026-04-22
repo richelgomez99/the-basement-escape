@@ -493,9 +493,27 @@ function IntroEditor({
         className="mt-2"
       />
       <p className="text-xs text-muted-foreground mt-2">
-        This is read aloud by the Puzzle Master on the home page. Audio regenerates automatically when you press
-        <strong> Save changes</strong> if the text has changed.
+        Read aloud by the Puzzle Master. Audio regenerates when text changes and you press
+        <strong> Save changes</strong>.
       </p>
+      <div className="mt-2 rounded border border-gold/30 bg-gold/5 p-2 text-xs text-muted-foreground">
+        <div className="font-display text-gold uppercase tracking-widest text-[10px] mb-1">
+          Voice direction tags (work anywhere — intro and puzzle flavors)
+        </div>
+        Drop these inline to color the delivery:
+        <code className="mx-1 text-gold">[whispers]</code>
+        <code className="mx-1 text-gold">[laughs]</code>
+        <code className="mx-1 text-gold">[chuckles]</code>
+        <code className="mx-1 text-gold">[mischievously]</code>
+        <code className="mx-1 text-gold">[sarcastic]</code>
+        <code className="mx-1 text-gold">[ominous]</code>
+        <code className="mx-1 text-gold">[excited]</code>
+        <code className="mx-1 text-gold">[sighs]</code>
+        <code className="mx-1 text-gold">[pause]</code>
+        <div className="mt-1 italic">
+          Example: <span className="text-gold">"…or be locked in this basement [chuckles mischievously] till Sunday."</span>
+        </div>
+      </div>
     </div>
   );
 }
