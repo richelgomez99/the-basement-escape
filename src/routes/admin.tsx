@@ -446,6 +446,34 @@ function Editor() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={resetGameOpen} onOpenChange={(o) => { setResetGameOpen(o); if (!o) setResetGameDone(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset the current game?</DialogTitle>
+            <DialogDescription>
+              Clears the active team's progress, timer, solved locks, and unlocked letters
+              stored in this browser. <strong>Puzzle content edits are not affected.</strong>
+              Use this between teams or to start a fresh playthrough.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {resetGameDone ? (
+              <div className="text-sm text-gold">Game reset. ✓</div>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setResetGameOpen(false)}>Cancel</Button>
+                <Button
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => { resetGame(); setResetGameDone(true); }}
+                >
+                  Reset game
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
