@@ -4,14 +4,6 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
