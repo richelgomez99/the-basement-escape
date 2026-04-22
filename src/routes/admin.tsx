@@ -848,29 +848,25 @@ function PuzzleEditor({
                       rows={2}
                     />
                   </Field>
-                  {!MULTI_Q_PUZZLES.has(puzzle.id) && (
-                    <>
-                      <Field label="Single-answer">
-                        <Input
-                          value={puzzle.answer}
-                          onChange={(e) => onChange({ answer: e.target.value })}
-                        />
-                      </Field>
-                      <Field label="Acceptable alternates (comma-separated)">
-                        <Input
-                          value={(puzzle.acceptable ?? []).join(", ")}
-                          onChange={(e) =>
-                            onChange({
-                              acceptable: e.target.value
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
-                      </Field>
-                    </>
-                  )}
+                  <Field label="Single-answer">
+                    <Input
+                      value={puzzle.answer}
+                      onChange={(e) => onChange({ answer: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Acceptable alternates (comma-separated)">
+                    <Input
+                      value={(puzzle.acceptable ?? []).join(", ")}
+                      onChange={(e) =>
+                        onChange({
+                          acceptable: e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                    />
+                  </Field>
                 </>
               )}
             </div>
