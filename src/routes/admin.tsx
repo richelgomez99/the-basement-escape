@@ -206,6 +206,10 @@ function Editor() {
     if (introText.trim() && introText.trim() !== DEFAULT_INTRO_TEXT) {
       out._intro = introText.trim();
     }
+    const vw = vaultWord.trim().toUpperCase();
+    if (vw && vw.length === 9 && /^[A-Z]{9}$/.test(vw) && vw !== DEFAULT_VAULT_WORD) {
+      out._vaultWord = vw;
+    }
     return out;
   }
 
