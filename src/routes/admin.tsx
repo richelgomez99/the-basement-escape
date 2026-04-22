@@ -320,6 +320,14 @@ function Editor() {
             <Link to="/">
               <Button variant="outline" size="sm">← Title</Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setResetGameOpen(true)}
+            >
+              Reset game
+            </Button>
             <Button variant="outline" size="sm" onClick={logout}>
               Lock admin
             </Button>
