@@ -85,45 +85,53 @@ function PuzzleRoute() {
 
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
-  const books = [
-    { id: "genesis", name: "Genesis", real: true, order: 1 },
-    { id: "hezekiah", name: "Hezekiah", real: false },
-    { id: "exodus", name: "Exodus", real: true, order: 2 },
-    { id: "opinions", name: "First Opinions", real: false },
-    { id: "leviticus", name: "Leviticus", real: true, order: 3 },
-    { id: "numbers", name: "Numbers", real: true, order: 4 },
-    { id: "melchizedek", name: "Melchizedek", real: false },
-  ];
+  const puzzle = getPuzzles()[2];
+  const cfg = puzzle.libraryConfig;
+  const books = cfg?.books ?? [];
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const realOrdered = books
+    .filter((b) => b.real && typeof b.order === "number")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
   function pick(id: string) {
-    const b = books.find((x) => x.id === id)!;
+    const b = books.find((x) => x.id === id);
+    if (!b) return;
     if (!b.real) {
-      setError(`"${b.name}" is not a book of the Bible.`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${b.name}" is not a book of the Bible. −30s.`);
       return;
     }
     if (picked.includes(id)) return;
     const next = [...picked, id];
-    const expected = books.filter((x) => x.real).sort((a, b) => a.order! - b.order!).map((x) => x.id);
-    if (expected[next.length - 1] !== id) {
-      setError("Wrong order. Start over with Genesis.");
+    if (realOrdered[next.length - 1]?.id !== id) {
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError("Wrong order. Start over with the first book. −30s.");
       setPicked([]);
       return;
     }
     setError("");
     setPicked(next);
-    if (next.length === expected.length) {
+    if (next.length === realOrdered.length) {
       markSolved(3);
       setTimeout(() => navigate({ to: "/door" }), 600);
     }
   }
 
+  if (books.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        No books configured. Set them up in /admin.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Click books in correct biblical order. Decoys will sound the alarm.
+        {cfg?.intro ?? "Click books in correct biblical order. Decoys will sound the alarm."}
       </p>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {books.map((b) => {
@@ -152,7 +160,10 @@ function Library() {
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
   const puzzle = getPuzzles()[6];
-  const letterMap: Record<number, string> = { 0: "T", 2: "R", 4: "U", 6: "T", 8: "H" };
+  const cfg = puzzle.stainedGlassConfig;
+  const letters = cfg?.letters ?? ["", "", "", "", "", "", "", "", ""];
+  const imageUrl = cfg?.imageUrl?.trim() ? cfg.imageUrl : stainedGlass;
+  // Stable shuffled initial order — derived from a fixed permutation.
   const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
   const [order, setOrder] = useState<number[]>(initialOrder);
   const [selected, setSelected] = useState<number | null>(null);
@@ -180,7 +191,7 @@ function StainedGlass() {
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Tap two pieces to swap them. Reassemble the window — letters will appear.
+        {cfg?.intro ?? "Tap two pieces to swap them. Reassemble the window — letters will appear."}
       </p>
       <div
         className="relative mx-auto grid grid-cols-3 gap-1 rounded-lg overflow-hidden border border-gold/30 bg-background/40"
@@ -190,7 +201,7 @@ function StainedGlass() {
           const row = Math.floor(piece / 3);
           const col = piece % 3;
           const isSel = selected === gridIdx;
-          const letter = letterMap[piece];
+          const letter = letters[piece] ?? "";
           return (
             <button
               key={gridIdx}
@@ -199,7 +210,7 @@ function StainedGlass() {
                 isSel ? "ring-4 ring-gold scale-95" : "hover:opacity-90"
               }`}
               style={{
-                backgroundImage: `url(${stainedGlass})`,
+                backgroundImage: `url(${imageUrl})`,
                 backgroundSize: "300% 300%",
                 backgroundPosition: `${col * 50}% ${row * 50}%`,
               }}
@@ -219,7 +230,11 @@ function StainedGlass() {
           <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} />
         ) : (
           <>
-            <p className="text-center text-sm text-gold">The window reveals a word.</p>
+            <p className="text-center text-sm text-gold">
+              {cfg?.revealedWord
+                ? `The window reveals: ${cfg.revealedWord}`
+                : "The window reveals a word."}
+            </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
           </>
         )
@@ -247,18 +262,15 @@ function MusicRoundOrSingle() {
 }
 
 /* ---------- Puzzle 9: Timeline ---------- */
-type Event = { id: string; label: string; moses: boolean; order?: number };
 function Timeline() {
   const puzzle = getPuzzles()[8];
-  const all: Event[] = [
-    { id: "basket", label: "Hidden in a basket", moses: true, order: 1 },
-    { id: "babel", label: "Tower of Babel", moses: false },
-    { id: "bush", label: "Burning Bush", moses: true, order: 2 },
-    { id: "abraham", label: "Abraham's covenant", moses: false },
-    { id: "plagues", label: "Ten Plagues", moses: true, order: 3 },
-    { id: "redsea", label: "Crossing the Red Sea", moses: true, order: 4 },
-    { id: "ten", label: "Ten Commandments", moses: true, order: 5 },
-  ];
+  const cfg = puzzle.timelineConfig;
+  const all = cfg?.events ?? [];
+  const finalCode = cfg?.finalCode ?? puzzle.answer ?? "";
+  const ordered = all
+    .filter((e) => e.belongs && typeof e.order === "number")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
   const [removed, setRemoved] = useState<string[]>([]);
   const [order, setOrder] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -268,10 +280,11 @@ function Timeline() {
 
   function remove(id: string) {
     if (done) return;
-    const e = all.find((x) => x.id === id)!;
-    if (e.moses) {
+    const e = all.find((x) => x.id === id);
+    if (!e) return;
+    if (e.belongs) {
       addPenalty(TRAP_PENALTY_SECONDS);
-      setError(`"${e.label}" belongs to Moses! −30 seconds.`);
+      setError(`"${e.label}" belongs to the sequence! −30 seconds.`);
       return;
     }
     setError("");
@@ -280,14 +293,14 @@ function Timeline() {
 
   function pick(id: string) {
     if (done) return;
-    const e = all.find((x) => x.id === id)!;
-    if (!e.moses) {
+    const e = all.find((x) => x.id === id);
+    if (!e) return;
+    if (!e.belongs) {
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
-    const expected = all.filter((x) => x.moses).sort((a, b) => a.order! - b.order!);
-    if (expected[order.length].id !== id) {
+    if (ordered[order.length]?.id !== id) {
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`Out of order. −30 seconds.`);
       return;
@@ -295,16 +308,23 @@ function Timeline() {
     setError("");
     const next = [...order, id];
     setOrder(next);
-    if (next.length === 5) {
+    if (next.length === ordered.length) {
       setDone(true);
     }
+  }
+
+  if (all.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        No timeline events configured. Set them up in /admin.
+      </p>
+    );
   }
 
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Tap to <strong className="text-gold">order</strong> Moses events. Tap ✕ to{" "}
-        <strong className="text-destructive">remove</strong> imposters. Wrong moves = −30s.
+        {cfg?.intro ?? "Tap to ORDER events. Tap ✕ to REMOVE imposters. Wrong moves = −30s."}
       </p>
       <div className="space-y-2">
         {visible.map((e) => (
@@ -331,7 +351,7 @@ function Timeline() {
           <div className="font-display text-xs uppercase tracking-widest text-gold">Ordered</div>
           <ol className="mt-1 list-decimal list-inside text-sm">
             {order.map((id) => (
-              <li key={id}>{all.find((x) => x.id === id)!.label}</li>
+              <li key={id}>{all.find((x) => x.id === id)?.label}</li>
             ))}
           </ol>
         </div>
@@ -339,8 +359,15 @@ function Timeline() {
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
       {done && (
         <>
-          <p className="text-center text-sm text-gold">Timeline complete. Type the order to lock it in.</p>
-          <AnswerForm puzzle={puzzle} placeholder="Type: 12345" inputMode="numeric" />
+          <p className="text-center text-sm text-gold">
+            Timeline complete. Type{" "}
+            {finalCode ? <code className="text-gold">{finalCode}</code> : "the order"} to lock it in.
+          </p>
+          <AnswerForm
+            puzzle={puzzle}
+            placeholder={finalCode ? `Type: ${finalCode}` : "Type the order"}
+            inputMode="numeric"
+          />
         </>
       )}
     </div>

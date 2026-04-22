@@ -45,6 +45,41 @@ export type PathConfig = {
   previewSeconds: number; // initial flash time
 };
 
+// Library (puzzle 3): list of books, real ones must be picked in order
+export type LibraryBook = {
+  id: string;
+  name: string;
+  real: boolean;
+  order?: number; // 1-based order among real books
+};
+export type LibraryConfig = {
+  books: LibraryBook[];
+  intro?: string;
+};
+
+// Stained Glass (puzzle 7): 3x3 jigsaw with letters revealed when solved
+export type StainedGlassConfig = {
+  imageUrl: string; // background image (sliced into 3x3)
+  // Letters keyed by piece index 0..8 (left-to-right, top-to-bottom of the SOLVED image).
+  // Empty string = no letter shown on that piece.
+  letters: string[]; // length 9
+  revealedWord: string; // for display copy after solve
+  intro?: string;
+};
+
+// Timeline (puzzle 9): events to order; some are imposters
+export type TimelineEvent = {
+  id: string;
+  label: string;
+  belongs: boolean; // true = part of the correct sequence
+  order?: number; // 1-based among belongs=true
+};
+export type TimelineConfig = {
+  events: TimelineEvent[];
+  intro?: string;
+  finalCode: string; // what to type to lock it (e.g. "12345")
+};
+
 export type Puzzle = {
   id: number;
   title: string;
@@ -63,6 +98,12 @@ export type Puzzle = {
   hiddenScene?: HiddenScene;
   // Puzzle 4 path config
   pathConfig?: PathConfig;
+  // Puzzle 3 library config
+  libraryConfig?: LibraryConfig;
+  // Puzzle 7 stained glass config
+  stainedGlassConfig?: StainedGlassConfig;
+  // Puzzle 9 timeline config
+  timelineConfig?: TimelineConfig;
 };
 
 // Default cathedral asset URL (resolved at runtime via dynamic import substitution).
@@ -132,6 +173,18 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "Genesis comes first. After that: a book about leaving Egypt, a book of priestly law, then a book of a census." },
       { tier: 3, label: "Bypass", text: "Genesis, Exodus, Leviticus, Numbers — that's 4 correct books." },
     ],
+    libraryConfig: {
+      intro: "Click books in correct biblical order. Decoys will sound the alarm.",
+      books: [
+        { id: "genesis", name: "Genesis", real: true, order: 1 },
+        { id: "hezekiah", name: "Hezekiah", real: false },
+        { id: "exodus", name: "Exodus", real: true, order: 2 },
+        { id: "opinions", name: "First Opinions", real: false },
+        { id: "leviticus", name: "Leviticus", real: true, order: 3 },
+        { id: "numbers", name: "Numbers", real: true, order: 4 },
+        { id: "melchizedek", name: "Melchizedek", real: false },
+      ],
+    },
   },
   {
     id: 4,
@@ -187,6 +240,13 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters, starts with T." },
       { tier: 3, label: "Bypass", text: "The word is: TRUTH" },
     ],
+    stainedGlassConfig: {
+      imageUrl: "", // resolved at runtime to the bundled stained-glass asset
+      // Pieces are 0..8 in solved-image order. Letters spell TRUTH on pieces 0,2,4,6,8.
+      letters: ["T", "", "R", "", "U", "", "T", "", "H"],
+      revealedWord: "TRUTH",
+      intro: "Tap two pieces to swap them. Reassemble the window — letters will appear.",
+    },
   },
   {
     id: 8,
@@ -266,6 +326,19 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "Begin with him hidden as an infant. End at Sinai. In between: a bush, plagues, and a sea." },
       { tier: 3, label: "Bypass", text: "Order: Basket, Burning Bush, Plagues, Red Sea, Ten Commandments." },
     ],
+    timelineConfig: {
+      intro: "Tap to ORDER Moses events. Tap ✕ to REMOVE imposters. Wrong moves = −30s.",
+      finalCode: "12345",
+      events: [
+        { id: "basket", label: "Hidden in a basket", belongs: true, order: 1 },
+        { id: "babel", label: "Tower of Babel", belongs: false },
+        { id: "bush", label: "Burning Bush", belongs: true, order: 2 },
+        { id: "abraham", label: "Abraham's covenant", belongs: false },
+        { id: "plagues", label: "Ten Plagues", belongs: true, order: 3 },
+        { id: "redsea", label: "Crossing the Red Sea", belongs: true, order: 4 },
+        { id: "ten", label: "Ten Commandments", belongs: true, order: 5 },
+      ],
+    },
   },
 ];
 

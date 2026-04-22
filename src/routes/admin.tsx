@@ -15,11 +15,17 @@ import {
   type HiddenMarker,
   type HiddenScene,
   type Hint,
+  type LibraryBook,
+  type LibraryConfig,
   type PathConfig,
   type Puzzle,
   type Question,
+  type StainedGlassConfig,
+  type TimelineConfig,
+  type TimelineEvent,
 } from "@/game/content";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
+import stainedGlassImg from "@/assets/stained-glass.jpg";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — The Basement Escape" }] }),
@@ -158,6 +164,24 @@ function Editor() {
         const a = JSON.stringify(p.pathConfig ?? null);
         const b = JSON.stringify(def.pathConfig ?? null);
         if (a !== b) diff.pathConfig = p.pathConfig;
+      }
+      // library config (puzzle 3)
+      if (p.libraryConfig || def.libraryConfig) {
+        const a = JSON.stringify(p.libraryConfig ?? null);
+        const b = JSON.stringify(def.libraryConfig ?? null);
+        if (a !== b) diff.libraryConfig = p.libraryConfig;
+      }
+      // stained glass config (puzzle 7)
+      if (p.stainedGlassConfig || def.stainedGlassConfig) {
+        const a = JSON.stringify(p.stainedGlassConfig ?? null);
+        const b = JSON.stringify(def.stainedGlassConfig ?? null);
+        if (a !== b) diff.stainedGlassConfig = p.stainedGlassConfig;
+      }
+      // timeline config (puzzle 9)
+      if (p.timelineConfig || def.timelineConfig) {
+        const a = JSON.stringify(p.timelineConfig ?? null);
+        const b = JSON.stringify(def.timelineConfig ?? null);
+        if (a !== b) diff.timelineConfig = p.timelineConfig;
       }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
@@ -472,6 +496,39 @@ function PuzzleEditor({
         <PathConfigEditor
           config={puzzle.pathConfig}
           onChange={(pc) => onChange({ pathConfig: pc })}
+        />
+      )}
+
+      {/* Library editor for puzzle 3 */}
+      {puzzle.id === 3 && (
+        <LibraryEditor
+          config={puzzle.libraryConfig ?? { books: [], intro: "" }}
+          onChange={(c) => onChange({ libraryConfig: c })}
+        />
+      )}
+
+      {/* Stained Glass editor for puzzle 7 */}
+      {puzzle.id === 7 && (
+        <StainedGlassEditor
+          config={
+            puzzle.stainedGlassConfig ?? {
+              imageUrl: stainedGlassImg,
+              letters: ["", "", "", "", "", "", "", "", ""],
+              revealedWord: "",
+              intro: "",
+            }
+          }
+          onChange={(c) => onChange({ stainedGlassConfig: c })}
+        />
+      )}
+
+      {/* Timeline editor for puzzle 9 */}
+      {puzzle.id === 9 && (
+        <TimelineEditor
+          config={
+            puzzle.timelineConfig ?? { events: [], intro: "", finalCode: puzzle.answer ?? "" }
+          }
+          onChange={(c) => onChange({ timelineConfig: c })}
         />
       )}
     </div>
@@ -1024,5 +1081,340 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </div>
       {children}
     </label>
+  );
+}
+
+/* ----------------- Library editor (puzzle 3) ----------------- */
+function LibraryEditor({
+  config,
+  onChange,
+}: {
+  config: LibraryConfig;
+  onChange: (c: LibraryConfig) => void;
+}) {
+  function update(idx: number, patch: Partial<LibraryBook>) {
+    onChange({
+      ...config,
+      books: config.books.map((b, i) => (i === idx ? { ...b, ...patch } : b)),
+    });
+  }
+  function add() {
+    const id = `book-${Date.now()}`;
+    onChange({ ...config, books: [...config.books, { id, name: "", real: false }] });
+  }
+  function remove(idx: number) {
+    onChange({ ...config, books: config.books.filter((_, i) => i !== idx) });
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const next = [...config.books];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    onChange({ ...config, books: next });
+  }
+
+  return (
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
+      <div className="font-display text-xs uppercase tracking-widest text-gold">
+        Library — books on display. Mark which are real and the order to pick them in.
+      </div>
+      <Field label="Intro text shown to players">
+        <Textarea
+          value={config.intro ?? ""}
+          onChange={(e) => onChange({ ...config, intro: e.target.value })}
+          rows={2}
+        />
+      </Field>
+      <div className="space-y-2">
+        {config.books.map((b, i) => (
+          <div
+            key={b.id}
+            className="grid gap-2 md:grid-cols-[1fr_90px_90px_auto] items-center rounded border border-border bg-background/40 p-2"
+          >
+            <Input
+              value={b.name}
+              onChange={(e) => update(i, { name: e.target.value })}
+              placeholder="Book name"
+            />
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={b.real}
+                onChange={(e) => update(i, { real: e.target.checked })}
+              />
+              Real book
+            </label>
+            <NumberField
+              label="order"
+              value={b.order ?? 0}
+              min={0}
+              max={20}
+              onChange={(v) => update(i, { order: v || undefined })}
+            />
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
+                ↑
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => move(i, 1)}
+                disabled={i === config.books.length - 1}
+              >
+                ↓
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-destructive/50 text-destructive"
+                onClick={() => remove(i)}
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button size="sm" variant="outline" onClick={add}>
+        + Add book
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Real books must have a unique <code>order</code> (1, 2, 3…). Fake books are decoys — picking
+        them costs −30s.
+      </p>
+    </div>
+  );
+}
+
+/* ----------------- Stained Glass editor (puzzle 7) ----------------- */
+function StainedGlassEditor({
+  config,
+  onChange,
+}: {
+  config: StainedGlassConfig;
+  onChange: (c: StainedGlassConfig) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState("");
+  const letters = config.letters.length === 9 ? config.letters : ["", "", "", "", "", "", "", "", ""];
+
+  async function handleImage(file: File) {
+    setUploading(true);
+    setErr("");
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `stained-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("hidden-scenes")
+        .upload(path, file, { upsert: true, contentType: file.type || "image/jpeg" });
+      if (error) throw error;
+      const { data } = supabase.storage.from("hidden-scenes").getPublicUrl(path);
+      onChange({ ...config, imageUrl: data.publicUrl });
+    } catch (e: any) {
+      setErr(e?.message ?? "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function setLetter(i: number, v: string) {
+    const next = [...letters];
+    next[i] = v.slice(0, 1).toUpperCase();
+    onChange({ ...config, letters: next });
+  }
+
+  return (
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
+      <div className="font-display text-xs uppercase tracking-widest text-gold">
+        Stained Glass — 3×3 image and letters revealed when solved
+      </div>
+      <Field label="Intro text shown to players">
+        <Textarea
+          value={config.intro ?? ""}
+          onChange={(e) => onChange({ ...config, intro: e.target.value })}
+          rows={2}
+        />
+      </Field>
+      <Field label="Background image (sliced 3×3)">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImage(f);
+                e.target.value = "";
+              }}
+              disabled={uploading}
+            />
+            <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm hover:bg-accent">
+              {uploading ? "Uploading…" : "Upload image"}
+            </span>
+          </label>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onChange({ ...config, imageUrl: stainedGlassImg })}
+          >
+            Use default stained glass
+          </Button>
+          <Input
+            placeholder="…or paste image URL"
+            value={config.imageUrl}
+            onChange={(e) => onChange({ ...config, imageUrl: e.target.value })}
+            className="max-w-md"
+          />
+        </div>
+        {err && <div className="text-xs text-destructive mt-1">{err}</div>}
+      </Field>
+      <Field label="Revealed word (display only — players type the puzzle answer above)">
+        <Input
+          value={config.revealedWord}
+          onChange={(e) => onChange({ ...config, revealedWord: e.target.value })}
+          placeholder="e.g. TRUTH"
+        />
+      </Field>
+      <div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+          Letter on each piece (left→right, top→bottom of solved image)
+        </div>
+        <div
+          className="mx-auto grid grid-cols-3 gap-2"
+          style={{ maxWidth: 300 }}
+        >
+          {letters.map((l, i) => (
+            <div
+              key={i}
+              className="relative aspect-square rounded border border-gold/40 bg-background/40 overflow-hidden"
+              style={{
+                backgroundImage: config.imageUrl ? `url(${config.imageUrl})` : undefined,
+                backgroundSize: "300% 300%",
+                backgroundPosition: `${(i % 3) * 50}% ${Math.floor(i / 3) * 50}%`,
+              }}
+            >
+              <Input
+                value={l}
+                onChange={(e) => setLetter(i, e.target.value)}
+                maxLength={1}
+                className="absolute inset-0 h-full w-full bg-background/60 text-center font-display text-2xl text-gold"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------- Timeline editor (puzzle 9) ----------------- */
+function TimelineEditor({
+  config,
+  onChange,
+}: {
+  config: TimelineConfig;
+  onChange: (c: TimelineConfig) => void;
+}) {
+  function update(idx: number, patch: Partial<TimelineEvent>) {
+    onChange({
+      ...config,
+      events: config.events.map((e, i) => (i === idx ? { ...e, ...patch } : e)),
+    });
+  }
+  function add() {
+    const id = `evt-${Date.now()}`;
+    onChange({ ...config, events: [...config.events, { id, label: "", belongs: false }] });
+  }
+  function remove(idx: number) {
+    onChange({ ...config, events: config.events.filter((_, i) => i !== idx) });
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const next = [...config.events];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    onChange({ ...config, events: next });
+  }
+
+  return (
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
+      <div className="font-display text-xs uppercase tracking-widest text-gold">
+        Timeline — events on the board. Mark which belong and their order.
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Intro text shown to players">
+          <Textarea
+            value={config.intro ?? ""}
+            onChange={(e) => onChange({ ...config, intro: e.target.value })}
+            rows={2}
+          />
+        </Field>
+        <Field label="Final code players type to lock it in">
+          <Input
+            value={config.finalCode}
+            onChange={(e) => onChange({ ...config, finalCode: e.target.value })}
+            placeholder="e.g. 12345"
+          />
+        </Field>
+      </div>
+      <div className="space-y-2">
+        {config.events.map((ev, i) => (
+          <div
+            key={ev.id}
+            className="grid gap-2 md:grid-cols-[1fr_110px_90px_auto] items-center rounded border border-border bg-background/40 p-2"
+          >
+            <Input
+              value={ev.label}
+              onChange={(e) => update(i, { label: e.target.value })}
+              placeholder="Event label"
+            />
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={ev.belongs}
+                onChange={(e) => update(i, { belongs: e.target.checked })}
+              />
+              Belongs
+            </label>
+            <NumberField
+              label="order"
+              value={ev.order ?? 0}
+              min={0}
+              max={20}
+              onChange={(v) => update(i, { order: v || undefined })}
+            />
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
+                ↑
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => move(i, 1)}
+                disabled={i === config.events.length - 1}
+              >
+                ↓
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-destructive/50 text-destructive"
+                onClick={() => remove(i)}
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button size="sm" variant="outline" onClick={add}>
+        + Add event
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Belonging events need a unique <code>order</code> (1, 2, 3…). Imposters cost −30s when picked
+        as part of the order.
+      </p>
+    </div>
   );
 }
