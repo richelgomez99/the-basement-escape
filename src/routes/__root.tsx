@@ -35,6 +35,12 @@ export const Route = createRootRoute({
       { name: "description", content: "A 60-minute virtual escape room by Glorious Church of God in Christ." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:title", content: "The Basement Escape" },
+      { name: "twitter:title", content: "The Basement Escape" },
+      { property: "og:description", content: "A 60-minute virtual escape room by Glorious Church of God in Christ." },
+      { name: "twitter:description", content: "A 60-minute virtual escape room by Glorious Church of God in Christ." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e5ec3c92-e72c-4e10-b11f-1fb18807ad76/id-preview-e1b9f572--c1939247-1545-4a86-a64c-3c7ca01d6718.lovable.app-1776829815154.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e5ec3c92-e72c-4e10-b11f-1fb18807ad76/id-preview-e1b9f572--c1939247-1545-4a86-a64c-3c7ca01d6718.lovable.app-1776829815154.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
