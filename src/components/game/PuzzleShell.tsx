@@ -14,6 +14,9 @@ export function PuzzleShell({
   children: React.ReactNode;
 }) {
   const total = getPuzzles().length;
+  const hasQuestions =
+    (puzzle.questions?.length ?? 0) > 0 ||
+    (puzzle.musicQuestions?.length ?? 0) > 0;
   return (
     <div className="min-h-screen px-4 py-6 md:px-8">
       <header className="mx-auto flex max-w-4xl items-center justify-between">
@@ -35,14 +38,14 @@ export function PuzzleShell({
           <div className="mt-3 flex justify-center">
             <NarrationPlayer narrationKey={puzzleNarrationKey(puzzle.id)} />
           </div>
-          {puzzle.scripture && (
+          {!hasQuestions && puzzle.scripture && (
             <p className="mt-3 font-display text-sm text-gold/90">"{puzzle.scripture}"</p>
           )}
         </div>
 
         <div className="stone-panel rounded-xl p-6">{children}</div>
 
-        <HintBox hints={puzzle.hints} />
+        {!hasQuestions && <HintBox hints={puzzle.hints} />}
       </main>
     </div>
   );
