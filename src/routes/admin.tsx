@@ -121,6 +121,7 @@ const MULTI_Q_PUZZLES = new Set([1, 4, 5, 6, 7, 8]);
 
 function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
+  const [introText, setIntroText] = useState<string>(getIntroText());
   const [savedAt, setSavedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
@@ -133,6 +134,7 @@ function Editor() {
     (async () => {
       await loadOverridesFromCloud();
       setPuzzles(getPuzzles());
+      setIntroText(getIntroText());
     })();
   }, []);
 
@@ -140,8 +142,8 @@ function Editor() {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
 
-  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> {
-    const out: Partial<Record<number, Partial<Puzzle>>> = {};
+  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } {
+    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } = {};
     puzzles.forEach((p) => {
       const def = DEFAULT_PUZZLES.find((d) => d.id === p.id)!;
       const diff: Partial<Puzzle> = {};
@@ -195,6 +197,9 @@ function Editor() {
       }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
+    if (introText.trim() && introText.trim() !== DEFAULT_INTRO_TEXT) {
+      out._intro = introText.trim();
+    }
     return out;
   }
 
@@ -204,6 +209,9 @@ function Editor() {
     try {
       await saveOverridesToCloud(buildOverrides());
       setSavedAt(new Date().toLocaleTimeString());
+      // Trigger narration regeneration for intro + every puzzle flavor.
+      // The server function returns instantly if text hasn't changed.
+      void triggerAllNarrations(introText, puzzles);
     } catch (e: any) {
       setSaveErr(e?.message ?? "Cloud save failed (saved locally).");
     } finally {
