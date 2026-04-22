@@ -92,8 +92,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "everlasting",
     acceptable: ["everlasting", "eternal"],
     hints: [
-      { tier: 1, label: "Nudge", text: "It means 'without end.'" },
-      { tier: 2, label: "Direction", text: "Eleven letters. Starts with E." },
+      { tier: 1, label: "Nudge", text: "What kind of life does God promise those who believe? Think of a word that means it never ends." },
+      { tier: 2, label: "Direction", text: "Eleven letters, starts with E. Synonym of 'eternal.'" },
       { tier: 3, label: "Bypass", text: "The answer is: everlasting" },
     ],
   },
@@ -106,8 +106,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "light",
     acceptable: ["light", "the light"],
     hints: [
-      { tier: 1, label: "Nudge", text: "Look near the windows, the altar, the floor — and shadows." },
-      { tier: 2, label: "Direction", text: "Dove, fish, cross, lamb, bread. They are all illuminated." },
+      { tier: 1, label: "Nudge", text: "What do a stained-glass window, a candle on the altar, and the dove of the Spirit all carry?" },
+      { tier: 2, label: "Direction", text: "Five letters. 'Let your ___ so shine before men' (Matthew 5:16)." },
       { tier: 3, label: "Bypass", text: "The answer is: LIGHT" },
     ],
     hiddenScene: {
@@ -128,9 +128,9 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     artifact: "L",
     answer: "4",
     hints: [
-      { tier: 1, label: "Nudge", text: "Hezekiah and First Opinions are not books of the Bible." },
-      { tier: 2, label: "Direction", text: "Genesis, Exodus, Leviticus, Numbers." },
-      { tier: 3, label: "Bypass", text: "The number of correct books is 4." },
+      { tier: 1, label: "Nudge", text: "Recite the very first books of the Old Testament — the Torah." },
+      { tier: 2, label: "Direction", text: "Genesis comes first. After that: a book about leaving Egypt, a book of priestly law, then a book of a census." },
+      { tier: 3, label: "Bypass", text: "Genesis, Exodus, Leviticus, Numbers — that's 4 correct books." },
     ],
   },
   {
@@ -143,9 +143,9 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "narrow",
     acceptable: ["narrow", "the narrow way", "narrow way"],
     hints: [
-      { tier: 1, label: "Nudge", text: "It is not straight — it weaves." },
-      { tier: 2, label: "Direction", text: "Six letters. The opposite of 'wide.' Use 'Show path again' (−2 min) if you forgot the route." },
-      { tier: 3, label: "Bypass", text: "After crossing, type the missing word from Matthew 7:14." },
+      { tier: 1, label: "Nudge", text: "Jesus said few find this kind of way — it's the opposite of broad." },
+      { tier: 2, label: "Direction", text: "Six letters, starts with N. Opposite of 'wide.'" },
+      { tier: 3, label: "Bypass", text: "The missing word from Matthew 7:14 is: narrow" },
     ],
     pathConfig: defaultPath(),
   },
@@ -157,8 +157,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "total praise",
     acceptable: ["total praise", "total praise to you"],
     hints: [
-      { tier: 1, label: "Nudge", text: "Composed by Richard Smallwood. A modern gospel standard sung in choirs everywhere." },
-      { tier: 2, label: "Direction", text: "Two words. Begins 'Lord, I will lift mine eyes to the hills...' and ends with 'Amen.'" },
+      { tier: 1, label: "Nudge", text: "A modern gospel standard composed by Richard Smallwood, often sung at funerals and church anniversaries." },
+      { tier: 2, label: "Direction", text: "Two words. The lyrics adapt Psalm 121 ('I will lift mine eyes...') and famously close on a long, sustained 'Amen.'" },
       { tier: 3, label: "Bypass", text: "The hymn is: Total Praise" },
     ],
   },
@@ -171,8 +171,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     artifact: "T",
     answer: "4",
     hints: [
-      { tier: 1, label: "Nudge", text: "Recall how long Noah's flood lasted (40)." },
-      { tier: 2, label: "Direction", text: "12 apostles × 3 days in the fish = 36. 40 − 36." },
+      { tier: 1, label: "Nudge", text: "Start with how long it rained on Noah, then subtract a smaller number tied to the apostles and Jonah." },
+      { tier: 2, label: "Direction", text: "40 (flood) − (12 apostles × 3 days Jonah was in the fish) = 40 − 36." },
       { tier: 3, label: "Bypass", text: "The answer is 4." },
     ],
   },
@@ -183,8 +183,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     artifact: "I",
     answer: "truth",
     hints: [
-      { tier: 1, label: "Nudge", text: "Jesus called himself the way, the ____, and the life." },
-      { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters." },
+      { tier: 1, label: "Nudge", text: "Jesus made an 'I am' statement in John 14:6. Three things — and you're looking for the middle one." },
+      { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters, starts with T." },
       { tier: 3, label: "Bypass", text: "The word is: TRUTH" },
     ],
   },
@@ -262,8 +262,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     artifact: "N",
     answer: "12345",
     hints: [
-      { tier: 1, label: "Nudge", text: "Two events belong to Abraham or Babel — drop them." },
-      { tier: 2, label: "Direction", text: "Basket → Burning Bush → Plagues → Red Sea → Ten Commandments." },
+      { tier: 1, label: "Nudge", text: "Moses' life starts as a baby and ends with him receiving the Law. Some events on the board belong to Abraham or to Babel." },
+      { tier: 2, label: "Direction", text: "Begin with him hidden as an infant. End at Sinai. In between: a bush, plagues, and a sea." },
       { tier: 3, label: "Bypass", text: "Order: Basket, Burning Bush, Plagues, Red Sea, Ten Commandments." },
     ],
   },
