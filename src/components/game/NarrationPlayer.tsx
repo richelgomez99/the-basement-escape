@@ -88,6 +88,18 @@ export function NarrationPlayer({
     };
   }, [narrationKey]);
 
+  // Track whether the *current* playback was a clock-pausing first play.
+  const pausingRef = useRef(false);
+
+  function handleAudioEnded() {
+    if (pausingRef.current) {
+      pausingRef.current = false;
+      resumeClock();
+    }
+  }
+
+  // Pause the clock if browser blocks autoplay too — only the *first* time per key.
+  // We resume when audio ends, OR when the user mutes mid-play.
   // Auto-play when ready
   useEffect(() => {
     if (!autoplay || muted) return;
@@ -95,24 +107,52 @@ export function NarrationPlayer({
     if (playedRef.current === row.audio_url) return;
     playedRef.current = row.audio_url;
     const a = audioRef.current;
-    if (a) {
-      a.currentTime = 0;
-      // Browsers may block autoplay — silently fail.
-      a.play().catch(() => {});
+    if (!a) return;
+    a.currentTime = 0;
+    const isFirst = !hasPlayedBefore(narrationKey);
+    if (isFirst) {
+      pauseClock();
+      pausingRef.current = true;
     }
-  }, [row?.audio_url, row?.status, autoplay, muted]);
+    a.play()
+      .then(() => {
+        if (isFirst) markPlayed(narrationKey);
+      })
+      .catch(() => {
+        // Autoplay blocked — don't keep clock paused waiting for a play that never happens.
+        if (pausingRef.current) {
+          pausingRef.current = false;
+          resumeClock();
+        }
+      });
+  }, [row?.audio_url, row?.status, autoplay, muted, narrationKey]);
+
+  // Safety: if component unmounts mid-first-play, resume clock.
+  useEffect(() => {
+    return () => {
+      if (pausingRef.current) {
+        pausingRef.current = false;
+        resumeClock();
+      }
+    };
+  }, []);
 
   function toggleMute() {
     const next = !muted;
     setMuted(next);
     setMutedState(next);
     if (next && audioRef.current) audioRef.current.pause();
+    if (next && pausingRef.current) {
+      pausingRef.current = false;
+      resumeClock();
+    }
   }
 
   function replay() {
     const a = audioRef.current;
     if (a && row?.audio_url) {
       a.currentTime = 0;
+      // Replays never pause the clock.
       a.play().catch(() => {});
     }
   }
