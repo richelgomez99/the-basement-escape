@@ -498,6 +498,39 @@ function PuzzleEditor({
           onChange={(pc) => onChange({ pathConfig: pc })}
         />
       )}
+
+      {/* Library editor for puzzle 3 */}
+      {puzzle.id === 3 && (
+        <LibraryEditor
+          config={puzzle.libraryConfig ?? { books: [], intro: "" }}
+          onChange={(c) => onChange({ libraryConfig: c })}
+        />
+      )}
+
+      {/* Stained Glass editor for puzzle 7 */}
+      {puzzle.id === 7 && (
+        <StainedGlassEditor
+          config={
+            puzzle.stainedGlassConfig ?? {
+              imageUrl: stainedGlassImg,
+              letters: ["", "", "", "", "", "", "", "", ""],
+              revealedWord: "",
+              intro: "",
+            }
+          }
+          onChange={(c) => onChange({ stainedGlassConfig: c })}
+        />
+      )}
+
+      {/* Timeline editor for puzzle 9 */}
+      {puzzle.id === 9 && (
+        <TimelineEditor
+          config={
+            puzzle.timelineConfig ?? { events: [], intro: "", finalCode: puzzle.answer ?? "" }
+          }
+          onChange={(c) => onChange({ timelineConfig: c })}
+        />
+      )}
     </div>
   );
 }
