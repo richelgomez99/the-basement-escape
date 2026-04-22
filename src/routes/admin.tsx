@@ -8,6 +8,7 @@ import {
   ADMIN_DEFAULT_PASSWORD,
   clearOverrides,
   DEFAULT_PUZZLES,
+  getIntroText,
   getOverrides,
   getPuzzles,
   loadOverridesFromCloud,
@@ -24,6 +25,15 @@ import {
   type TimelineConfig,
   type TimelineEvent,
 } from "@/game/content";
+import {
+  DEFAULT_INTRO_TEXT,
+  INTRO_KEY,
+  fetchAllNarrations,
+  puzzleNarrationKey,
+  type NarrationRow,
+} from "@/game/narration";
+import { generateNarration } from "@/server/narration";
+import { Loader2, CheckCircle2, AlertCircle, Volume2 } from "lucide-react";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlassImg from "@/assets/stained-glass.jpg";
 
