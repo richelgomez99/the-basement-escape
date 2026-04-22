@@ -42,7 +42,7 @@ function Vault() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (code.trim().toUpperCase() === getVaultCode().toUpperCase()) {
-      setFinished(true);
+      setFinished(true, "victory");
       navigate({ to: "/victory" });
     } else {
       setShake(true);

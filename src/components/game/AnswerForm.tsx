@@ -7,6 +7,7 @@ import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 import type { Puzzle } from "@/game/content";
 import { getPuzzles } from "@/game/content";
 import { markSolved } from "@/game/state";
+import { playSfx } from "@/game/sfx";
 
 export function AnswerForm({
   puzzle,
@@ -29,10 +30,12 @@ export function AnswerForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (checkAnswer(val, puzzle)) {
+      playSfx("lock");
       markSolved(puzzle.id);
       onSolved?.();
       setShowLetter(true);
     } else {
+      playSfx("error");
       setShake(true);
       setError("Not quite. Try again.");
       setTimeout(() => setShake(false), 450);
