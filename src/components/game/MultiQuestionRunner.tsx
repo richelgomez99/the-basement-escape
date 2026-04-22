@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Puzzle, Question } from "@/game/content";
 import { TRAP_PENALTY_SECONDS, getPuzzles } from "@/game/content";
-import { addPenalty, markSolved } from "@/game/state";
+import { addPenalty, getPuzzleState, markSolved, setPuzzleState } from "@/game/state";
+import { playSfx } from "@/game/sfx";
 import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 import { HintBox } from "./HintBox";
 
