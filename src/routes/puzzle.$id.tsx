@@ -4,10 +4,11 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import { addPenalty, getSolved, isGameStarted, isUnlocked, markSolved } from "@/game/state";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
+import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlass from "@/assets/stained-glass.jpg";
 
