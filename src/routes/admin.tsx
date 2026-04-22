@@ -139,6 +139,8 @@ function Editor() {
   const [saveErr, setSaveErr] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwMsg, setPwMsg] = useState("");
+  const [resetGameOpen, setResetGameOpen] = useState(false);
+  const [resetGameDone, setResetGameDone] = useState(false);
   const vaultWordValid = /^[A-Z]{9}$/.test(vaultWord.toUpperCase());
 
   // Pull latest from cloud once on mount
