@@ -160,7 +160,10 @@ function Library() {
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
   const puzzle = getPuzzles()[6];
-  const letterMap: Record<number, string> = { 0: "T", 2: "R", 4: "U", 6: "T", 8: "H" };
+  const cfg = puzzle.stainedGlassConfig;
+  const letters = cfg?.letters ?? ["", "", "", "", "", "", "", "", ""];
+  const imageUrl = cfg?.imageUrl?.trim() ? cfg.imageUrl : stainedGlass;
+  // Stable shuffled initial order — derived from a fixed permutation.
   const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
   const [order, setOrder] = useState<number[]>(initialOrder);
   const [selected, setSelected] = useState<number | null>(null);
@@ -188,7 +191,7 @@ function StainedGlass() {
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Tap two pieces to swap them. Reassemble the window — letters will appear.
+        {cfg?.intro ?? "Tap two pieces to swap them. Reassemble the window — letters will appear."}
       </p>
       <div
         className="relative mx-auto grid grid-cols-3 gap-1 rounded-lg overflow-hidden border border-gold/30 bg-background/40"
@@ -198,7 +201,7 @@ function StainedGlass() {
           const row = Math.floor(piece / 3);
           const col = piece % 3;
           const isSel = selected === gridIdx;
-          const letter = letterMap[piece];
+          const letter = letters[piece] ?? "";
           return (
             <button
               key={gridIdx}
@@ -207,7 +210,7 @@ function StainedGlass() {
                 isSel ? "ring-4 ring-gold scale-95" : "hover:opacity-90"
               }`}
               style={{
-                backgroundImage: `url(${stainedGlass})`,
+                backgroundImage: `url(${imageUrl})`,
                 backgroundSize: "300% 300%",
                 backgroundPosition: `${col * 50}% ${row * 50}%`,
               }}
@@ -227,7 +230,11 @@ function StainedGlass() {
           <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} />
         ) : (
           <>
-            <p className="text-center text-sm text-gold">The window reveals a word.</p>
+            <p className="text-center text-sm text-gold">
+              {cfg?.revealedWord
+                ? `The window reveals: ${cfg.revealedWord}`
+                : "The window reveals a word."}
+            </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
           </>
         )
