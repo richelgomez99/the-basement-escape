@@ -7,13 +7,38 @@ import { TRAP_PENALTY_SECONDS } from "@/game/content";
 import { addPenalty, markSolved } from "@/game/state";
 
 function normalize(s: string) {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
+  return s
+    .trim()
+    .toLowerCase()
+    // strip punctuation that doesn't affect meaning
+    .replace(/[.!?'"]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+// Split on common "song / artist" separators: dash variants, comma, " by ", slash, "&", " and "
+function splitParts(s: string): string[] {
+  return normalize(s)
+    .split(/\s*(?:-|–|—|,|\/|&| by | and )\s*/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
 }
 
 function isCorrect(input: string, q: Question) {
   const n = normalize(input);
-  if (n === normalize(q.answer)) return true;
-  return (q.acceptable ?? []).some((a) => normalize(a) === n);
+  const canonical = normalize(q.answer);
+  if (n === canonical) return true;
+  if ((q.acceptable ?? []).some((a) => normalize(a) === n)) return true;
+
+  // Order-insensitive multipart match (handles "Song - Artist" vs "Artist - Song" vs comma/by/etc.)
+  const inputParts = splitParts(input).sort();
+  const candidates = [q.answer, ...(q.acceptable ?? [])];
+  for (const c of candidates) {
+    const cParts = splitParts(c).sort();
+    if (cParts.length >= 2 && cParts.length === inputParts.length) {
+      if (cParts.every((p, i) => p === inputParts[i])) return true;
+    }
+  }
+  return false;
 }
 
 /**
