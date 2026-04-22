@@ -1,6 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
+import { loadOverridesFromCloud } from "@/game/content";
 
 function NotFoundComponent() {
   return (
@@ -64,5 +66,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    void loadOverridesFromCloud();
+  }, []);
   return <Outlet />;
 }
