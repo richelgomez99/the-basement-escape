@@ -199,7 +199,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       {
         prompt:
           "___ released by Donald Lawrence in 2004 samples ___ released by Michael Jackson in 2001.",
-        hint: "Two song titles, separated by a comma.",
+        hint: "The gospel song's title is what God does for the brokenhearted (Psalm 147:3). The MJ track is from Invincible.",
         answer: "healed, you rock my world",
         acceptable: [
           "healed, you rock my world",
@@ -211,21 +211,21 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       },
       {
         prompt: 'Finish the lyric: "Melodies from heaven, ___ ___ ___ ___."',
-        hint: "Four words. It is also the title of the song.",
+        hint: "Kirk Franklin & God's Property, 1997. The four missing words describe what those melodies do.",
         answer: "rain down on me",
         acceptable: ["rain down on me"],
         audioUrl: "",
       },
       {
         prompt: 'What group released "Optimistic" in 1991?',
-        hint: "Minneapolis-based gospel ensemble.",
+        hint: "A Minneapolis-based ensemble whose name pairs an audio word with a community.",
         answer: "sounds of blackness",
         acceptable: ["sounds of blackness", "the sounds of blackness"],
         audioUrl: "",
       },
       {
         prompt: "10 seconds — name that song AND artist.",
-        hint: 'Format: Song - Artist (e.g. "Praise Him in Advance - Marvin Sapp").',
+        hint: "Pastor and gospel artist who sang about lifting hands before the breakthrough arrives.",
         answer: "praise him in advance - marvin sapp",
         acceptable: [
           "praise him in advance - marvin sapp",
@@ -237,7 +237,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       },
       {
         prompt: "10 seconds — name that song AND artist.",
-        hint: "Hezekiah Walker classic. Format: Song - Artist.",
+        hint: "Bishop and Love Fellowship Choir leader. The song declares that God's name is ___.",
         answer: "wonderful is your name - hezekiah walker",
         acceptable: [
           "wonderful is your name - hezekiah walker",
@@ -249,9 +249,9 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       },
     ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Q1's gospel song shares its title with what God does for the brokenhearted (Psalm 147:3)." },
-      { tier: 2, label: "Direction", text: "Q1 wants two songs (gospel, then MJ). Q4/Q5 want both song and artist — format: Song - Artist." },
-      { tier: 3, label: "Bypass", text: "Stuck on Q1? Try: Healed, You Rock My World. Q2: Rain Down On Me. Q3: Sounds of Blackness." },
+      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s — Kirk Franklin, Sounds of Blackness, Marvin Sapp, Hezekiah Walker." },
+      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people." },
+      { tier: 3, label: "Bypass", text: "Q1: Healed, You Rock My World • Q2: Rain Down On Me • Q3: Sounds of Blackness • Q4: Praise Him in Advance — Marvin Sapp • Q5: Wonderful Is Your Name — Hezekiah Walker." },
     ],
   },
   {
