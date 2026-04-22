@@ -86,7 +86,14 @@ async function createSessionRow(team: string): Promise<string | null> {
   }
 }
 
-async function updateSessionRow(patch: Record<string, unknown>) {
+type SessionPatch = {
+  outcome?: "in_progress" | "victory" | "failure";
+  finished_at?: string | null;
+  elapsed_seconds?: number | null;
+  penalty_seconds?: number;
+  solved_count?: number;
+};
+async function updateSessionRow(patch: SessionPatch) {
   const id = getSessionId();
   if (!id) return;
   try {
