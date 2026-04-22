@@ -165,6 +165,24 @@ function Editor() {
         const b = JSON.stringify(def.pathConfig ?? null);
         if (a !== b) diff.pathConfig = p.pathConfig;
       }
+      // library config (puzzle 3)
+      if (p.libraryConfig || def.libraryConfig) {
+        const a = JSON.stringify(p.libraryConfig ?? null);
+        const b = JSON.stringify(def.libraryConfig ?? null);
+        if (a !== b) diff.libraryConfig = p.libraryConfig;
+      }
+      // stained glass config (puzzle 7)
+      if (p.stainedGlassConfig || def.stainedGlassConfig) {
+        const a = JSON.stringify(p.stainedGlassConfig ?? null);
+        const b = JSON.stringify(def.stainedGlassConfig ?? null);
+        if (a !== b) diff.stainedGlassConfig = p.stainedGlassConfig;
+      }
+      // timeline config (puzzle 9)
+      if (p.timelineConfig || def.timelineConfig) {
+        const a = JSON.stringify(p.timelineConfig ?? null);
+        const b = JSON.stringify(def.timelineConfig ?? null);
+        if (a !== b) diff.timelineConfig = p.timelineConfig;
+      }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
     return out;
