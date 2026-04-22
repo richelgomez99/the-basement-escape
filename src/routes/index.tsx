@@ -79,6 +79,19 @@ function TitleScreen() {
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
           Nine locks bar the door. One hour on the clock. Solve every puzzle and find your way out.
         </p>
+        {introText && (
+          <div className="mx-auto mt-6 max-w-2xl stone-panel rounded-xl p-5 text-left">
+            <div className="font-display text-xs uppercase tracking-[0.3em] text-gold mb-2">
+              The Puzzle Master speaks
+            </div>
+            <p className="text-sm md:text-base text-foreground/90 leading-relaxed italic">
+              {introText}
+            </p>
+            <div className="mt-3">
+              <NarrationPlayer narrationKey={INTRO_KEY} />
+            </div>
+          </div>
+        )}
       </div>
 
       <form onSubmit={begin} className="stone-panel mt-12 w-full max-w-md rounded-xl p-6 space-y-4">
