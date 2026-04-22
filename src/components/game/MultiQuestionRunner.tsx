@@ -52,7 +52,10 @@ export function MultiQuestionRunner({
   showAudio?: boolean;
   inputMode?: "text" | "numeric";
 }) {
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => {
+    const saved = getPuzzleState<{ idx: number }>(puzzle.id, { idx: 0 });
+    return Math.min(Math.max(0, saved.idx ?? 0), Math.max(0, questions.length - 1));
+  });
   const [val, setVal] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
@@ -60,12 +63,17 @@ export function MultiQuestionRunner({
   const navigate = useNavigate();
   const totalPuzzles = getPuzzles().length;
 
+  useEffect(() => {
+    setPuzzleState(puzzle.id, { idx });
+  }, [puzzle.id, idx]);
+
   const current = questions[idx];
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!current) return;
     if (!isCorrect(val, current)) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError("Not quite. −30 seconds.");
       setShake(true);
@@ -75,6 +83,7 @@ export function MultiQuestionRunner({
     setError("");
     setVal("");
     if (idx + 1 >= questions.length) {
+      playSfx("lock");
       markSolved(puzzle.id);
       setShowLetter(true);
     } else {
