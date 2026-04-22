@@ -40,7 +40,7 @@ export function LetterUnlockedDialog({
 
   const sub =
     variant === "solved"
-      ? "Write this letter down — you'll need it for the final vault."
+      ? "Write this letter down — you'll unscramble all nine into the final word."
       : variant === "recall"
         ? "The Oracle reveals the letter you'd already earned."
         : "Here's the letter you earned. Write it down for the vault.";
@@ -61,7 +61,7 @@ export function LetterUnlockedDialog({
             {letter || "?"}
           </div>
           <p className="text-xs text-muted-foreground text-center max-w-xs">
-            All {totalPuzzles} letters, in order, form the final vault code.
+            All {totalPuzzles} letters can be rearranged to spell a single word — the key to the vault.
           </p>
         </div>
 
