@@ -3,8 +3,17 @@ import { useEffect, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPuzzles, getVaultCode } from "@/game/content";
-import { getSolved, isGameStarted, setFinished } from "@/game/state";
+import { getPuzzles, getVaultCode, RECALL_PENALTY_SECONDS } from "@/game/content";
+import { addPenalty, getSolved, isGameStarted, setFinished } from "@/game/state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
 
 export const Route = createFileRoute("/vault")({
   head: () => ({ meta: [{ title: "The Final Vault — The Basement Escape" }] }),
@@ -15,6 +24,8 @@ function Vault() {
   const [code, setCode] = useState("");
   const [shake, setShake] = useState(false);
   const [error, setError] = useState("");
+  const [recallOpen, setRecallOpen] = useState(false);
+  const [revealedId, setRevealedId] = useState<number | null>(null);
   const navigate = useNavigate();
   const puzzles = getPuzzles();
 
@@ -39,6 +50,8 @@ function Vault() {
       setTimeout(() => setShake(false), 450);
     }
   }
+
+  const revealedPuzzle = revealedId ? puzzles.find((p) => p.id === revealedId) : null;
 
   return (
     <div className="min-h-screen px-4 py-6">
@@ -65,14 +78,14 @@ function Vault() {
             {puzzles.map((p) => (
               <div
                 key={p.id}
-                className="aspect-square rounded border border-gold/30 bg-background/40 flex items-center justify-center font-display text-lg text-gold"
+                className="aspect-square rounded border border-gold/30 bg-background/40 flex items-center justify-center font-display text-lg text-muted-foreground/40"
               >
-                {p.artifact}
+                {p.id}
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            (Your collected artifacts in order. Type them below.)
+            (Nine letters — one per lock, in order. Type them below.)
           </p>
 
           <form onSubmit={submit} className={`mt-6 space-y-3 ${shake ? "shake" : ""}`}>
@@ -95,8 +108,72 @@ function Vault() {
               UNLOCK THE VAULT
             </Button>
           </form>
+
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setRecallOpen(true)}
+            >
+              Forgot a letter? Recall (−2:00)
+            </Button>
+            <Link to="/door">
+              <Button variant="outline" size="sm" className="border-gold/40">
+                Replay a lock for free
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
+
+      <Dialog open={recallOpen} onOpenChange={setRecallOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recall a letter</DialogTitle>
+            <DialogDescription>
+              Pick a lock — the Oracle reveals its letter for{" "}
+              <strong className="text-destructive">−2 minutes</strong>. Or close this and head back to
+              the Door to replay any solved lock for free.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 py-2">
+            {puzzles.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  addPenalty(RECALL_PENALTY_SECONDS);
+                  setRecallOpen(false);
+                  setRevealedId(p.id);
+                }}
+                className="rounded border border-gold/50 bg-gold/5 p-3 text-center hover:bg-gold/15"
+              >
+                <div className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+                  Lock {p.id}
+                </div>
+                <div className="mt-1 font-display text-xl text-gold">?</div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRecallOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {revealedPuzzle && (
+        <LetterUnlockedDialog
+          open={revealedId !== null}
+          onClose={() => setRevealedId(null)}
+          puzzleId={revealedPuzzle.id}
+          totalPuzzles={puzzles.length}
+          letter={revealedPuzzle.artifact}
+          variant="recall"
+        />
+      )}
     </div>
   );
 }
