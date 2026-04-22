@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import crypto from "crypto";
 
-const PUZZLE_MASTER_VOICE_ID = "3e05zN2dtLwjhJY7rUhg";
+const PUZZLE_MASTER_VOICE_ID = "bqQ7DQwY9bell4LCvnXs";
 
 function hashText(text: string): string {
   return crypto.createHash("sha256").update(text.trim()).digest("hex").slice(0, 16);
