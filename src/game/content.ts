@@ -183,7 +183,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     artifact: "I",
     answer: "truth",
     hints: [
-      { tier: 1, label: "Nudge", text: "Tap two pieces to swap them." },
+      { tier: 1, label: "Nudge", text: "Jesus called himself the way, the ____, and the life." },
       { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters." },
       { tier: 3, label: "Bypass", text: "The word is: TRUTH" },
     ],
@@ -249,7 +249,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       },
     ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Each wrong guess costs 30 seconds — read carefully. There's no skip; you must answer all 5 to claim the artifact." },
+      { tier: 1, label: "Nudge", text: "Q1's gospel song shares its title with what God does for the brokenhearted (Psalm 147:3)." },
       { tier: 2, label: "Direction", text: "Q1 wants two songs (gospel, then MJ). Q4/Q5 want both song and artist — format: Song - Artist." },
       { tier: 3, label: "Bypass", text: "Stuck on Q1? Try: Healed, You Rock My World. Q2: Rain Down On Me. Q3: Sounds of Blackness." },
     ],
