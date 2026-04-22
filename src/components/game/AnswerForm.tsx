@@ -3,7 +3,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { checkAnswer } from "./PuzzleShell";
+import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 import type { Puzzle } from "@/game/content";
+import { getPuzzles } from "@/game/content";
 import { markSolved } from "@/game/state";
 
 export function AnswerForm({
@@ -20,14 +22,16 @@ export function AnswerForm({
   const [val, setVal] = useState("");
   const [shake, setShake] = useState(false);
   const [error, setError] = useState("");
+  const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
+  const totalPuzzles = getPuzzles().length;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (checkAnswer(val, puzzle)) {
       markSolved(puzzle.id);
       onSolved?.();
-      navigate({ to: "/door" });
+      setShowLetter(true);
     } else {
       setShake(true);
       setError("Not quite. Try again.");
@@ -36,22 +40,35 @@ export function AnswerForm({
   }
 
   return (
-    <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
-      <Input
-        autoFocus
-        value={val}
-        onChange={(e) => {
-          setVal(e.target.value);
-          setError("");
-        }}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        className="h-12 text-lg border-gold/40 bg-background/60"
+    <>
+      <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
+        <Input
+          autoFocus
+          value={val}
+          onChange={(e) => {
+            setVal(e.target.value);
+            setError("");
+          }}
+          placeholder={placeholder}
+          inputMode={inputMode}
+          className="h-12 text-lg border-gold/40 bg-background/60"
+        />
+        {error && <div className="text-sm text-destructive">{error}</div>}
+        <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
+          Submit
+        </Button>
+      </form>
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="solved"
+        continueLabel="Continue to the door"
+        onContinue={() => navigate({ to: "/door" })}
       />
-      {error && <div className="text-sm text-destructive">{error}</div>}
-      <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
-        Submit
-      </Button>
-    </form>
+    </>
   );
 }
