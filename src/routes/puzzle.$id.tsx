@@ -85,45 +85,53 @@ function PuzzleRoute() {
 
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
-  const books = [
-    { id: "genesis", name: "Genesis", real: true, order: 1 },
-    { id: "hezekiah", name: "Hezekiah", real: false },
-    { id: "exodus", name: "Exodus", real: true, order: 2 },
-    { id: "opinions", name: "First Opinions", real: false },
-    { id: "leviticus", name: "Leviticus", real: true, order: 3 },
-    { id: "numbers", name: "Numbers", real: true, order: 4 },
-    { id: "melchizedek", name: "Melchizedek", real: false },
-  ];
+  const puzzle = getPuzzles()[2];
+  const cfg = puzzle.libraryConfig;
+  const books = cfg?.books ?? [];
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const realOrdered = books
+    .filter((b) => b.real && typeof b.order === "number")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
   function pick(id: string) {
-    const b = books.find((x) => x.id === id)!;
+    const b = books.find((x) => x.id === id);
+    if (!b) return;
     if (!b.real) {
-      setError(`"${b.name}" is not a book of the Bible.`);
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError(`"${b.name}" is not a book of the Bible. −30s.`);
       return;
     }
     if (picked.includes(id)) return;
     const next = [...picked, id];
-    const expected = books.filter((x) => x.real).sort((a, b) => a.order! - b.order!).map((x) => x.id);
-    if (expected[next.length - 1] !== id) {
-      setError("Wrong order. Start over with Genesis.");
+    if (realOrdered[next.length - 1]?.id !== id) {
+      addPenalty(TRAP_PENALTY_SECONDS);
+      setError("Wrong order. Start over with the first book. −30s.");
       setPicked([]);
       return;
     }
     setError("");
     setPicked(next);
-    if (next.length === expected.length) {
+    if (next.length === realOrdered.length) {
       markSolved(3);
       setTimeout(() => navigate({ to: "/door" }), 600);
     }
   }
 
+  if (books.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        No books configured. Set them up in /admin.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Click books in correct biblical order. Decoys will sound the alarm.
+        {cfg?.intro ?? "Click books in correct biblical order. Decoys will sound the alarm."}
       </p>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {books.map((b) => {
