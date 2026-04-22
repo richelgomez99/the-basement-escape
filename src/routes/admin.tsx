@@ -824,15 +824,21 @@ function PuzzleEditor({
                   onChange={(e) => onChange({ title: e.target.value })}
                 />
               </Field>
+              <Field
+                label={
+                  hasQuestions
+                    ? "Flavor (intro shown once above all questions)"
+                    : "Flavor"
+                }
+              >
+                <Textarea
+                  value={puzzle.flavor}
+                  onChange={(e) => onChange({ flavor: e.target.value })}
+                  rows={2}
+                />
+              </Field>
               {!hasQuestions && (
                 <>
-                  <Field label="Flavor">
-                    <Textarea
-                      value={puzzle.flavor}
-                      onChange={(e) => onChange({ flavor: e.target.value })}
-                      rows={2}
-                    />
-                  </Field>
                   <Field label="Scripture (optional)">
                     <Textarea
                       value={puzzle.scripture ?? ""}
