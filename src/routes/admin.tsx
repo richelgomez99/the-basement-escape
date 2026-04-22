@@ -15,11 +15,17 @@ import {
   type HiddenMarker,
   type HiddenScene,
   type Hint,
+  type LibraryBook,
+  type LibraryConfig,
   type PathConfig,
   type Puzzle,
   type Question,
+  type StainedGlassConfig,
+  type TimelineConfig,
+  type TimelineEvent,
 } from "@/game/content";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
+import stainedGlassImg from "@/assets/stained-glass.jpg";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — The Basement Escape" }] }),
