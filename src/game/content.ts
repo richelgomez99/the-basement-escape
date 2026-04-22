@@ -143,7 +143,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["everlasting", "eternal"],
     hints: [
       { tier: 1, label: "Nudge", text: "What kind of life does God promise those who believe? Think of a word that means it never ends." },
-      { tier: 2, label: "Direction", text: "Eleven letters, starts with E. Synonym of 'eternal.'" },
+      { tier: 2, label: "Direction", text: "Eleven letters. A synonym for 'eternal' that begins with the same letter as 'every.'" },
       { tier: 3, label: "Bypass", text: "The answer is: everlasting" },
     ],
   },
@@ -157,7 +157,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["light", "the light"],
     hints: [
       { tier: 1, label: "Nudge", text: "What do a stained-glass window, a candle on the altar, and the dove of the Spirit all carry?" },
-      { tier: 2, label: "Direction", text: "Five letters. 'Let your ___ so shine before men' (Matthew 5:16)." },
+      { tier: 2, label: "Direction", text: "Five letters. Matthew 5:16 — 'Let your ___ so shine before men.'" },
       { tier: 3, label: "Bypass", text: "The answer is: LIGHT" },
     ],
     hiddenScene: {
@@ -179,7 +179,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "4",
     hints: [
       { tier: 1, label: "Nudge", text: "Recite the very first books of the Old Testament — the Torah." },
-      { tier: 2, label: "Direction", text: "Genesis comes first. After that: a book about leaving Egypt, a book of priestly law, then a book of a census." },
+      { tier: 2, label: "Direction", text: "There are four. The first is about beginnings; the second about leaving Egypt; one is priestly law; one is a wilderness census." },
       { tier: 3, label: "Bypass", text: "Genesis, Exodus, Leviticus, Numbers — that's 4 correct books." },
     ],
     libraryConfig: {
@@ -206,7 +206,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["narrow", "the narrow way", "narrow way"],
     hints: [
       { tier: 1, label: "Nudge", text: "Jesus said few find this kind of way — it's the opposite of broad." },
-      { tier: 2, label: "Direction", text: "Six letters, starts with N. Opposite of 'wide.'" },
+      { tier: 2, label: "Direction", text: "Six letters. The opposite of 'wide.'" },
       { tier: 3, label: "Bypass", text: "The missing word from Matthew 7:14 is: narrow" },
     ],
     pathConfig: defaultPath(),
@@ -220,7 +220,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["total praise", "total praise to you"],
     hints: [
       { tier: 1, label: "Nudge", text: "A modern gospel standard composed by Richard Smallwood, often sung at funerals and church anniversaries." },
-      { tier: 2, label: "Direction", text: "Two words. The lyrics adapt Psalm 121 ('I will lift mine eyes...') and famously close on a long, sustained 'Amen.'" },
+      { tier: 2, label: "Direction", text: "Two words. Adapts Psalm 121 ('I will lift mine eyes...') and famously closes on a long, sustained 'Amen.'" },
       { tier: 3, label: "Bypass", text: "The hymn is: Total Praise" },
     ],
   },
@@ -234,8 +234,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "4",
     hints: [
       { tier: 1, label: "Nudge", text: "Start with how long it rained on Noah, then subtract a smaller number tied to the apostles and Jonah." },
-      { tier: 2, label: "Direction", text: "40 (flood) − (12 apostles × 3 days Jonah was in the fish) = 40 − 36." },
-      { tier: 3, label: "Bypass", text: "The answer is 4." },
+      { tier: 2, label: "Direction", text: "Flood days − (apostles × Jonah's days in the fish). All three numbers are famous Bible counts." },
+      { tier: 3, label: "Bypass", text: "40 − (12 × 3) = 4." },
     ],
   },
   {
