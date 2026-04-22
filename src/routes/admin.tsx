@@ -124,12 +124,13 @@ const MULTI_Q_PUZZLES = new Set([1, 4, 5, 6, 7, 8]);
 function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
   const [introText, setIntroText] = useState<string>(getIntroText());
+  const [vaultWord, setVaultWord] = useState<string>(getVaultWord());
   const [savedAt, setSavedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwMsg, setPwMsg] = useState("");
-  const vaultCode = useMemo(() => puzzles.map((p) => p.artifact).join(""), [puzzles]);
+  const vaultWordValid = /^[A-Z]{9}$/.test(vaultWord.toUpperCase());
 
   // Pull latest from cloud once on mount
   useEffect(() => {
