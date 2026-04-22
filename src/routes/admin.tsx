@@ -1008,7 +1008,7 @@ function QuestionsEditor({
         </Button>
       </div>
       <div className="space-y-3">
-        {questions.map((q, i) => (
+        {display.map((q, i) => (
           <div key={i} className="rounded border border-border bg-background/40 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <div className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -1022,7 +1022,7 @@ function QuestionsEditor({
                   size="sm"
                   variant="outline"
                   onClick={() => move(i, 1)}
-                  disabled={i === questions.length - 1}
+                  disabled={i === display.length - 1}
                 >
                   ↓
                 </Button>
