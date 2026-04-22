@@ -14,11 +14,26 @@ export type Hint = { tier: 1 | 2 | 3; label: string; text: string };
 // and the music round (puzzle 8). Optional `audioUrl` for music questions.
 export type Question = {
   prompt: string;
+  /** Legacy single hint — still rendered if `hints` is empty. */
   hint?: string;
+  /** Optional flavor text shown above the prompt for this question. */
+  flavor?: string;
+  /** Optional scripture shown above the prompt for this question. */
+  scripture?: string;
+  /** Three-tier hints (Nudge / Direction / Bypass), like puzzle hints. */
+  hints?: Hint[];
   answer: string;
   acceptable?: string[];
   audioUrl?: string; // optional MP3 (puzzle 8)
 };
+
+export function emptyQuestionHints(): Hint[] {
+  return [
+    { tier: 1, label: "Nudge", text: "" },
+    { tier: 2, label: "Direction", text: "" },
+    { tier: 3, label: "Bypass", text: "" },
+  ];
+}
 // Backwards-compat alias for old code
 export type MusicQuestion = Question;
 
