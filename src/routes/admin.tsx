@@ -855,16 +855,9 @@ function PuzzleEditor({
                     />
                   </Field>
                   <Field label="Acceptable alternates (comma-separated)">
-                    <Input
-                      value={(puzzle.acceptable ?? []).join(", ")}
-                      onChange={(e) =>
-                        onChange({
-                          acceptable: e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean),
-                        })
-                      }
+                    <AcceptableInput
+                      value={puzzle.acceptable ?? []}
+                      onCommit={(acceptable) => onChange({ acceptable })}
                     />
                   </Field>
                 </>
