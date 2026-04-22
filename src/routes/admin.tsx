@@ -1606,10 +1606,43 @@ function PathConfigEditor({
     onChange({ ...config, cols, safeCols });
   }
 
+  // Adjacency validation: every safe cell in row r > 0 must be within 1 column
+  // of at least one safe cell in row r-1 (horizontal/vertical/diagonal step).
+  const rowErrors: string[] = [];
+  for (let r = 0; r < config.rows; r++) {
+    const cur = rowAsArray(r);
+    if (cur.length === 0) {
+      rowErrors[r] = "No safe stone in this row.";
+      continue;
+    }
+    if (r === 0) {
+      rowErrors[r] = "";
+      continue;
+    }
+    const prev = rowAsArray(r - 1);
+    if (prev.length === 0) {
+      rowErrors[r] = "";
+      continue;
+    }
+    const bad = cur.filter((c) => !prev.some((pc) => Math.abs(pc - c) <= 1));
+    rowErrors[r] = bad.length
+      ? `Not reachable from row ${r}: column${bad.length > 1 ? "s" : ""} ${bad.join(", ")}. Safe stones must be adjacent (±1 column) to a safe stone in the previous row.`
+      : "";
+  }
+  const hasErrors = rowErrors.some(Boolean);
+
+  // A cell is "reachable" if there's a safe stone in the previous row within ±1 column.
+  function isReachable(row: number, col: number): boolean {
+    if (row === 0) return true;
+    const prev = rowAsArray(row - 1);
+    if (prev.length === 0) return true;
+    return prev.some((pc) => Math.abs(pc - col) <= 1);
+  }
+
   return (
     <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
       <div className="font-display text-xs uppercase tracking-widest text-gold">
-        Path of the Righteous — click cells to toggle safe stones (multiple per row allowed for branching/looping paths)
+        Path of the Righteous — click cells to toggle safe stones (must be adjacent row-to-row)
       </div>
       <div className="grid gap-2 md:grid-cols-3">
         <NumberField label="Rows (path length)" value={config.rows} min={3} max={30} onChange={setRows} />
@@ -1633,25 +1666,47 @@ function PathConfigEditor({
           const row = Math.floor(i / config.cols);
           const col = i % config.cols;
           const isSafe = rowAsArray(row).includes(col);
+          const reachable = isReachable(row, col);
+          const invalidSafe = isSafe && !reachable;
           return (
             <button
               key={i}
               type="button"
               onClick={() => toggleCell(row, col)}
               className={`aspect-square rounded border transition ${
-                isSafe
-                  ? "border-gold bg-gold/40 shadow-[0_0_6px_rgba(212,175,55,0.6)]"
-                  : "border-border/60 bg-background/30 hover:border-gold/40"
+                invalidSafe
+                  ? "border-destructive bg-destructive/40 shadow-[0_0_6px_rgba(239,68,68,0.7)]"
+                  : isSafe
+                    ? "border-gold bg-gold/40 shadow-[0_0_6px_rgba(212,175,55,0.6)]"
+                    : reachable
+                      ? "border-border/60 bg-background/30 hover:border-gold/40"
+                      : "border-dashed border-border/30 bg-background/10 hover:border-destructive/40"
               }`}
-              aria-label={`r${row}c${col}${isSafe ? " (safe)" : ""}`}
+              aria-label={`r${row}c${col}${isSafe ? " (safe)" : ""}${!reachable ? " (not adjacent to previous row)" : ""}`}
+              title={!reachable && !isSafe ? "Not adjacent to a safe stone in the previous row" : undefined}
             />
           );
         })}
       </div>
+      {hasErrors && (
+        <div className="rounded border border-destructive/50 bg-destructive/10 p-2 text-xs text-destructive space-y-1">
+          <div className="font-semibold uppercase tracking-widest">Path is broken</div>
+          {rowErrors.map((err, r) =>
+            err ? (
+              <div key={r}>
+                Row {r + 1}: {err}
+              </div>
+            ) : null,
+          )}
+        </div>
+      )}
       <p className="text-xs text-muted-foreground">
-        Click any cell to toggle it as safe. You can mark <strong>multiple</strong> safe stones per row to create
-        looping or branching paths. Players see safe stones lit for {config.previewSeconds}s, then they hide.
-        Wrong stone = −30s. Asking to see the path again = −2 minutes.
+        Click any cell to toggle it as safe. Safe stones must be <strong>adjacent</strong>
+        {" "}(horizontally, vertically, or diagonally — within ±1 column) to a safe stone in
+        the previous row, so players can always step from one row to the next. Cells with a
+        dashed border can't be reached from the row above. You can still mark multiple safe
+        stones per row for branching paths. Players see safe stones lit for {config.previewSeconds}s,
+        then they hide. Wrong stone = −30s. Asking to see the path again = −2 minutes.
       </p>
     </div>
   );
