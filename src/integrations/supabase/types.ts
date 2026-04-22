@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      narrations: {
+        Row: {
+          audio_url: string | null
+          error: string | null
+          key: string
+          status: string
+          text: string
+          text_hash: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          error?: string | null
+          key: string
+          status?: string
+          text: string
+          text_hash: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          error?: string | null
+          key?: string
+          status?: string
+          text?: string
+          text_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       puzzle_overrides: {
         Row: {
           data: Json

@@ -8,6 +8,7 @@ import {
   ADMIN_DEFAULT_PASSWORD,
   clearOverrides,
   DEFAULT_PUZZLES,
+  getIntroText,
   getOverrides,
   getPuzzles,
   loadOverridesFromCloud,
@@ -24,6 +25,15 @@ import {
   type TimelineConfig,
   type TimelineEvent,
 } from "@/game/content";
+import {
+  DEFAULT_INTRO_TEXT,
+  INTRO_KEY,
+  fetchAllNarrations,
+  puzzleNarrationKey,
+  type NarrationRow,
+} from "@/game/narration";
+import { generateNarration } from "@/server/narration";
+import { Loader2, CheckCircle2, AlertCircle, Volume2 } from "lucide-react";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlassImg from "@/assets/stained-glass.jpg";
 
@@ -111,6 +121,7 @@ const MULTI_Q_PUZZLES = new Set([1, 4, 5, 6, 7, 8]);
 
 function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
+  const [introText, setIntroText] = useState<string>(getIntroText());
   const [savedAt, setSavedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
@@ -123,6 +134,7 @@ function Editor() {
     (async () => {
       await loadOverridesFromCloud();
       setPuzzles(getPuzzles());
+      setIntroText(getIntroText());
     })();
   }, []);
 
@@ -130,8 +142,8 @@ function Editor() {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
 
-  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> {
-    const out: Partial<Record<number, Partial<Puzzle>>> = {};
+  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } {
+    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } = {};
     puzzles.forEach((p) => {
       const def = DEFAULT_PUZZLES.find((d) => d.id === p.id)!;
       const diff: Partial<Puzzle> = {};
@@ -185,6 +197,9 @@ function Editor() {
       }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
+    if (introText.trim() && introText.trim() !== DEFAULT_INTRO_TEXT) {
+      out._intro = introText.trim();
+    }
     return out;
   }
 
@@ -194,6 +209,9 @@ function Editor() {
     try {
       await saveOverridesToCloud(buildOverrides());
       setSavedAt(new Date().toLocaleTimeString());
+      // Trigger narration regeneration for intro + every puzzle flavor.
+      // The server function returns instantly if text hasn't changed.
+      void triggerAllNarrations(introText, puzzles);
     } catch (e: any) {
       setSaveErr(e?.message ?? "Cloud save failed (saved locally).");
     } finally {
@@ -349,6 +367,14 @@ function Editor() {
           </div>
         </div>
 
+        <IntroEditor
+          introText={introText}
+          onChange={setIntroText}
+          onReset={() => setIntroText(DEFAULT_INTRO_TEXT)}
+        />
+
+        <NarrationStatusPanel introText={introText} puzzles={puzzles} />
+
         <div className="mt-6 space-y-6">
           {puzzles.map((p) => (
             <PuzzleEditor
@@ -365,6 +391,197 @@ function Editor() {
             {saving ? "Saving…" : "Save changes"}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------- Narration: triggers + UI ----------------- */
+
+async function triggerAllNarrations(introText: string, puzzles: Puzzle[]) {
+  const trimmedIntro = (introText || DEFAULT_INTRO_TEXT).trim();
+  const jobs: Array<{ key: string; text: string }> = [
+    { key: INTRO_KEY, text: trimmedIntro },
+    ...puzzles.map((p) => ({ key: puzzleNarrationKey(p.id), text: p.flavor.trim() })),
+  ];
+  // Fire sequentially to be polite to ElevenLabs rate limits.
+  for (const job of jobs) {
+    if (!job.text) continue;
+    try {
+      await generateNarration({ data: job });
+    } catch (e) {
+      console.warn("Narration generation failed for", job.key, e);
+    }
+  }
+}
+
+function IntroEditor({
+  introText,
+  onChange,
+  onReset,
+}: {
+  introText: string;
+  onChange: (v: string) => void;
+  onReset: () => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  async function regen() {
+    setGenerating(true);
+    try {
+      await generateNarration({ data: { key: INTRO_KEY, text: introText.trim() } });
+    } catch (e) {
+      console.warn("Intro narration regen failed", e);
+    } finally {
+      setGenerating(false);
+    }
+  }
+  return (
+    <div className="stone-panel mt-4 rounded-xl p-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="font-display text-xs uppercase tracking-widest text-gold">
+          Home page intro story (Puzzle Master narration)
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={onReset}>
+            Use default
+          </Button>
+          <Button size="sm" variant="outline" onClick={regen} disabled={generating || !introText.trim()}>
+            {generating ? "Generating…" : "Regenerate audio now"}
+          </Button>
+        </div>
+      </div>
+      <Textarea
+        value={introText}
+        onChange={(e) => onChange(e.target.value)}
+        rows={5}
+        placeholder={DEFAULT_INTRO_TEXT}
+        className="mt-2"
+      />
+      <p className="text-xs text-muted-foreground mt-2">
+        This is read aloud by the Puzzle Master on the home page. Audio regenerates automatically when you press
+        <strong> Save changes</strong> if the text has changed.
+      </p>
+    </div>
+  );
+}
+
+function NarrationStatusPanel({
+  introText,
+  puzzles,
+}: {
+  introText: string;
+  puzzles: Puzzle[];
+}) {
+  const [rows, setRows] = useState<NarrationRow[]>([]);
+
+  // Initial load + realtime subscription
+  useEffect(() => {
+    let alive = true;
+    fetchAllNarrations().then((r) => alive && setRows(r));
+    const channel = supabase
+      .channel("narrations-admin")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "narrations" },
+        () => {
+          fetchAllNarrations().then((r) => alive && setRows(r));
+        },
+      )
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const byKey = useMemo(() => {
+    const m = new Map<string, NarrationRow>();
+    rows.forEach((r) => m.set(r.key, r));
+    return m;
+  }, [rows]);
+
+  const items: Array<{ key: string; label: string; text: string }> = [
+    { key: INTRO_KEY, label: "Home intro", text: (introText || DEFAULT_INTRO_TEXT).trim() },
+    ...puzzles.map((p) => ({
+      key: puzzleNarrationKey(p.id),
+      label: `Lock ${p.id} — ${p.title}`,
+      text: p.flavor.trim(),
+    })),
+  ];
+
+  async function regenOne(key: string, text: string) {
+    if (!text) return;
+    try {
+      await generateNarration({ data: { key, text } });
+    } catch (e) {
+      console.warn("regen failed", key, e);
+    }
+  }
+
+  return (
+    <div className="stone-panel mt-4 rounded-xl p-4">
+      <div className="flex items-center gap-2">
+        <Volume2 className="h-4 w-4 text-gold" />
+        <div className="font-display text-xs uppercase tracking-widest text-gold">
+          Puzzle Master narration status
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">
+        Each item below is auto-narrated by ElevenLabs (voice: Puzzle Master). Audio regenerates whenever the
+        text below changes and you press <strong>Save changes</strong>.
+      </p>
+      <div className="mt-3 grid gap-2">
+        {items.map((it) => {
+          const row = byKey.get(it.key);
+          const status = row?.status ?? "pending";
+          const upToDate =
+            row?.audio_url &&
+            row.status === "ready" &&
+            row.text.trim() === it.text;
+          return (
+            <div
+              key={it.key}
+              className="flex flex-wrap items-center gap-3 rounded border border-border bg-background/40 p-2"
+            >
+              <div className="min-w-[180px] text-sm">{it.label}</div>
+              <div className="flex-1 min-w-[160px] flex items-center gap-2 text-xs">
+                {status === "generating" || status === "pending" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                    <span className="text-gold">Generating…</span>
+                  </>
+                ) : status === "error" ? (
+                  <>
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive truncate">{row?.error ?? "Error"}</span>
+                  </>
+                ) : upToDate ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-gold" />
+                    <span className="text-muted-foreground">Up to date</span>
+                  </>
+                ) : row?.audio_url ? (
+                  <span className="text-muted-foreground italic">
+                    Out of date — press Save to regenerate
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground italic">Not generated yet</span>
+                )}
+              </div>
+              {row?.audio_url && (
+                <audio controls src={row.audio_url} className="h-8 max-w-[220px]" />
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => regenOne(it.key, it.text)}
+                disabled={!it.text || status === "generating"}
+              >
+                Regenerate
+              </Button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

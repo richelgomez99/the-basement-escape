@@ -2,7 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Timer } from "./Timer";
 import { HintBox } from "./HintBox";
 import { getPuzzles, type Puzzle } from "@/game/content";
+import { puzzleNarrationKey } from "@/game/narration";
 import { Button } from "@/components/ui/button";
+import { NarrationPlayer } from "./NarrationPlayer";
 
 export function PuzzleShell({
   puzzle,
@@ -30,6 +32,9 @@ export function PuzzleShell({
           </div>
           <h1 className="mt-2 font-display text-3xl md:text-4xl">{puzzle.title}</h1>
           <p className="mt-3 text-muted-foreground italic">{puzzle.flavor}</p>
+          <div className="mt-3 flex justify-center">
+            <NarrationPlayer narrationKey={puzzleNarrationKey(puzzle.id)} />
+          </div>
           {puzzle.scripture && (
             <p className="mt-3 font-display text-sm text-gold/90">"{puzzle.scripture}"</p>
           )}

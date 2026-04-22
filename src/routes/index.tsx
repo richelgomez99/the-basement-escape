@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isGameStarted, resetGame, startGame } from "@/game/state";
+import { getIntroText, loadOverridesFromCloud } from "@/game/content";
+import { INTRO_KEY } from "@/game/narration";
+import { NarrationPlayer } from "@/components/game/NarrationPlayer";
 import {
   Dialog,
   DialogContent,
@@ -36,10 +39,15 @@ function TitleScreen() {
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const [inProgress, setInProgress] = useState(false);
+  const [introText, setIntroText] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
     setInProgress(isGameStarted());
+    (async () => {
+      await loadOverridesFromCloud();
+      setIntroText(getIntroText());
+    })();
   }, []);
 
   function begin(e: React.FormEvent) {
@@ -71,6 +79,19 @@ function TitleScreen() {
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
           Nine locks bar the door. One hour on the clock. Solve every puzzle and find your way out.
         </p>
+        {introText && (
+          <div className="mx-auto mt-6 max-w-2xl stone-panel rounded-xl p-5 text-left">
+            <div className="font-display text-xs uppercase tracking-[0.3em] text-gold mb-2">
+              The Puzzle Master speaks
+            </div>
+            <p className="text-sm md:text-base text-foreground/90 leading-relaxed italic">
+              {introText}
+            </p>
+            <div className="mt-3">
+              <NarrationPlayer narrationKey={INTRO_KEY} />
+            </div>
+          </div>
+        )}
       </div>
 
       <form onSubmit={begin} className="stone-panel mt-12 w-full max-w-md rounded-xl p-6 space-y-4">
