@@ -5,6 +5,9 @@ import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
 import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import { HiddenScene } from "@/components/game/HiddenScene";
+import { PathOfRighteous } from "@/components/game/PathOfRighteous";
+import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlass from "@/assets/stained-glass.jpg";
 
@@ -47,78 +50,36 @@ function PuzzleRoute() {
     );
   }
 
+  // Helper: render a text puzzle as either a single AnswerForm or a multi-question runner.
+  const textPuzzle = (placeholder: string, inputMode?: "text" | "numeric") => {
+    if (puzzle.questions && puzzle.questions.length > 0) {
+      return <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} inputMode={inputMode} />;
+    }
+    return <AnswerForm puzzle={puzzle} placeholder={placeholder} inputMode={inputMode} />;
+  };
+
   return (
     <PuzzleShell puzzle={puzzle}>
-      {puzzle.id === 1 && <AnswerForm puzzle={puzzle} placeholder="Type the missing word" />}
-      {puzzle.id === 2 && <HiddenSymbols />}
-      {puzzle.id === 3 && <Library />}
-      {puzzle.id === 4 && <PathOfRighteous />}
-      {puzzle.id === 5 && <NameThatTune />}
-      {puzzle.id === 6 && (
-        <AnswerForm puzzle={puzzle} placeholder="Enter a number" inputMode="numeric" />
+      {puzzle.id === 1 && textPuzzle("Type the missing word")}
+      {puzzle.id === 2 && (
+        <HiddenScene
+          puzzle={puzzle}
+          scene={{
+            imageUrl: puzzle.hiddenScene?.imageUrl || cathedralMural,
+            markers: puzzle.hiddenScene?.markers ?? [],
+          }}
+        />
       )}
+      {puzzle.id === 3 && <Library />}
+      {puzzle.id === 4 && puzzle.pathConfig && (
+        <PathOfRighteous puzzle={puzzle} config={puzzle.pathConfig} />
+      )}
+      {puzzle.id === 5 && textPuzzle("Name the hymn")}
+      {puzzle.id === 6 && textPuzzle("Enter a number", "numeric")}
       {puzzle.id === 7 && <StainedGlass />}
-      {puzzle.id === 8 && <MusicRound />}
+      {puzzle.id === 8 && <MusicRoundOrSingle />}
       {puzzle.id === 9 && <Timeline />}
     </PuzzleShell>
-  );
-}
-
-/* ---------- Puzzle 2: Hidden in Plain Sight ---------- */
-function HiddenSymbols() {
-  const puzzle = getPuzzles()[1];
-  const symbols = [
-    { id: "dove", x: 50, y: 22, label: "🕊️" },
-    { id: "fish", x: 35, y: 72, label: "🐟" },
-    { id: "cross", x: 50, y: 60, label: "✝️" },
-    { id: "lamb", x: 72, y: 70, label: "🐑" },
-    { id: "bread", x: 50, y: 50, label: "🍞" },
-  ];
-  const [found, setFound] = useState<string[]>([]);
-  const allFound = found.length === symbols.length;
-
-  return (
-    <div className="space-y-4">
-      <div
-        className="relative w-full overflow-hidden rounded-lg border border-gold/30"
-        style={{ aspectRatio: "16/9" }}
-      >
-        <img
-          src={cathedralMural}
-          alt="Cathedral mural with hidden sacred symbols"
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        {symbols.map((s) => {
-          const isFound = found.includes(s.id);
-          return (
-            <button
-              key={s.id}
-              onClick={() => !isFound && setFound((f) => [...f, s.id])}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 text-2xl md:text-3xl transition-all ${
-                isFound
-                  ? "scale-125 drop-shadow-[0_0_10px_gold] opacity-100"
-                  : "opacity-0 hover:opacity-100 w-10 h-10"
-              }`}
-              style={{ left: `${s.x}%`, top: `${s.y}%` }}
-              aria-label={s.id}
-            >
-              {isFound ? s.label : ""}
-            </button>
-          );
-        })}
-      </div>
-      <div className="text-center text-sm text-muted-foreground">
-        Found {found.length} / {symbols.length}
-      </div>
-      {allFound ? (
-        <AnswerForm puzzle={puzzle} placeholder="Five symbols, one word..." />
-      ) : (
-        <p className="text-center text-xs text-muted-foreground">
-          Find all five symbols to unlock the answer field.
-        </p>
-      )}
-    </div>
   );
 }
 
@@ -188,108 +149,10 @@ function Library() {
   );
 }
 
-/* ---------- Puzzle 4: Path of the Righteous ---------- */
-function PathOfRighteous() {
-  const puzzle = getPuzzles()[3];
-  const cols = 3;
-  const rows = 4;
-  // Zigzag: row0 col0 (left), row1 col1 (center), row2 col2 (right), row3 col1 (center)
-  const safeByRow = [0, 1, 2, 1];
-  const safe = new Set(safeByRow.map((c, r) => r * cols + c));
-  const [step, setStep] = useState(0);
-  const [locked, setLocked] = useState(false);
-  const [error, setError] = useState("");
-  const [crossed, setCrossed] = useState(false);
-  const [trail, setTrail] = useState<number[]>([]);
-
-  function step_(idx: number) {
-    if (locked || crossed) return;
-    const row = Math.floor(idx / cols);
-    if (row !== step) {
-      setError("Step in order, row by row.");
-      return;
-    }
-    if (!safe.has(idx)) {
-      setError("The stone crumbles! −30 seconds.");
-      addPenalty(TRAP_PENALTY_SECONDS);
-      setLocked(true);
-      setTimeout(() => {
-        setLocked(false);
-        setStep(0);
-        setTrail([]);
-        setError("");
-      }, 1500);
-      return;
-    }
-    setError("");
-    const nextStep = step + 1;
-    setStep(nextStep);
-    setTrail([...trail, idx]);
-    if (nextStep === rows) {
-      setCrossed(true);
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <p className="text-center text-sm text-muted-foreground">
-        Cross row by row. The narrow way is hidden — wrong stones cost 30 seconds.
-      </p>
-      <div className={`mx-auto grid grid-cols-3 gap-2 max-w-sm ${locked ? "pointer-events-none opacity-60" : ""}`}>
-        {Array.from({ length: rows * cols }).map((_, i) => {
-          const reached = trail.includes(i);
-          return (
-            <button
-              key={i}
-              onClick={() => step_(i)}
-              disabled={crossed}
-              className={`aspect-square rounded border-2 transition ${
-                reached
-                  ? "border-gold bg-gold/20"
-                  : "border-border bg-background/40 hover:border-gold/40"
-              }`}
-              aria-label={`stone-${i}`}
-            />
-          );
-        })}
-      </div>
-      <div className="text-center text-sm">
-        {error ? (
-          <span className="text-destructive">{error}</span>
-        ) : crossed ? (
-          <span className="text-gold">You crossed safely. Now name the way.</span>
-        ) : (
-          <span className="text-muted-foreground">Row {step + 1} of {rows}</span>
-        )}
-      </div>
-      {crossed && <AnswerForm puzzle={puzzle} placeholder="The way is ______" />}
-    </div>
-  );
-}
-
-/* ---------- Puzzle 5: Name That Tune ---------- */
-function NameThatTune() {
-  const puzzle = getPuzzles()[4];
-  return (
-    <div className="space-y-4">
-      <div className="rounded border border-dashed border-gold/40 p-4 text-center text-sm text-muted-foreground">
-        🎵 [Audio placeholder — host: replace with a 5-second clip of "Amazing Grace"]
-        <audio controls className="mt-3 mx-auto w-full max-w-sm">
-          <source src="" />
-        </audio>
-      </div>
-      <AnswerForm puzzle={puzzle} placeholder="Name the hymn" />
-    </div>
-  );
-}
-
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
   const puzzle = getPuzzles()[6];
-  // 9 pieces, indexed 0-8 in correct order. Letters T-R-U-T-H overlay 5 of them.
-  // Correct positions: piece i belongs at grid position i.
   const letterMap: Record<number, string> = { 0: "T", 2: "R", 4: "U", 6: "T", 8: "H" };
-  // Initial shuffle (deterministic for fairness)
   const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
   const [order, setOrder] = useState<number[]>(initialOrder);
   const [selected, setSelected] = useState<number | null>(null);
@@ -352,10 +215,14 @@ function StainedGlass() {
         })}
       </div>
       {solved ? (
-        <>
-          <p className="text-center text-sm text-gold">The window reveals a word.</p>
-          <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
-        </>
+        puzzle.questions && puzzle.questions.length > 0 ? (
+          <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} />
+        ) : (
+          <>
+            <p className="text-center text-sm text-gold">The window reveals a word.</p>
+            <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
+          </>
+        )
       ) : (
         <p className="text-center text-xs text-muted-foreground">
           Reassemble the window to reveal the answer.
@@ -365,16 +232,10 @@ function StainedGlass() {
   );
 }
 
-/* ---------- Puzzle 8: Songs of the Saints (Music Round) ---------- */
-function MusicRound() {
+/* ---------- Puzzle 8: Music round (multi-question with audio) ---------- */
+function MusicRoundOrSingle() {
   const puzzle = getPuzzles()[7];
-  const questions = puzzle.musicQuestions ?? [];
-  const [idx, setIdx] = useState(0);
-  const [val, setVal] = useState("");
-  const [error, setError] = useState("");
-  const [shake, setShake] = useState(false);
-  const [done, setDone] = useState(false);
-
+  const questions = puzzle.questions ?? puzzle.musicQuestions ?? [];
   if (questions.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground">
@@ -382,92 +243,7 @@ function MusicRound() {
       </p>
     );
   }
-
-  const current = questions[idx];
-
-  function normalize(s: string) {
-    return s.trim().toLowerCase().replace(/\s+/g, " ");
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const norm = normalize(val);
-    const ok =
-      norm === normalize(current.answer) ||
-      (current.acceptable ?? []).some((a) => normalize(a) === norm);
-    if (!ok) {
-      addPenalty(TRAP_PENALTY_SECONDS);
-      setError("Not quite. −30 seconds.");
-      setShake(true);
-      setTimeout(() => setShake(false), 450);
-      return;
-    }
-    setError("");
-    setVal("");
-    if (idx + 1 >= questions.length) {
-      setDone(true);
-    } else {
-      setIdx(idx + 1);
-    }
-  }
-
-  if (done) {
-    return (
-      <div className="space-y-4">
-        <p className="text-center text-gold font-display">
-          All five answered. The artifact is yours.
-        </p>
-        <AnswerForm puzzle={puzzle} placeholder="Type the artifact letter" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">
-          Question {idx + 1} of {questions.length}
-        </span>
-        <span className="text-destructive">Wrong answer = −30s</span>
-      </div>
-
-      <div className="rounded border border-gold/30 bg-background/40 p-4 space-y-3">
-        <p className="font-display text-lg">{current.prompt}</p>
-        {current.audioUrl ? (
-          <audio
-            key={current.audioUrl}
-            controls
-            className="w-full"
-            src={current.audioUrl}
-          />
-        ) : (
-          <p className="text-xs italic text-muted-foreground">
-            (No audio uploaded yet — host can add one in /admin)
-          </p>
-        )}
-        {current.hint && (
-          <p className="text-xs text-muted-foreground italic">{current.hint}</p>
-        )}
-      </div>
-
-      <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
-        <input
-          autoFocus
-          value={val}
-          onChange={(e) => {
-            setVal(e.target.value);
-            setError("");
-          }}
-          placeholder="Your answer"
-          className="flex h-12 w-full rounded-md border border-gold/40 bg-background/60 px-3 py-2 text-lg shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-        {error && <div className="text-sm text-destructive">{error}</div>}
-        <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
-          Submit
-        </Button>
-      </form>
-    </div>
-  );
+  return <MultiQuestionRunner puzzle={puzzle} questions={questions} showAudio />;
 }
 
 /* ---------- Puzzle 9: Timeline ---------- */
@@ -570,3 +346,5 @@ function Timeline() {
     </div>
   );
 }
+// Suppress unused warning; Button is reused indirectly via children (kept import for parity)
+void Button;
