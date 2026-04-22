@@ -198,8 +198,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     questions: [
       {
         prompt:
-          "___ released by Donald Lawrence in 2004 samples ___ released by Michael Jackson in 2001. (Format: gospel song, MJ song)",
-        hint: "Two parts. Separate with a comma.",
+          "___ released by Donald Lawrence in 2004 samples ___ released by Michael Jackson in 2001.",
+        hint: "Two song titles, separated by a comma.",
         answer: "healed, you rock my world",
         acceptable: [
           "healed, you rock my world",
