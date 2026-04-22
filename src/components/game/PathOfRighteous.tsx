@@ -124,7 +124,7 @@ export function PathOfRighteous({
           const safe = safeIndices.has(i);
           const reveal = showSafe && safe;
           const currentRowMarker =
-            phase === "play" && Math.floor(i / cols) === step;
+            phase === "play" && Math.floor(i / cols) === step && i % cols === 0;
           return (
             <button
               key={i}
