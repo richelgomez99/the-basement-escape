@@ -1606,8 +1606,11 @@ function PathConfigEditor({
     onChange({ ...config, cols, safeCols });
   }
 
-  // Adjacency validation: every safe cell in row r > 0 must be within 1 column
-  // of at least one safe cell in row r-1 (horizontal/vertical/diagonal step).
+  // Adjacency validation: a row is valid as long as AT LEAST ONE of its safe
+  // stones is within 1 column of a safe stone in the previous row. Extra
+  // stones that aren't reachable are fine — they're dead-end branches the
+  // player simply wouldn't step on. The path only breaks if NO stone in the
+  // row can be reached from the previous row.
   const rowErrors: string[] = [];
   for (let r = 0; r < config.rows; r++) {
     const cur = rowAsArray(r);
@@ -1624,10 +1627,10 @@ function PathConfigEditor({
       rowErrors[r] = "";
       continue;
     }
-    const bad = cur.filter((c) => !prev.some((pc) => Math.abs(pc - c) <= 1));
-    rowErrors[r] = bad.length
-      ? `Not reachable from row ${r}: column${bad.length > 1 ? "s" : ""} ${bad.join(", ")}. Safe stones must be adjacent (±1 column) to a safe stone in the previous row.`
-      : "";
+    const anyReachable = cur.some((c) => prev.some((pc) => Math.abs(pc - c) <= 1));
+    rowErrors[r] = anyReachable
+      ? ""
+      : `No stone in this row is adjacent (±1 column) to a safe stone in row ${r}. The path is broken here.`;
   }
   const hasErrors = rowErrors.some(Boolean);
 
@@ -1667,7 +1670,10 @@ function PathConfigEditor({
           const col = i % config.cols;
           const isSafe = rowAsArray(row).includes(col);
           const reachable = isReachable(row, col);
-          const invalidSafe = isSafe && !reachable;
+          // Only flag a safe stone as invalid if the entire row is unreachable
+          // from the previous row. Otherwise it's just a dead-end branch.
+          const rowBroken = !!rowErrors[row];
+          const invalidSafe = isSafe && !reachable && rowBroken;
           return (
             <button
               key={i}
@@ -1680,10 +1686,10 @@ function PathConfigEditor({
                     ? "border-gold bg-gold/40 shadow-[0_0_6px_rgba(212,175,55,0.6)]"
                     : reachable
                       ? "border-border/60 bg-background/30 hover:border-gold/40"
-                      : "border-dashed border-border/30 bg-background/10 hover:border-destructive/40"
+                      : "border-dashed border-border/30 bg-background/10 hover:border-gold/30"
               }`}
-              aria-label={`r${row}c${col}${isSafe ? " (safe)" : ""}${!reachable ? " (not adjacent to previous row)" : ""}`}
-              title={!reachable && !isSafe ? "Not adjacent to a safe stone in the previous row" : undefined}
+              aria-label={`r${row}c${col}${isSafe ? " (safe)" : ""}`}
+              title={!reachable && !isSafe ? "Not adjacent to a safe stone in the previous row (would be a dead-end branch)" : undefined}
             />
           );
         })}
