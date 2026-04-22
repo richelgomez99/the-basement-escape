@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_sessions: {
+        Row: {
+          created_at: string
+          elapsed_seconds: number | null
+          finished_at: string | null
+          id: string
+          outcome: string
+          penalty_seconds: number
+          solved_count: number
+          started_at: string
+          team_name: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          elapsed_seconds?: number | null
+          finished_at?: string | null
+          id?: string
+          outcome?: string
+          penalty_seconds?: number
+          solved_count?: number
+          started_at?: string
+          team_name: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          elapsed_seconds?: number | null
+          finished_at?: string | null
+          id?: string
+          outcome?: string
+          penalty_seconds?: number
+          solved_count?: number
+          started_at?: string
+          team_name?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       narrations: {
         Row: {
           audio_url: string | null
