@@ -887,6 +887,9 @@ function PuzzleEditor({
           allowAudio={puzzle.id === 8}
           seedAnswer={puzzle.answer}
           seedAcceptable={puzzle.acceptable}
+          seedFlavor={puzzle.flavor}
+          seedScripture={puzzle.scripture}
+          seedHints={puzzle.hints}
           onChange={(next) => {
             const patch: Partial<Puzzle> = { questions: next };
             if (puzzle.id === 8) patch.musicQuestions = next;
