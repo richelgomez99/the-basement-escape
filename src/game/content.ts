@@ -363,7 +363,19 @@ DEFAULT_PUZZLES.forEach((p) => {
 /* ---------------- Persistence: Cloud + local fallback ---------------- */
 
 const OVERRIDES_KEY = "be_content_overrides";
-type Overrides = Partial<Record<number, Partial<Puzzle>>>;
+// Numeric keys map to per-puzzle overrides. Special key "_intro" stores the
+// home-page intro narration text (string).
+type Overrides = Partial<Record<number, Partial<Puzzle>>> & { _intro?: string };
+
+export function getIntroText(): string {
+  // Lazy import to avoid circular dep
+  const stored = (cachedOverrides as any)?._intro;
+  return typeof stored === "string" && stored.trim() ? stored : DEFAULT_INTRO_TEXT_INLINE;
+}
+
+// Inline default to avoid importing client-only module in shared content file.
+const DEFAULT_INTRO_TEXT_INLINE =
+  "You wake in the basement of an old church. The door is sealed by nine sacred locks, and the clock above is already counting down. Each lock guards a letter. Solve every puzzle, gather every letter, and you will find the code that sets you free. Trust the scriptures. Trust each other. The hour begins now.";
 
 let cachedOverrides: Overrides = {};
 let loadedFromCloud = false;
