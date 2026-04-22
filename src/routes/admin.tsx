@@ -18,6 +18,7 @@ import {
   clearOverrides,
   DEFAULT_PUZZLES,
   DEFAULT_VAULT_WORD,
+  emptyQuestionHints,
   getIntroText,
   getOverrides,
   getPuzzles,
