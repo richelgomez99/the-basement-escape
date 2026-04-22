@@ -120,13 +120,22 @@ function DoorScreen() {
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <Button
-            variant="outline"
-            className="border-destructive/50 text-destructive hover:bg-destructive/10"
-            onClick={() => setRecallOpen(true)}
-          >
-            Recall Past Clue (−2:00)
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setRecallOpen(true)}
+            >
+              Recall Past Clue (−2:00)
+            </Button>
+            <Button
+              variant="outline"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setResetOpen(true)}
+            >
+              Reset Game
+            </Button>
+          </div>
 
           {allSolved ? (
             <Link to="/vault">
