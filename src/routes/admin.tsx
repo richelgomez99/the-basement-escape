@@ -911,9 +911,10 @@ function PuzzleEditor({
 
             {hasQuestions && (
               <p className="mt-3 text-[11px] text-muted-foreground italic">
-                Multi-question mode is on for this lock — Flavor, Scripture,
-                Answer and Hints are now edited per question below. Remove all
-                questions to return to single-answer mode.
+                Multi-question mode is on for this lock. The puzzle Flavor
+                above is shown once as the intro; Scripture, Answer, and Hints
+                are now edited per question below. Remove all questions to
+                return to single-answer mode.
               </p>
             )}
           </>
