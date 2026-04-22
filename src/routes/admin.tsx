@@ -1142,13 +1142,9 @@ function QuestionsEditor({
                   <Input value={q.answer} onChange={(e) => update(i, { answer: e.target.value })} />
                 </Field>
                 <Field label="Acceptable alternates (comma-separated)">
-                  <Input
-                    value={(q.acceptable ?? []).join(", ")}
-                    onChange={(e) =>
-                      update(i, {
-                        acceptable: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                      })
-                    }
+                  <AcceptableInput
+                    value={q.acceptable ?? []}
+                    onCommit={(acceptable) => update(i, { acceptable })}
                   />
                 </Field>
               </div>
