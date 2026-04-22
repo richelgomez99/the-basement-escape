@@ -123,8 +123,6 @@ export function PathOfRighteous({
           const reached = trail.includes(i);
           const safe = safeIndices.has(i);
           const reveal = showSafe && safe;
-          const currentRowMarker =
-            phase === "play" && Math.floor(i / cols) === step && i % cols === 0;
           return (
             <button
               key={i}
@@ -135,9 +133,7 @@ export function PathOfRighteous({
                   ? "border-gold bg-gold/30"
                   : reveal
                     ? "border-gold bg-gold/40 shadow-[0_0_8px_rgba(212,175,55,0.6)]"
-                    : currentRowMarker
-                      ? "border-gold/60 bg-background/40"
-                      : "border-border/40 bg-background/30 hover:border-gold/40"
+                    : "border-border/40 bg-background/30 hover:border-gold/40"
               }`}
               aria-label={`stone-${i}`}
             />
