@@ -185,6 +185,9 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         { id: "melchizedek", name: "Melchizedek", real: false },
       ],
     },
+  },
+  {
+    id: 4,
     title: "Path of the Righteous",
     flavor:
       "The path is shown for a moment, then hidden. Cross row by row. A wrong stone costs 30 seconds. Asking to see the path again costs 2 minutes.",
