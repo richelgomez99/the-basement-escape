@@ -37,13 +37,22 @@ export type HiddenScene = {
 };
 
 // Path-of-righteous configuration
+// `safeCols[row]` may be a single column index (number) OR an array of column indices
+// when the admin wants multiple valid stones per row (e.g. looping/branching paths).
 export type PathConfig = {
   cols: number;
   rows: number;
-  // Length must equal `rows`. Each entry is the safe column index (0-based) for that row.
-  safeCols: number[];
+  // Length must equal `rows`. Each entry is one or more safe column indices (0-based).
+  safeCols: Array<number | number[]>;
   previewSeconds: number; // initial flash time
 };
+
+// Helper: return the set of safe column indices for a given row, regardless of shape.
+export function safeColsForRow(cfg: PathConfig, row: number): number[] {
+  const v = cfg.safeCols[row];
+  if (v === undefined || v === null) return [];
+  return Array.isArray(v) ? v : [v];
+}
 
 // Library (puzzle 3): list of books, real ones must be picked in order
 export type LibraryBook = {
@@ -118,8 +127,8 @@ function defaultPath(): PathConfig {
   const rows = 15;
   const cols = 9;
   // Hand-tuned weaving columns for a memorable but tricky path of 15.
-  const safeCols = [4, 5, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 6, 5, 4];
-  return { cols, rows, safeCols, previewSeconds: 5 };
+  const safeCols: Array<number | number[]> = [4, 5, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 6, 5, 4];
+  return { cols, rows, safeCols, previewSeconds: 12 };
 }
 
 export const DEFAULT_PUZZLES: Puzzle[] = [
@@ -134,7 +143,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["everlasting", "eternal"],
     hints: [
       { tier: 1, label: "Nudge", text: "What kind of life does God promise those who believe? Think of a word that means it never ends." },
-      { tier: 2, label: "Direction", text: "Eleven letters, starts with E. Synonym of 'eternal.'" },
+      { tier: 2, label: "Direction", text: "Eleven letters. A synonym for 'eternal' that begins with the same letter as 'every.'" },
       { tier: 3, label: "Bypass", text: "The answer is: everlasting" },
     ],
   },
@@ -148,7 +157,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["light", "the light"],
     hints: [
       { tier: 1, label: "Nudge", text: "What do a stained-glass window, a candle on the altar, and the dove of the Spirit all carry?" },
-      { tier: 2, label: "Direction", text: "Five letters. 'Let your ___ so shine before men' (Matthew 5:16)." },
+      { tier: 2, label: "Direction", text: "Five letters. Matthew 5:16 — 'Let your ___ so shine before men.'" },
       { tier: 3, label: "Bypass", text: "The answer is: LIGHT" },
     ],
     hiddenScene: {
@@ -170,7 +179,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "4",
     hints: [
       { tier: 1, label: "Nudge", text: "Recite the very first books of the Old Testament — the Torah." },
-      { tier: 2, label: "Direction", text: "Genesis comes first. After that: a book about leaving Egypt, a book of priestly law, then a book of a census." },
+      { tier: 2, label: "Direction", text: "There are four. The first is about beginnings; the second about leaving Egypt; one is priestly law; one is a wilderness census." },
       { tier: 3, label: "Bypass", text: "Genesis, Exodus, Leviticus, Numbers — that's 4 correct books." },
     ],
     libraryConfig: {
@@ -197,7 +206,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["narrow", "the narrow way", "narrow way"],
     hints: [
       { tier: 1, label: "Nudge", text: "Jesus said few find this kind of way — it's the opposite of broad." },
-      { tier: 2, label: "Direction", text: "Six letters, starts with N. Opposite of 'wide.'" },
+      { tier: 2, label: "Direction", text: "Six letters. The opposite of 'wide.'" },
       { tier: 3, label: "Bypass", text: "The missing word from Matthew 7:14 is: narrow" },
     ],
     pathConfig: defaultPath(),
@@ -211,7 +220,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     acceptable: ["total praise", "total praise to you"],
     hints: [
       { tier: 1, label: "Nudge", text: "A modern gospel standard composed by Richard Smallwood, often sung at funerals and church anniversaries." },
-      { tier: 2, label: "Direction", text: "Two words. The lyrics adapt Psalm 121 ('I will lift mine eyes...') and famously close on a long, sustained 'Amen.'" },
+      { tier: 2, label: "Direction", text: "Two words. Adapts Psalm 121 ('I will lift mine eyes...') and famously closes on a long, sustained 'Amen.'" },
       { tier: 3, label: "Bypass", text: "The hymn is: Total Praise" },
     ],
   },
@@ -225,8 +234,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     answer: "4",
     hints: [
       { tier: 1, label: "Nudge", text: "Start with how long it rained on Noah, then subtract a smaller number tied to the apostles and Jonah." },
-      { tier: 2, label: "Direction", text: "40 (flood) − (12 apostles × 3 days Jonah was in the fish) = 40 − 36." },
-      { tier: 3, label: "Bypass", text: "The answer is 4." },
+      { tier: 2, label: "Direction", text: "Flood days − (apostles × Jonah's days in the fish). All three numbers are famous Bible counts." },
+      { tier: 3, label: "Bypass", text: "40 − (12 × 3) = 4." },
     ],
   },
   {
@@ -284,7 +293,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
+        prompt:
+          'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Pastor and gospel artist who sang about lifting hands before the breakthrough arrives.",
         answer: "praise him in advance - marvin sapp",
         acceptable: [
@@ -292,11 +302,13 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "marvin sapp - praise him in advance",
           "praise him in advance, marvin sapp",
           "marvin sapp, praise him in advance",
+          "praise him in advance by marvin sapp",
         ],
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
+        prompt:
+          'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Bishop and Love Fellowship Choir leader. The song declares that God's name is ___.",
         answer: "wonderful is your name - hezekiah walker",
         acceptable: [
@@ -304,13 +316,14 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "hezekiah walker - wonderful is your name",
           "wonderful is your name, hezekiah walker",
           "hezekiah walker, wonderful is your name",
+          "wonderful is your name by hezekiah walker",
         ],
         audioUrl: "",
       },
     ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s — Kirk Franklin, Sounds of Blackness, Marvin Sapp, Hezekiah Walker." },
-      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people." },
+      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s. Think Kirk Franklin, Donald Lawrence, Marvin Sapp, Hezekiah Walker." },
+      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words right after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people. Q4 & Q5: both are well-known worship songs by Black gospel pastors — one about lifting hands early, the other about the greatness of God's name." },
       { tier: 3, label: "Bypass", text: "Q1: Healed, You Rock My World • Q2: Rain Down On Me • Q3: Sounds of Blackness • Q4: Praise Him in Advance — Marvin Sapp • Q5: Wonderful Is Your Name — Hezekiah Walker." },
     ],
   },

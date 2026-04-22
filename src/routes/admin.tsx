@@ -1015,28 +1015,50 @@ function PathConfigEditor({
   config: PathConfig;
   onChange: (pc: PathConfig) => void;
 }) {
-  function setSafe(row: number, col: number) {
-    const next = [...config.safeCols];
-    next[row] = col;
+  // Normalize each row entry into a number[] for editing convenience.
+  function rowAsArray(row: number): number[] {
+    const v = config.safeCols[row];
+    if (v === undefined || v === null) return [];
+    return Array.isArray(v) ? [...v] : [v];
+  }
+
+  function toggleCell(row: number, col: number) {
+    const next: Array<number | number[]> = config.safeCols.map((v) =>
+      Array.isArray(v) ? [...v] : v,
+    );
+    const current = rowAsArray(row);
+    const has = current.includes(col);
+    const updated = has ? current.filter((c) => c !== col) : [...current, col].sort((a, b) => a - b);
+    // Store as plain number when only one safe stone, otherwise as array.
+    next[row] = updated.length === 1 ? updated[0] : updated;
     onChange({ ...config, safeCols: next });
   }
+
   function setRows(rows: number) {
     rows = Math.max(3, Math.min(30, rows));
-    const safeCols = [...config.safeCols];
+    const safeCols: Array<number | number[]> = config.safeCols.map((v) =>
+      Array.isArray(v) ? [...v] : v,
+    );
     while (safeCols.length < rows) safeCols.push(Math.floor(config.cols / 2));
     while (safeCols.length > rows) safeCols.pop();
     onChange({ ...config, rows, safeCols });
   }
   function setCols(cols: number) {
     cols = Math.max(3, Math.min(15, cols));
-    const safeCols = config.safeCols.map((c) => Math.min(c, cols - 1));
+    const safeCols: Array<number | number[]> = config.safeCols.map((v) => {
+      if (Array.isArray(v)) {
+        const filtered = v.filter((c) => c < cols);
+        return filtered.length === 1 ? filtered[0] : filtered.length === 0 ? 0 : filtered;
+      }
+      return Math.min(v, cols - 1);
+    });
     onChange({ ...config, cols, safeCols });
   }
 
   return (
     <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
       <div className="font-display text-xs uppercase tracking-widest text-gold">
-        Path of the Righteous — click a cell in each row to mark the safe stone
+        Path of the Righteous — click cells to toggle safe stones (multiple per row allowed for branching/looping paths)
       </div>
       <div className="grid gap-2 md:grid-cols-3">
         <NumberField label="Rows (path length)" value={config.rows} min={3} max={30} onChange={setRows} />
@@ -1045,7 +1067,7 @@ function PathConfigEditor({
           label="Preview seconds"
           value={config.previewSeconds}
           min={1}
-          max={20}
+          max={30}
           onChange={(v) => onChange({ ...config, previewSeconds: v })}
         />
       </div>
@@ -1059,12 +1081,12 @@ function PathConfigEditor({
         {Array.from({ length: config.rows * config.cols }).map((_, i) => {
           const row = Math.floor(i / config.cols);
           const col = i % config.cols;
-          const isSafe = config.safeCols[row] === col;
+          const isSafe = rowAsArray(row).includes(col);
           return (
             <button
               key={i}
               type="button"
-              onClick={() => setSafe(row, col)}
+              onClick={() => toggleCell(row, col)}
               className={`aspect-square rounded border transition ${
                 isSafe
                   ? "border-gold bg-gold/40 shadow-[0_0_6px_rgba(212,175,55,0.6)]"
@@ -1076,8 +1098,9 @@ function PathConfigEditor({
         })}
       </div>
       <p className="text-xs text-muted-foreground">
-        Players see the lit path for {config.previewSeconds}s, then it hides. Wrong stone = −30s. Asking
-        to see the path again = −2 minutes.
+        Click any cell to toggle it as safe. You can mark <strong>multiple</strong> safe stones per row to create
+        looping or branching paths. Players see safe stones lit for {config.previewSeconds}s, then they hide.
+        Wrong stone = −30s. Asking to see the path again = −2 minutes.
       </p>
     </div>
   );

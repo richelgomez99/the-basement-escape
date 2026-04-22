@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AnswerForm } from "./AnswerForm";
 import { Button } from "@/components/ui/button";
 import type { PathConfig, Puzzle } from "@/game/content";
-import { PATH_RECALL_PENALTY_SECONDS, TRAP_PENALTY_SECONDS } from "@/game/content";
+import { PATH_RECALL_PENALTY_SECONDS, TRAP_PENALTY_SECONDS, safeColsForRow } from "@/game/content";
 import { addPenalty } from "@/game/state";
 
 export function PathOfRighteous({
@@ -12,23 +12,27 @@ export function PathOfRighteous({
   puzzle: Puzzle;
   config: PathConfig;
 }) {
-  const { cols, rows, safeCols, previewSeconds } = config;
-  const safeIndices = new Set(safeCols.map((c, r) => r * cols + c));
+  const { cols, rows, previewSeconds } = config;
 
-  // 'preview' | 'memorize' | 'play' | 'recall' | 'crossed' | 'fail-flash'
+  // Build a Set of safe (row*cols+col) indices, supporting multiple safe cols per row.
+  const safeIndices = new Set<number>();
+  for (let r = 0; r < rows; r++) {
+    for (const c of safeColsForRow(config, r)) {
+      safeIndices.add(r * cols + c);
+    }
+  }
+
   const [phase, setPhase] = useState<"preview" | "play" | "recall" | "crossed" | "fail">("preview");
   const [step, setStep] = useState(0);
   const [trail, setTrail] = useState<number[]>([]);
   const [error, setError] = useState("");
 
-  // Initial preview countdown
   useEffect(() => {
     if (phase !== "preview") return;
     const t = setTimeout(() => setPhase("play"), previewSeconds * 1000);
     return () => clearTimeout(t);
   }, [phase, previewSeconds]);
 
-  // Recall mini-preview
   useEffect(() => {
     if (phase !== "recall") return;
     const t = setTimeout(() => setPhase("play"), previewSeconds * 1000);
@@ -71,9 +75,9 @@ export function PathOfRighteous({
   const showSafe = phase === "preview" || phase === "recall";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {phase === "preview" && `Memorize the path — hidden in ${previewSeconds}s.`}
           {phase === "recall" && `Path revealed — hides in ${previewSeconds}s.`}
           {phase === "play" && `Row ${step + 1} of ${rows}. Wrong stone = −30s.`}
@@ -94,10 +98,10 @@ export function PathOfRighteous({
       </div>
 
       <div
-        className={`mx-auto grid gap-1 ${phase === "fail" ? "pointer-events-none opacity-60" : ""}`}
+        className={`mx-auto grid gap-[2px] ${phase === "fail" ? "pointer-events-none opacity-60" : ""}`}
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          maxWidth: Math.min(560, cols * 56),
+          maxWidth: `min(100%, ${Math.min(420, cols * 40)}px)`,
         }}
       >
         {Array.from({ length: rows * cols }).map((_, i) => {
@@ -111,14 +115,14 @@ export function PathOfRighteous({
               key={i}
               onClick={() => tap(i)}
               disabled={phase !== "play"}
-              className={`aspect-square rounded border transition ${
+              className={`aspect-square rounded-sm border transition ${
                 reached
                   ? "border-gold bg-gold/30"
                   : reveal
-                    ? "border-gold bg-gold/40 shadow-[0_0_10px_rgba(212,175,55,0.6)]"
+                    ? "border-gold bg-gold/40 shadow-[0_0_8px_rgba(212,175,55,0.6)]"
                     : currentRowMarker
                       ? "border-gold/60 bg-background/40"
-                      : "border-border/50 bg-background/30 hover:border-gold/40"
+                      : "border-border/40 bg-background/30 hover:border-gold/40"
               }`}
               aria-label={`stone-${i}`}
             />
