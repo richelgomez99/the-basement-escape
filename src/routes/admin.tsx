@@ -958,6 +958,9 @@ function QuestionsEditor({
   allowAudio,
   seedAnswer,
   seedAcceptable,
+  seedFlavor,
+  seedScripture,
+  seedHints,
   onChange,
 }: {
   puzzleId: number;
@@ -965,119 +968,197 @@ function QuestionsEditor({
   allowAudio: boolean;
   seedAnswer?: string;
   seedAcceptable?: string[];
+  seedFlavor?: string;
+  seedScripture?: string;
+  seedHints?: Hint[];
   onChange: (next: Question[]) => void;
 }) {
-  // If no questions are saved yet but the puzzle has a single-answer, show that
-  // answer as Question 1 (virtual) so the host doesn't see an empty editor that
-  // contradicts the filled single-answer field. The first edit/add materializes it.
-  const hasSeed = !!(seedAnswer?.trim() || (seedAcceptable && seedAcceptable.length));
-  const isVirtual = questions.length === 0 && hasSeed;
-  const display: Question[] = isVirtual
-    ? [{ prompt: "", answer: seedAnswer ?? "", acceptable: seedAcceptable ?? [], hint: "", audioUrl: "" }]
-    : questions;
-
-  function commit(next: Question[]) {
-    onChange(next);
+  function makeSeededQuestion(): Question {
+    return {
+      prompt: "",
+      flavor: seedFlavor ?? "",
+      scripture: seedScripture ?? "",
+      answer: seedAnswer ?? "",
+      acceptable: seedAcceptable ?? [],
+      hint: "",
+      hints: seedHints && seedHints.length === 3
+        ? seedHints.map((h) => ({ ...h }))
+        : emptyQuestionHints(),
+      audioUrl: "",
+    };
   }
+  function makeBlankQuestion(): Question {
+    return {
+      prompt: "",
+      flavor: "",
+      scripture: "",
+      answer: "",
+      acceptable: [],
+      hint: "",
+      hints: emptyQuestionHints(),
+      audioUrl: "",
+    };
+  }
+
   function update(idx: number, patch: Partial<Question>) {
-    commit(display.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+    onChange(questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
   }
   function add() {
-    commit([...display, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
+    if (questions.length === 0) {
+      // First time enabling multi-question mode: seed Q1 from the puzzle and
+      // give the host an empty Q2 to fill in (matches their mental model).
+      onChange([makeSeededQuestion(), makeBlankQuestion()]);
+    } else {
+      onChange([...questions, makeBlankQuestion()]);
+    }
   }
   function remove(idx: number) {
-    commit(display.filter((_, i) => i !== idx));
+    onChange(questions.filter((_, i) => i !== idx));
   }
   function move(idx: number, dir: -1 | 1) {
-    const next = [...display];
+    const next = [...questions];
     const j = idx + dir;
     if (j < 0 || j >= next.length) return;
     [next[idx], next[j]] = [next[j], next[idx]];
-    commit(next);
+    onChange(next);
+  }
+  function updateHint(qIdx: number, hIdx: number, patch: Partial<Hint>) {
+    const q = questions[qIdx];
+    const baseHints = q.hints && q.hints.length === 3 ? q.hints : emptyQuestionHints();
+    const nextHints = baseHints.map((h, i) => (i === hIdx ? { ...h, ...patch } : h));
+    update(qIdx, { hints: nextHints });
   }
 
   return (
     <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <div className="font-display text-xs uppercase tracking-widest text-gold">
-          Questions ({display.length}) — players answer in order, −30s per wrong
-          {isVirtual && (
-            <span className="ml-2 normal-case tracking-normal text-muted-foreground">
-              (Question 1 is auto-filled from the single-answer above. Add a 2nd to enable multi-question mode.)
-            </span>
-          )}
+          Questions ({questions.length}) — players answer in order, −30s per wrong
         </div>
         <Button size="sm" variant="outline" onClick={add}>
           + Add question
         </Button>
       </div>
+
+      {questions.length === 0 && (
+        <p className="text-xs text-muted-foreground italic">
+          No questions yet. Click <strong>+ Add question</strong> to enable multi-question mode.
+          Question 1 will be auto-filled from this puzzle's flavor, scripture, answer, and 3 hints
+          above — and a blank Question 2 will be added so you can keep going.
+        </p>
+      )}
+
       <div className="space-y-3">
-        {display.map((q, i) => (
-          <div key={i} className="rounded border border-border bg-background/40 p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">
-                Question {i + 1}
+        {questions.map((q, i) => {
+          const hints = q.hints && q.hints.length === 3 ? q.hints : emptyQuestionHints();
+          return (
+            <div key={i} className="rounded border border-border bg-background/40 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Question {i + 1}
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
+                    ↑
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => move(i, 1)}
+                    disabled={i === questions.length - 1}
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-destructive/50 text-destructive"
+                    onClick={() => remove(i)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
-                  ↑
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => move(i, 1)}
-                  disabled={i === display.length - 1}
-                >
-                  ↓
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-destructive/50 text-destructive"
-                  onClick={() => remove(i)}
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-            <Field label="Prompt">
-              <Textarea
-                value={q.prompt}
-                onChange={(e) => update(i, { prompt: e.target.value })}
-                rows={2}
-              />
-            </Field>
-            <div className="grid gap-2 md:grid-cols-2">
-              <Field label="Canonical answer">
-                <Input value={q.answer} onChange={(e) => update(i, { answer: e.target.value })} />
-              </Field>
-              <Field label="Hint (optional)">
-                <Input
-                  value={q.hint ?? ""}
-                  onChange={(e) => update(i, { hint: e.target.value })}
+
+              <Field label="Prompt (the question players read)">
+                <Textarea
+                  value={q.prompt}
+                  onChange={(e) => update(i, { prompt: e.target.value })}
+                  rows={2}
                 />
               </Field>
+
+              <div className="grid gap-2 md:grid-cols-2">
+                <Field label="Flavor (optional, shown above prompt)">
+                  <Textarea
+                    value={q.flavor ?? ""}
+                    onChange={(e) => update(i, { flavor: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+                <Field label="Scripture (optional)">
+                  <Textarea
+                    value={q.scripture ?? ""}
+                    onChange={(e) => update(i, { scripture: e.target.value })}
+                    rows={2}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-2">
+                <Field label="Canonical answer">
+                  <Input value={q.answer} onChange={(e) => update(i, { answer: e.target.value })} />
+                </Field>
+                <Field label="Acceptable alternates (comma-separated)">
+                  <Input
+                    value={(q.acceptable ?? []).join(", ")}
+                    onChange={(e) =>
+                      update(i, {
+                        acceptable: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                  />
+                </Field>
+              </div>
+
+              {/* Per-question 3-tier hints */}
+              <div className="space-y-2">
+                <div className="font-display text-[11px] uppercase tracking-widest text-gold">
+                  Hints for this question (3 tiers — Nudge / Direction / Bypass)
+                </div>
+                {hints.map((h, hIdx) => (
+                  <div key={h.tier} className="rounded border border-border bg-background/30 p-2">
+                    <div className="grid gap-2 md:grid-cols-[120px_1fr]">
+                      <Input
+                        value={h.label}
+                        onChange={(e) => updateHint(i, hIdx, { label: e.target.value })}
+                        placeholder={`Hint ${h.tier} label`}
+                      />
+                      <Textarea
+                        value={h.text}
+                        onChange={(e) => updateHint(i, hIdx, { text: e.target.value })}
+                        rows={2}
+                        placeholder={`Hint ${h.tier} text (leave blank to hide)`}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[11px] text-muted-foreground italic">
+                  Empty hints are hidden from players. Each revealed hint costs 2 minutes.
+                </p>
+              </div>
+
+              {allowAudio && (
+                <AudioUploader
+                  puzzleId={puzzleId}
+                  qIdx={i}
+                  audioUrl={q.audioUrl ?? ""}
+                  onChange={(audioUrl) => update(i, { audioUrl })}
+                />
+              )}
             </div>
-            <Field label="Acceptable alternates (comma-separated)">
-              <Input
-                value={(q.acceptable ?? []).join(", ")}
-                onChange={(e) =>
-                  update(i, {
-                    acceptable: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                  })
-                }
-              />
-            </Field>
-            {allowAudio && (
-              <AudioUploader
-                puzzleId={puzzleId}
-                qIdx={i}
-                audioUrl={q.audioUrl ?? ""}
-                onChange={(audioUrl) => update(i, { audioUrl })}
-              />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
