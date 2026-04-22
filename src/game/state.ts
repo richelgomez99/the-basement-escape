@@ -37,10 +37,12 @@ export function startGame(name: string) {
   write(KEYS.penalty, 0);
   write(KEYS.solved, []);
   write(KEYS.finished, false);
+  if (typeof window !== "undefined") window.localStorage.removeItem("be_pause_start");
 }
 export function resetGame() {
   if (typeof window === "undefined") return;
   Object.values(KEYS).forEach((k) => window.localStorage.removeItem(k));
+  window.localStorage.removeItem("be_pause_start");
   window.dispatchEvent(new Event("be_state"));
 }
 export function getSolved(): number[] {
@@ -78,7 +80,9 @@ export function resumeClock() {
   window.localStorage.removeItem(PAUSE_KEY);
   if (Number.isFinite(startedAt) && startedAt > 0) {
     const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
-    if (pausedSecs > 0) addPenalty(-pausedSecs); // negative penalty = give time back
+    // Bake the paused duration into penalty so elapsed stays continuous
+    // (pauseOffset was subtracting these seconds while active; now it's gone).
+    if (pausedSecs > 0) addPenalty(pausedSecs);
   }
   window.dispatchEvent(new Event("be_state"));
 }

@@ -170,7 +170,13 @@ export function NarrationPlayer({
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
       {row?.audio_url && (
-        <audio ref={audioRef} src={row.audio_url} preload="auto" onEnded={handleAudioEnded} />
+        <audio
+          ref={audioRef}
+          src={row.audio_url}
+          preload="auto"
+          autoPlay={autoplay && !muted}
+          onEnded={handleAudioEnded}
+        />
       )}
       <button
         type="button"
