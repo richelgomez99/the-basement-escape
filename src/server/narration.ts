@@ -66,11 +66,13 @@ export const generateNarration = createServerFn({ method: "POST" })
           },
           body: JSON.stringify({
             text: trimmed,
-            model_id: "eleven_multilingual_v2",
+            // v3 supports inline audio tags like [whispers], [laughs], [mischievously],
+            // [sarcastic], [chuckles], [sighs], [excited], [ominous], etc.
+            model_id: "eleven_v3",
             voice_settings: {
-              stability: 0.5,
+              stability: 0.4,
               similarity_boost: 0.75,
-              style: 0.4,
+              style: 0.6,
               use_speaker_boost: true,
             },
           }),
