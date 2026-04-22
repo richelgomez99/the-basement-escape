@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
 
 export const Route = createFileRoute("/door")({
   head: () => ({
@@ -32,6 +33,8 @@ function DoorScreen() {
   const [team, setTeam] = useState("");
   const [recallOpen, setRecallOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  const [revealedLetterPuzzleId, setRevealedLetterPuzzleId] = useState<number | null>(null);
+  const [revealVariant, setRevealVariant] = useState<"replay" | "recall">("replay");
   const puzzles = getPuzzles();
 
   useEffect(() => {
@@ -44,10 +47,18 @@ function DoorScreen() {
 
   const allSolved = solved.length === puzzles.length;
   const solvedSet = new Set(solved);
-  // Sequential availability: lock N available iff 1..N-1 all solved.
   function isAvailable(id: number) {
     for (let i = 1; i < id; i++) if (!solvedSet.has(i)) return false;
     return true;
+  }
+
+  const revealedPuzzle = revealedLetterPuzzleId
+    ? puzzles.find((p) => p.id === revealedLetterPuzzleId)
+    : null;
+
+  function showLetterFor(id: number, variant: "replay" | "recall") {
+    setRevealVariant(variant);
+    setRevealedLetterPuzzleId(id);
   }
 
   return (
@@ -73,6 +84,9 @@ function DoorScreen() {
           <p className="mt-2 text-muted-foreground">
             {solved.length} of {puzzles.length} locks opened
           </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Tap a solved lock to view its letter again, or tap an open lock to play it.
+          </p>
         </div>
 
         <div className="mt-8 stone-panel rounded-2xl p-6 md:p-10">
@@ -85,7 +99,7 @@ function DoorScreen() {
                 <div
                   className={`group relative aspect-square rounded-lg border-2 p-3 md:p-5 transition-all flex flex-col items-center justify-center text-center ${
                     isSolved
-                      ? "border-gold bg-gold/10 gold-glow"
+                      ? "border-gold bg-gold/10 gold-glow cursor-pointer hover:bg-gold/20"
                       : available
                         ? "border-border bg-background/50 hover:border-gold/60 hover:bg-background/80 cursor-pointer"
                         : "border-border/40 bg-background/20 opacity-50 cursor-not-allowed"
@@ -110,14 +124,34 @@ function DoorScreen() {
                   >
                     {available || isSolved ? p.title.replace(/^.*— /, "") : "Sealed"}
                   </div>
+                  {isSolved && (
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-gold/80">
+                      Tap to view letter
+                    </div>
+                  )}
                 </div>
               );
 
-              return available ? (
-                <Link key={p.id} to="/puzzle/$id" params={{ id: String(p.id) }}>
-                  {tile}
-                </Link>
-              ) : (
+              if (isSolved) {
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => showLetterFor(p.id, "replay")}
+                    className="text-left"
+                  >
+                    {tile}
+                  </button>
+                );
+              }
+              if (available) {
+                return (
+                  <Link key={p.id} to="/puzzle/$id" params={{ id: String(p.id) }}>
+                    {tile}
+                  </Link>
+                );
+              }
+              return (
                 <div key={p.id} aria-disabled="true" title="Solve previous locks first">
                   {tile}
                 </div>
@@ -132,8 +166,9 @@ function DoorScreen() {
               variant="outline"
               className="border-destructive/50 text-destructive hover:bg-destructive/10"
               onClick={() => setRecallOpen(true)}
+              disabled={solved.length === 0}
             >
-              Recall Past Clue (−2:00)
+              Recall a Letter (−2:00)
             </Button>
             <Button
               variant="outline"
@@ -158,27 +193,54 @@ function DoorScreen() {
         </div>
       </main>
 
+      {/* Recall: pick a solved puzzle, pay 2 min, see its letter */}
       <Dialog open={recallOpen} onOpenChange={setRecallOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Recall a past clue?</DialogTitle>
+            <DialogTitle>Recall a letter</DialogTitle>
             <DialogDescription>
-              The Oracle will repeat any clue you've already heard — but it will cost you{" "}
-              <strong className="text-destructive">2 minutes</strong> off the clock.
+              Pick a lock you've already opened and the Oracle will reveal its letter — for{" "}
+              <strong className="text-destructive">−2 minutes</strong> off the clock.
+              <br />
+              <span className="text-xs text-muted-foreground">
+                Tip: tapping a solved lock above shows its letter for free.
+              </span>
             </DialogDescription>
           </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-2 py-2">
+            {puzzles.map((p) => {
+              const isSolved = solvedSet.has(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={!isSolved}
+                  onClick={() => {
+                    addPenalty(RECALL_PENALTY_SECONDS);
+                    setRecallOpen(false);
+                    showLetterFor(p.id, "recall");
+                  }}
+                  className={`rounded border p-3 text-center transition ${
+                    isSolved
+                      ? "border-gold/50 bg-gold/5 hover:bg-gold/15"
+                      : "border-border/40 opacity-40 cursor-not-allowed"
+                  }`}
+                >
+                  <div className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+                    Lock {p.id}
+                  </div>
+                  <div className="mt-1 font-display text-xl text-gold">
+                    {isSolved ? "?" : "—"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setRecallOpen(false)}>
               Cancel
-            </Button>
-            <Button
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                addPenalty(RECALL_PENALTY_SECONDS);
-                setRecallOpen(false);
-              }}
-            >
-              Yes, recall (−2:00)
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -211,6 +273,18 @@ function DoorScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Letter reveal dialog (replay = free, recall = paid) */}
+      {revealedPuzzle && (
+        <LetterUnlockedDialog
+          open={revealedLetterPuzzleId !== null}
+          onClose={() => setRevealedLetterPuzzleId(null)}
+          puzzleId={revealedPuzzle.id}
+          totalPuzzles={puzzles.length}
+          letter={revealedPuzzle.artifact}
+          variant={revealVariant}
+        />
+      )}
     </div>
   );
 }
