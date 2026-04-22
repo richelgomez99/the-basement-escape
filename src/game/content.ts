@@ -247,6 +247,9 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       revealedWord: "TRUTH",
       intro: "Tap two pieces to swap them. Reassemble the window — letters will appear.",
     },
+  },
+  {
+    id: 8,
     title: "Songs of the Saints",
     flavor: "Five gospel music challenges. Wrong answers cost 30 seconds. Pass them all.",
     artifact: "I",
@@ -323,8 +326,19 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "Begin with him hidden as an infant. End at Sinai. In between: a bush, plagues, and a sea." },
       { tier: 3, label: "Bypass", text: "Order: Basket, Burning Bush, Plagues, Red Sea, Ten Commandments." },
     ],
-  },
-];
+    timelineConfig: {
+      intro: "Tap to ORDER Moses events. Tap ✕ to REMOVE imposters. Wrong moves = −30s.",
+      finalCode: "12345",
+      events: [
+        { id: "basket", label: "Hidden in a basket", belongs: true, order: 1 },
+        { id: "babel", label: "Tower of Babel", belongs: false },
+        { id: "bush", label: "Burning Bush", belongs: true, order: 2 },
+        { id: "abraham", label: "Abraham's covenant", belongs: false },
+        { id: "plagues", label: "Ten Plagues", belongs: true, order: 3 },
+        { id: "redsea", label: "Crossing the Red Sea", belongs: true, order: 4 },
+        { id: "ten", label: "Ten Commandments", belongs: true, order: 5 },
+      ],
+    },
 
 // Mirror musicQuestions ↔ questions for puzzle 8 backwards-compat
 DEFAULT_PUZZLES.forEach((p) => {
