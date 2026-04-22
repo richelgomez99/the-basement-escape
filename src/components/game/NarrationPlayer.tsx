@@ -40,7 +40,9 @@ export function NarrationPlayer({
     return () => window.removeEventListener("be_mute", h);
   }, []);
 
-  // Fetch + poll narration row
+  // Fetch + (only while actively generating) poll narration row.
+  // We do NOT poll when the row is missing — admin pre-generates audio,
+  // and realtime subscription will pick it up if/when it appears.
   useEffect(() => {
     let alive = true;
     let timer: number | undefined;
@@ -49,13 +51,14 @@ export function NarrationPlayer({
       const r = await fetchNarration(narrationKey);
       if (!alive) return;
       setRow(r);
-      if (!r || r.status === "generating" || r.status === "pending") {
+      // Only keep polling while a generation is actively in progress.
+      if (r && (r.status === "generating" || r.status === "pending")) {
         timer = window.setTimeout(tick, 2000);
       }
     }
     tick();
 
-    // Realtime subscription for instant update when admin regenerates
+    // Realtime subscription so admin-triggered generation reaches players instantly.
     const channel = supabase
       .channel(`narration-${narrationKey}`)
       .on(
@@ -103,8 +106,15 @@ export function NarrationPlayer({
     }
   }
 
-  const isLoading = !row || row.status === "generating" || row.status === "pending";
+  // Generation only happens admin-side. From the player's POV:
+  //   - row missing → silently render nothing
+  //   - row generating → show subtle loader
+  //   - row ready → show play / mute controls
+  const generating = row?.status === "generating" || row?.status === "pending";
   const isError = row?.status === "error";
+
+  // Hide entirely until admin has generated something for this key.
+  if (!row && !generating) return null;
 
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
@@ -115,18 +125,18 @@ export function NarrationPlayer({
         type="button"
         onClick={muted ? toggleMute : row?.audio_url ? replay : undefined}
         className="inline-flex h-9 items-center gap-2 rounded-md border border-gold/40 bg-background/40 px-3 text-xs text-gold hover:bg-gold/10 disabled:opacity-50"
-        disabled={isLoading || (!row?.audio_url && !muted)}
+        disabled={generating || (!row?.audio_url && !muted)}
         title={
           muted
             ? "Unmute Puzzle Master"
-            : isLoading
+            : generating
               ? "Generating narration…"
               : isError
                 ? "Narration unavailable"
                 : "Replay Puzzle Master"
         }
       >
-        {isLoading ? (
+        {generating ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Conjuring voice…</span>
@@ -143,7 +153,7 @@ export function NarrationPlayer({
           </>
         )}
       </button>
-      {!isLoading && (
+      {!generating && (
         <button
           type="button"
           onClick={toggleMute}

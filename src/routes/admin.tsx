@@ -8,9 +8,11 @@ import {
   ADMIN_DEFAULT_PASSWORD,
   clearOverrides,
   DEFAULT_PUZZLES,
+  DEFAULT_VAULT_WORD,
   getIntroText,
   getOverrides,
   getPuzzles,
+  getVaultWord,
   loadOverridesFromCloud,
   saveOverridesToCloud,
   type HiddenMarker,
@@ -122,12 +124,13 @@ const MULTI_Q_PUZZLES = new Set([1, 4, 5, 6, 7, 8]);
 function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
   const [introText, setIntroText] = useState<string>(getIntroText());
+  const [vaultWord, setVaultWord] = useState<string>(getVaultWord());
   const [savedAt, setSavedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwMsg, setPwMsg] = useState("");
-  const vaultCode = useMemo(() => puzzles.map((p) => p.artifact).join(""), [puzzles]);
+  const vaultWordValid = /^[A-Z]{9}$/.test(vaultWord.toUpperCase());
 
   // Pull latest from cloud once on mount
   useEffect(() => {
@@ -135,6 +138,7 @@ function Editor() {
       await loadOverridesFromCloud();
       setPuzzles(getPuzzles());
       setIntroText(getIntroText());
+      setVaultWord(getVaultWord());
     })();
   }, []);
 
@@ -142,12 +146,14 @@ function Editor() {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
 
-  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } {
-    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } = {};
+  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } {
+    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } = {};
     puzzles.forEach((p) => {
       const def = DEFAULT_PUZZLES.find((d) => d.id === p.id)!;
       const diff: Partial<Puzzle> = {};
-      (["title", "flavor", "scripture", "artifact", "answer"] as const).forEach((k) => {
+      // NOTE: `artifact` intentionally excluded — letters are derived from the
+      // single vault word, not edited per puzzle.
+      (["title", "flavor", "scripture", "answer"] as const).forEach((k) => {
         if ((p[k] ?? "") !== (def[k] ?? "")) (diff as any)[k] = p[k];
       });
       const accNew = (p.acceptable ?? []).join(",");
@@ -199,6 +205,10 @@ function Editor() {
     });
     if (introText.trim() && introText.trim() !== DEFAULT_INTRO_TEXT) {
       out._intro = introText.trim();
+    }
+    const vw = vaultWord.trim().toUpperCase();
+    if (vw && vw.length === 9 && /^[A-Z]{9}$/.test(vw) && vw !== DEFAULT_VAULT_WORD) {
+      out._vaultWord = vw;
     }
     return out;
   }
@@ -308,16 +318,41 @@ function Editor() {
         </header>
 
         <div className="stone-panel mt-6 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-[260px]">
             <div className="font-display text-xs uppercase tracking-widest text-gold">
-              Live Vault Code
+              Vault word (9 letters)
             </div>
-            <div className="font-display text-2xl tracking-[0.3em] text-gold mt-1">
-              {vaultCode || "—"}
+            <div className="mt-1 flex items-center gap-2">
+              <Input
+                value={vaultWord}
+                maxLength={9}
+                onChange={(e) =>
+                  setVaultWord(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 9))
+                }
+                className="h-11 w-44 text-center font-display text-xl tracking-[0.3em] uppercase border-gold/50"
+                placeholder={DEFAULT_VAULT_WORD}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setVaultWord(DEFAULT_VAULT_WORD)}
+                title="Reset to default"
+              >
+                Default
+              </Button>
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {vaultWordValid
+                ? "Letters auto-scramble across the 9 locks. Players unscramble to win."
+                : "Enter exactly 9 letters (A–Z). No spaces."}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={save} disabled={saving} className="bg-gold text-gold-foreground hover:bg-gold/90">
+            <Button
+              onClick={save}
+              disabled={saving || !vaultWordValid}
+              className="bg-gold text-gold-foreground hover:bg-gold/90"
+            >
               {saving ? "Saving…" : "Save changes"}
             </Button>
             <Button variant="outline" onClick={exportJson}>Export JSON</Button>
@@ -518,17 +553,54 @@ function NarrationStatusPanel({
     }
   }
 
+  // True for items missing audio OR whose text changed since last generation.
+  const stale = items.filter((it) => {
+    const row = byKey.get(it.key);
+    if (!row || !row.audio_url || row.status !== "ready") return true;
+    return row.text.trim() !== it.text;
+  });
+  const [bulkRunning, setBulkRunning] = useState(false);
+  async function generateAllStale() {
+    if (bulkRunning || stale.length === 0) return;
+    setBulkRunning(true);
+    for (const it of stale) {
+      if (!it.text) continue;
+      try {
+        await generateNarration({ data: { key: it.key, text: it.text } });
+      } catch (e) {
+        console.warn("bulk regen failed for", it.key, e);
+      }
+    }
+    setBulkRunning(false);
+  }
+
   return (
     <div className="stone-panel mt-4 rounded-xl p-4">
-      <div className="flex items-center gap-2">
-        <Volume2 className="h-4 w-4 text-gold" />
-        <div className="font-display text-xs uppercase tracking-widest text-gold">
-          Puzzle Master narration status
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-4 w-4 text-gold" />
+          <div className="font-display text-xs uppercase tracking-widest text-gold">
+            Puzzle Master narration status
+          </div>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={generateAllStale}
+          disabled={bulkRunning || stale.length === 0}
+          className="border-gold/40"
+        >
+          {bulkRunning
+            ? "Generating…"
+            : stale.length === 0
+              ? "All voices ready"
+              : `Generate ${stale.length} missing voice${stale.length === 1 ? "" : "s"}`}
+        </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        Each item below is auto-narrated by ElevenLabs (voice: Puzzle Master). Audio regenerates whenever the
-        text below changes and you press <strong>Save changes</strong>.
+        Audio is generated once and cached. It only regenerates when you change the text and press
+        <strong> Save changes</strong>, or when you click the buttons here. Players never trigger generation —
+        they just play the saved file.
       </p>
       <div className="mt-3 grid gap-2">
         {items.map((it) => {
@@ -613,21 +685,20 @@ function PuzzleEditor({
         </Button>
       </div>
 
-      {/* Letter editor — prominent, full-width */}
+      {/* Letter readout — auto-derived from the vault word above */}
       <div className="mt-4 rounded border border-gold/40 bg-gold/5 p-3">
-        <Field label={`Letter for vault code (Lock ${puzzle.id})`}>
-          <div className="flex items-center gap-3">
-            <Input
-              value={puzzle.artifact}
-              maxLength={1}
-              onChange={(e) => onChange({ artifact: e.target.value.slice(0, 1).toUpperCase() })}
-              className="h-12 w-20 text-center font-display text-2xl uppercase tracking-widest"
-            />
-            <p className="text-xs text-muted-foreground">
-              This single character becomes letter #{puzzle.id} of the final vault code.
-            </p>
+        <div className="text-xs font-display uppercase tracking-widest text-gold">
+          Scrambled letter (auto-assigned)
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded border border-gold/50 bg-background/40 font-display text-2xl text-gold">
+            {puzzle.artifact}
           </div>
-        </Field>
+          <p className="text-xs text-muted-foreground">
+            This letter is dealt automatically from the vault word above. Change the
+            vault word to re-deal letters across all nine locks.
+          </p>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
