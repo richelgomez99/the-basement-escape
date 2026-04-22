@@ -284,7 +284,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name that song AND artist.",
+        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
         hint: "Pastor and gospel artist who sang about lifting hands before the breakthrough arrives.",
         answer: "praise him in advance - marvin sapp",
         acceptable: [
@@ -296,7 +296,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name that song AND artist.",
+        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
         hint: "Bishop and Love Fellowship Choir leader. The song declares that God's name is ___.",
         answer: "wonderful is your name - hezekiah walker",
         acceptable: [
