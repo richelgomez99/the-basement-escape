@@ -234,6 +234,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     title: "Broken Stained Glass",
     flavor: "Reassemble the shards. A word will appear — type it to claim the artifact.",
     artifact: "O",
+    answer: "truth",
     hints: [
       { tier: 1, label: "Nudge", text: "Jesus made an 'I am' statement in John 14:6. Three things — and you're looking for the middle one." },
       { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters, starts with T." },
