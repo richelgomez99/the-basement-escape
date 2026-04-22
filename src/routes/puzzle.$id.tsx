@@ -4,7 +4,16 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import { addPenalty, getSolved, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import {
+  addPenalty,
+  getPuzzleState,
+  getSolved,
+  isGameStarted,
+  isUnlocked,
+  markSolved,
+  setPuzzleState,
+} from "@/game/state";
+import { playSfx } from "@/game/sfx";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
@@ -112,11 +121,13 @@ function PuzzleRoute() {
 
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
-  const puzzle = getPuzzles()[2];
+  const puzzle = getPuzzles().find((p) => p.id === 3)!;
   const totalPuzzles = getPuzzles().length;
   const cfg = puzzle.libraryConfig;
   const books = cfg?.books ?? [];
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(() =>
+    getPuzzleState<{ picked: string[] }>(3, { picked: [] }).picked ?? [],
+  );
   const [error, setError] = useState("");
   const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
@@ -125,10 +136,15 @@ function Library() {
     .filter((b) => b.real && typeof b.order === "number")
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+  useEffect(() => {
+    setPuzzleState(3, { picked });
+  }, [picked]);
+
   function pick(id: string) {
     const b = books.find((x) => x.id === id);
     if (!b) return;
     if (!b.real) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${b.name}" is not a book of the Bible. −30s.`);
       return;
@@ -136,6 +152,7 @@ function Library() {
     if (picked.includes(id)) return;
     const next = [...picked, id];
     if (realOrdered[next.length - 1]?.id !== id) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError("Wrong order. Start over with the first book. −30s.");
       setPicked([]);
@@ -144,6 +161,7 @@ function Library() {
     setError("");
     setPicked(next);
     if (next.length === realOrdered.length) {
+      playSfx("lock");
       markSolved(3);
       setTimeout(() => setShowLetter(true), 400);
     }
@@ -199,15 +217,20 @@ function Library() {
 
 /* ---------- Puzzle 7: Broken Stained Glass ---------- */
 function StainedGlass() {
-  const puzzle = getPuzzles()[6];
+  const puzzle = getPuzzles().find((p) => p.id === 7)!;
   const cfg = puzzle.stainedGlassConfig;
   const letters = cfg?.letters ?? ["", "", "", "", "", "", "", "", ""];
   const imageUrl = cfg?.imageUrl?.trim() ? cfg.imageUrl : stainedGlass;
-  // Stable shuffled initial order — derived from a fixed permutation.
   const initialOrder = [4, 7, 2, 5, 0, 8, 1, 6, 3];
-  const [order, setOrder] = useState<number[]>(initialOrder);
+  const saved = getPuzzleState<{ order: number[] }>(7, { order: initialOrder });
+  const startOrder = Array.isArray(saved.order) && saved.order.length === 9 ? saved.order : initialOrder;
+  const [order, setOrder] = useState<number[]>(startOrder);
   const [selected, setSelected] = useState<number | null>(null);
-  const [solved, setSolvedLocal] = useState(false);
+  const [solved, setSolvedLocal] = useState(() => startOrder.every((p, i) => p === i));
+
+  useEffect(() => {
+    setPuzzleState(7, { order });
+  }, [order]);
 
   function tap(gridIdx: number) {
     if (solved) return;
@@ -287,7 +310,7 @@ function StainedGlass() {
 
 /* ---------- Puzzle 8: Music round (multi-question with audio) ---------- */
 function MusicRoundOrSingle() {
-  const puzzle = getPuzzles()[7];
+  const puzzle = getPuzzles().find((p) => p.id === 8)!;
   const questions = puzzle.questions ?? puzzle.musicQuestions ?? [];
   if (questions.length === 0) {
     return (
@@ -301,7 +324,7 @@ function MusicRoundOrSingle() {
 
 /* ---------- Puzzle 9: Timeline ---------- */
 function Timeline() {
-  const puzzle = getPuzzles()[8];
+  const puzzle = getPuzzles().find((p) => p.id === 9)!;
   const cfg = puzzle.timelineConfig;
   const all = cfg?.events ?? [];
   const finalCode = cfg?.finalCode ?? puzzle.answer ?? "";
@@ -309,11 +332,21 @@ function Timeline() {
     .filter((e) => e.belongs && typeof e.order === "number")
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const [removed, setRemoved] = useState<string[]>([]);
-  const [order, setOrder] = useState<string[]>([]);
+  const savedT = getPuzzleState<{ removed: string[]; order: string[] }>(9, {
+    removed: [],
+    order: [],
+  });
+  const [removed, setRemoved] = useState<string[]>(savedT.removed ?? []);
+  const [order, setOrder] = useState<string[]>(savedT.order ?? []);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(
+    () => (savedT.order?.length ?? 0) === ordered.length && ordered.length > 0,
+  );
   const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPuzzleState(9, { removed, order });
+  }, [removed, order]);
 
   const visible = all.filter((e) => !removed.includes(e.id) && !order.includes(e.id));
   const confirmEvent = confirmId ? all.find((x) => x.id === confirmId) ?? null : null;
@@ -322,6 +355,7 @@ function Timeline() {
     const e = all.find((x) => x.id === id);
     if (!e) return;
     if (e.belongs) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" belongs to the sequence! −30 seconds.`);
       return;
@@ -335,11 +369,13 @@ function Timeline() {
     const e = all.find((x) => x.id === id);
     if (!e) return;
     if (!e.belongs) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
     if (ordered[order.length]?.id !== id) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`Out of order. −30 seconds.`);
       return;

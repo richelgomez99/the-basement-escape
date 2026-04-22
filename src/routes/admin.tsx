@@ -393,6 +393,11 @@ function Editor() {
                 Import JSON
               </span>
             </label>
+            <Link to="/admin/sessions">
+              <Button variant="outline" className="border-gold/40 text-gold">
+                View Sessions →
+              </Button>
+            </Link>
             <Button
               variant="outline"
               className="border-destructive/50 text-destructive hover:bg-destructive/10"

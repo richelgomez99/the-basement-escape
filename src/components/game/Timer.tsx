@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { isClockPaused, isFinished, isGameStarted, useCountdown } from "@/game/state";
+import { isClockPaused, isFinished, isGameStarted, setFinished, useCountdown } from "@/game/state";
+import { startTicker, stopTicker } from "@/game/sfx";
 
 export function Timer({ redirectOnZero = true }: { redirectOnZero?: boolean }) {
   const { remaining, formatted } = useCountdown();
@@ -18,6 +19,20 @@ export function Timer({ redirectOnZero = true }: { redirectOnZero?: boolean }) {
     };
   }, []);
 
+  // Tick SFX in the final minute (paused = no ticking).
+  useEffect(() => {
+    if (paused) {
+      stopTicker();
+      return;
+    }
+    if (remaining > 0 && remaining <= 60 && isGameStarted() && !isFinished()) {
+      startTicker();
+    } else {
+      stopTicker();
+    }
+    return () => stopTicker();
+  }, [remaining, paused]);
+
   useEffect(() => {
     if (
       redirectOnZero &&
@@ -25,9 +40,11 @@ export function Timer({ redirectOnZero = true }: { redirectOnZero?: boolean }) {
       isGameStarted() &&
       !isFinished()
     ) {
+      setFinished(true, "failure");
       navigate({ to: "/failure" });
     }
   }, [remaining, redirectOnZero, navigate]);
+
 
   const danger = remaining <= 60;
   const warn = remaining <= 5 * 60;

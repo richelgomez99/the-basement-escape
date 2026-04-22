@@ -7,6 +7,7 @@ const KEYS = {
   penalty: "be_penalty",
   solved: "be_solved",
   finished: "be_finished",
+  sessionId: "be_session_id",
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -31,6 +32,78 @@ export function getTeamName() {
 export function setTeamName(name: string) {
   write(KEYS.team, name);
 }
+
+// ---- Per-puzzle persisted state ----
+const PSTATE_PREFIX = "be_pstate:";
+export function getPuzzleState<T>(id: number, fallback: T): T {
+  return read<T>(PSTATE_PREFIX + id, fallback);
+}
+export function setPuzzleState<T>(id: number, value: T) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PSTATE_PREFIX + id, JSON.stringify(value));
+}
+export function clearPuzzleState(id: number) {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(PSTATE_PREFIX + id);
+}
+function clearAllPuzzleState() {
+  if (typeof window === "undefined") return;
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const k = window.localStorage.key(i);
+    if (k && k.startsWith(PSTATE_PREFIX)) {
+      window.localStorage.removeItem(k);
+      i--;
+    }
+  }
+}
+
+// ---- Session tracking (private; admin reads via service role) ----
+export function getSessionId(): string {
+  return read<string>(KEYS.sessionId, "");
+}
+function setSessionId(id: string) {
+  write(KEYS.sessionId, id);
+}
+
+async function createSessionRow(team: string): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data, error } = await supabase
+      .from("game_sessions")
+      .insert({
+        team_name: team,
+        outcome: "in_progress",
+        user_agent: navigator.userAgent.slice(0, 500),
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return (data as any)?.id ?? null;
+  } catch (e) {
+    console.warn("Session create failed (continuing offline):", e);
+    return null;
+  }
+}
+
+type SessionPatch = {
+  outcome?: "in_progress" | "victory" | "failure";
+  finished_at?: string | null;
+  elapsed_seconds?: number | null;
+  penalty_seconds?: number;
+  solved_count?: number;
+};
+async function updateSessionRow(patch: SessionPatch) {
+  const id = getSessionId();
+  if (!id) return;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.from("game_sessions").update(patch).eq("id", id);
+  } catch (e) {
+    console.warn("Session update failed:", e);
+  }
+}
+
 export function startGame(name: string) {
   write(KEYS.team, name);
   write(KEYS.start, Date.now());
@@ -38,36 +111,48 @@ export function startGame(name: string) {
   write(KEYS.solved, []);
   write(KEYS.finished, false);
   if (typeof window !== "undefined") window.localStorage.removeItem("be_pause_start");
+  clearAllPuzzleState();
+  // Create the cloud session row, fire-and-forget.
+  void (async () => {
+    const id = await createSessionRow(name);
+    if (id) setSessionId(id);
+  })();
 }
+
 export function resetGame() {
   if (typeof window === "undefined") return;
   Object.values(KEYS).forEach((k) => window.localStorage.removeItem(k));
   window.localStorage.removeItem("be_pause_start");
+  clearAllPuzzleState();
   window.dispatchEvent(new Event("be_state"));
 }
 export function getSolved(): number[] {
   return read<number[]>(KEYS.solved, []);
 }
 export function isUnlocked(id: number): boolean {
-  // Strictly sequential: lock N is unlocked iff 1..N-1 are all solved.
   const solved = new Set(getSolved());
   for (let i = 1; i < id; i++) if (!solved.has(i)) return false;
   return true;
 }
 export function markSolved(id: number) {
   const s = new Set(getSolved());
+  const wasSolved = s.has(id);
   s.add(id);
-  write(KEYS.solved, Array.from(s).sort((a, b) => a - b));
+  const arr = Array.from(s).sort((a, b) => a - b);
+  write(KEYS.solved, arr);
+  clearPuzzleState(id);
+  if (!wasSolved) {
+    void updateSessionRow({ solved_count: arr.length });
+  }
 }
 export function addPenalty(seconds: number) {
   const cur = read<number>(KEYS.penalty, 0);
-  write(KEYS.penalty, cur + seconds);
+  const next = cur + seconds;
+  write(KEYS.penalty, next);
+  void updateSessionRow({ penalty_seconds: next });
 }
 
-// ---- Pause support (used while narration plays for the first time) ----
-// While paused, the timer display freezes. On resume, we add the paused
-// duration to penalty so the post-resume countdown continues from the same
-// frozen value (no jumps backward or forward).
+// ---- Pause support ----
 const PAUSE_KEY = "be_pause_start";
 function getPauseStart(): number {
   if (typeof window === "undefined") return 0;
@@ -81,7 +166,7 @@ export function isClockPaused(): boolean {
 }
 export function pauseClock() {
   if (typeof window === "undefined") return;
-  if (getPauseStart()) return; // already paused
+  if (getPauseStart()) return;
   window.localStorage.setItem(PAUSE_KEY, String(Date.now()));
   window.dispatchEvent(new Event("be_state"));
 }
@@ -91,7 +176,6 @@ export function resumeClock() {
   if (!startedAt) return;
   window.localStorage.removeItem(PAUSE_KEY);
   const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
-  // Bake paused duration into penalty so elapsed stays continuous across resume.
   if (pausedSecs > 0) addPenalty(pausedSecs);
   window.dispatchEvent(new Event("be_state"));
 }
@@ -99,7 +183,6 @@ export function getRemainingSeconds(): number {
   const start = read<number>(KEYS.start, 0);
   const penalty = read<number>(KEYS.penalty, 0);
   if (!start) return GAME_DURATION_SECONDS;
-  // While paused, freeze "now" at the moment the pause began.
   const pauseStart = getPauseStart();
   const nowMs = pauseStart || Date.now();
   const elapsed = Math.floor((nowMs - start) / 1000) + penalty;
@@ -108,18 +191,32 @@ export function getRemainingSeconds(): number {
 export function isGameStarted() {
   return read<number>(KEYS.start, 0) > 0;
 }
-export function setFinished(v: boolean) {
+
+export function getElapsedSecondsRaw(): number {
+  const start = read<number>(KEYS.start, 0);
+  if (!start) return 0;
+  const penalty = read<number>(KEYS.penalty, 0);
+  return Math.floor((Date.now() - start) / 1000) + penalty;
+}
+
+export function setFinished(v: boolean, outcome?: "victory" | "failure") {
   write(KEYS.finished, v);
+  if (v && outcome) {
+    const elapsed = getElapsedSecondsRaw();
+    void updateSessionRow({
+      outcome,
+      finished_at: new Date().toISOString(),
+      elapsed_seconds: elapsed,
+      penalty_seconds: read<number>(KEYS.penalty, 0),
+      solved_count: getSolved().length,
+    });
+  }
 }
 export function isFinished() {
   return read<boolean>(KEYS.finished, false);
 }
 export function getElapsedFormatted() {
-  const start = read<number>(KEYS.start, 0);
-  if (!start) return "00:00";
-  const penalty = read<number>(KEYS.penalty, 0);
-  const elapsed = Math.floor((Date.now() - start) / 1000) + penalty;
-  return formatTime(elapsed);
+  return formatTime(getElapsedSecondsRaw());
 }
 
 export function formatTime(totalSeconds: number) {
