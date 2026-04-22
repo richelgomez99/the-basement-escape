@@ -973,9 +973,18 @@ function QuestionsEditor({
   seedHints?: Hint[];
   onChange: (next: Question[]) => void;
 }) {
+  function defaultSeededPrompt(): string {
+    if (seedScripture && seedScripture.trim()) {
+      return "Fill in the blank from the scripture above.";
+    }
+    if (seedFlavor && seedFlavor.trim()) {
+      return seedFlavor.trim();
+    }
+    return "What is the answer?";
+  }
   function makeSeededQuestion(): Question {
     return {
-      prompt: "",
+      prompt: defaultSeededPrompt(),
       flavor: seedFlavor ?? "",
       scripture: seedScripture ?? "",
       answer: seedAnswer ?? "",
