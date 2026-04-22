@@ -37,10 +37,12 @@ export function startGame(name: string) {
   write(KEYS.penalty, 0);
   write(KEYS.solved, []);
   write(KEYS.finished, false);
+  if (typeof window !== "undefined") window.localStorage.removeItem("be_pause_start");
 }
 export function resetGame() {
   if (typeof window === "undefined") return;
   Object.values(KEYS).forEach((k) => window.localStorage.removeItem(k));
+  window.localStorage.removeItem("be_pause_start");
   window.dispatchEvent(new Event("be_state"));
 }
 export function getSolved(): number[] {
