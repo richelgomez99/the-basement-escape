@@ -138,6 +138,7 @@ function Editor() {
       await loadOverridesFromCloud();
       setPuzzles(getPuzzles());
       setIntroText(getIntroText());
+      setVaultWord(getVaultWord());
     })();
   }, []);
 
@@ -145,12 +146,14 @@ function Editor() {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
 
-  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } {
-    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string } = {};
+  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } {
+    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } = {};
     puzzles.forEach((p) => {
       const def = DEFAULT_PUZZLES.find((d) => d.id === p.id)!;
       const diff: Partial<Puzzle> = {};
-      (["title", "flavor", "scripture", "artifact", "answer"] as const).forEach((k) => {
+      // NOTE: `artifact` intentionally excluded — letters are derived from the
+      // single vault word, not edited per puzzle.
+      (["title", "flavor", "scripture", "answer"] as const).forEach((k) => {
         if ((p[k] ?? "") !== (def[k] ?? "")) (diff as any)[k] = p[k];
       });
       const accNew = (p.acceptable ?? []).join(",");
