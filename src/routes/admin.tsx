@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,12 +10,16 @@ import {
   DEFAULT_PUZZLES,
   getOverrides,
   getPuzzles,
-  getVaultCode,
-  saveOverrides,
+  loadOverridesFromCloud,
+  saveOverridesToCloud,
+  type HiddenMarker,
+  type HiddenScene,
   type Hint,
-  type MusicQuestion,
+  type PathConfig,
   type Puzzle,
+  type Question,
 } from "@/game/content";
+import cathedralMural from "@/assets/cathedral-mural.jpg";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — The Basement Escape" }] }),
@@ -39,7 +43,6 @@ function AdminPage() {
   const [pwError, setPwError] = useState("");
 
   useEffect(() => {
-    // Auto-allow if a session flag is set
     if (typeof window !== "undefined" && sessionStorage.getItem("be_admin_ok") === "1") {
       setAuthed(true);
     }
@@ -96,38 +99,28 @@ function AdminPage() {
   return <Editor />;
 }
 
+// Puzzles that support multi-question text mode
+const MULTI_Q_PUZZLES = new Set([1, 4, 5, 6, 7, 8]);
+
 function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
   const [savedAt, setSavedAt] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwMsg, setPwMsg] = useState("");
   const vaultCode = useMemo(() => puzzles.map((p) => p.artifact).join(""), [puzzles]);
 
-  function updatePuzzle(id: number, patch: Partial<Puzzle>) {
+  // Pull latest from cloud once on mount
+  useEffect(() => {
+    (async () => {
+      await loadOverridesFromCloud();
+      setPuzzles(getPuzzles());
+    })();
+  }, []);
+
+  function update(id: number, patch: Partial<Puzzle>) {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  }
-
-  function updateHint(id: number, tier: 1 | 2 | 3, patch: Partial<Hint>) {
-    setPuzzles((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              hints: p.hints.map((h) => (h.tier === tier ? { ...h, ...patch } : h)) as Hint[],
-            }
-          : p
-      )
-    );
-  }
-
-  function updateMusicQuestion(id: number, qIdx: number, patch: Partial<MusicQuestion>) {
-    setPuzzles((prev) =>
-      prev.map((p) => {
-        if (p.id !== id || !p.musicQuestions) return p;
-        const next = p.musicQuestions.map((q, i) => (i === qIdx ? { ...q, ...patch } : q));
-        return { ...p, musicQuestions: next };
-      })
-    );
   }
 
   function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> {
@@ -146,30 +139,52 @@ function Editor() {
         return !dh || h.label !== dh.label || h.text !== dh.text;
       });
       if (hintsChanged) diff.hints = p.hints;
-      if (p.musicQuestions || def.musicQuestions) {
-        const a = JSON.stringify(p.musicQuestions ?? []);
-        const b = JSON.stringify(def.musicQuestions ?? []);
-        if (a !== b) diff.musicQuestions = p.musicQuestions;
+      // questions / musicQuestions
+      const qA = JSON.stringify(p.questions ?? p.musicQuestions ?? []);
+      const qB = JSON.stringify(def.questions ?? def.musicQuestions ?? []);
+      if (qA !== qB) {
+        diff.questions = p.questions ?? p.musicQuestions;
+        if (p.id === 8) diff.musicQuestions = diff.questions;
+      }
+      // hidden scene
+      if (p.hiddenScene || def.hiddenScene) {
+        const a = JSON.stringify(p.hiddenScene ?? null);
+        const b = JSON.stringify(def.hiddenScene ?? null);
+        if (a !== b) diff.hiddenScene = p.hiddenScene;
+      }
+      // path config
+      if (p.pathConfig || def.pathConfig) {
+        const a = JSON.stringify(p.pathConfig ?? null);
+        const b = JSON.stringify(def.pathConfig ?? null);
+        if (a !== b) diff.pathConfig = p.pathConfig;
       }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
     return out;
   }
 
-  function save() {
-    saveOverrides(buildOverrides());
-    setSavedAt(new Date().toLocaleTimeString());
+  async function save() {
+    setSaving(true);
+    setSaveErr("");
+    try {
+      await saveOverridesToCloud(buildOverrides());
+      setSavedAt(new Date().toLocaleTimeString());
+    } catch (e: any) {
+      setSaveErr(e?.message ?? "Cloud save failed (saved locally).");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function resetPuzzle(id: number) {
     const def = DEFAULT_PUZZLES.find((d) => d.id === id)!;
-    setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...def } : p)));
+    setPuzzles((prev) => prev.map((p) => (p.id === id ? structuredClone(def) : p)));
   }
 
-  function resetAll() {
+  async function resetAll() {
     if (!confirm("Reset ALL puzzle content to defaults?")) return;
     clearOverrides();
-    setPuzzles(DEFAULT_PUZZLES.map((p) => ({ ...p })));
+    setPuzzles(structuredClone(DEFAULT_PUZZLES));
     setSavedAt(new Date().toLocaleTimeString());
   }
 
@@ -186,10 +201,10 @@ function Editor() {
 
   function importJson(file: File) {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const parsed = JSON.parse(String(reader.result));
-        saveOverrides(parsed);
+        await saveOverridesToCloud(parsed);
         setPuzzles(getPuzzles());
         setSavedAt(new Date().toLocaleTimeString());
       } catch {
@@ -215,20 +230,29 @@ function Editor() {
     window.location.reload();
   }
 
-  // load fresh on mount in case overrides changed elsewhere
+  // re-sync from local cache if overrides changed via another tab
   useEffect(() => {
-    setPuzzles(getPuzzles());
+    const h = () => {
+      const o = getOverrides();
+      void o;
+      setPuzzles(getPuzzles());
+    };
+    window.addEventListener("be_content", h);
+    return () => window.removeEventListener("be_content", h);
   }, []);
 
   return (
     <div className="min-h-screen px-4 py-8 md:px-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-display text-xs uppercase tracking-widest text-gold">
               Host Admin
             </div>
             <h1 className="font-display text-3xl md:text-4xl">Puzzle Editor</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Edits sync to the cloud — players on any device get the latest content.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/">
@@ -250,8 +274,8 @@ function Editor() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={save} className="bg-gold text-gold-foreground hover:bg-gold/90">
-              Save changes
+            <Button onClick={save} disabled={saving} className="bg-gold text-gold-foreground hover:bg-gold/90">
+              {saving ? "Saving…" : "Save changes"}
             </Button>
             <Button variant="outline" onClick={exportJson}>Export JSON</Button>
             <label className="inline-flex">
@@ -278,9 +302,8 @@ function Editor() {
             </Button>
           </div>
         </div>
-        {savedAt && (
-          <div className="text-xs text-gold mt-2">Saved at {savedAt}</div>
-        )}
+        {savedAt && <div className="text-xs text-gold mt-2">Saved at {savedAt}</div>}
+        {saveErr && <div className="text-xs text-destructive mt-2">{saveErr}</div>}
 
         <div className="stone-panel mt-4 rounded-xl p-4">
           <div className="font-display text-xs uppercase tracking-widest text-gold">
@@ -306,17 +329,15 @@ function Editor() {
             <PuzzleEditor
               key={p.id}
               puzzle={p}
-              onChange={(patch) => updatePuzzle(p.id, patch)}
-              onHintChange={(tier, patch) => updateHint(p.id, tier, patch)}
-              onMusicChange={(qIdx, patch) => updateMusicQuestion(p.id, qIdx, patch)}
+              onChange={(patch) => update(p.id, patch)}
               onReset={() => resetPuzzle(p.id)}
             />
           ))}
         </div>
 
         <div className="mt-8 flex justify-end">
-          <Button onClick={save} className="bg-gold text-gold-foreground hover:bg-gold/90">
-            Save changes
+          <Button onClick={save} disabled={saving} className="bg-gold text-gold-foreground hover:bg-gold/90">
+            {saving ? "Saving…" : "Save changes"}
           </Button>
         </div>
       </div>
@@ -327,16 +348,15 @@ function Editor() {
 function PuzzleEditor({
   puzzle,
   onChange,
-  onHintChange,
-  onMusicChange,
   onReset,
 }: {
   puzzle: Puzzle;
   onChange: (patch: Partial<Puzzle>) => void;
-  onHintChange: (tier: 1 | 2 | 3, patch: Partial<Hint>) => void;
-  onMusicChange: (qIdx: number, patch: Partial<MusicQuestion>) => void;
   onReset: () => void;
 }) {
+  function setHints(next: Hint[]) {
+    onChange({ hints: next });
+  }
   return (
     <div className="stone-panel rounded-xl p-5">
       <div className="flex items-center justify-between gap-3">
@@ -376,10 +396,10 @@ function PuzzleEditor({
             rows={2}
           />
         </Field>
-        <Field label="Answer (canonical)">
+        <Field label="Single-answer (used when no questions below)">
           <Input value={puzzle.answer} onChange={(e) => onChange({ answer: e.target.value })} />
         </Field>
-        <Field label="Acceptable answers (comma-separated)">
+        <Field label="Acceptable alternates (comma-separated)">
           <Input
             value={(puzzle.acceptable ?? []).join(", ")}
             onChange={(e) =>
@@ -394,18 +414,28 @@ function PuzzleEditor({
         </Field>
       </div>
 
+      {/* Hints */}
       <div className="mt-4 space-y-2">
-        {puzzle.hints.map((h) => (
+        <div className="font-display text-xs uppercase tracking-widest text-gold">Hints</div>
+        {puzzle.hints.map((h, i) => (
           <div key={h.tier} className="rounded border border-border bg-background/30 p-3">
             <div className="grid gap-2 md:grid-cols-[120px_1fr]">
               <Input
                 value={h.label}
-                onChange={(e) => onHintChange(h.tier, { label: e.target.value })}
+                onChange={(e) => {
+                  const next = [...puzzle.hints];
+                  next[i] = { ...h, label: e.target.value };
+                  setHints(next);
+                }}
                 placeholder={`Hint ${h.tier} label`}
               />
               <Textarea
                 value={h.text}
-                onChange={(e) => onHintChange(h.tier, { text: e.target.value })}
+                onChange={(e) => {
+                  const next = [...puzzle.hints];
+                  next[i] = { ...h, text: e.target.value };
+                  setHints(next);
+                }}
                 rows={2}
                 placeholder={`Hint ${h.tier} text`}
               />
@@ -414,66 +444,171 @@ function PuzzleEditor({
         ))}
       </div>
 
-      {puzzle.musicQuestions && (
-        <MusicQuestionsEditor
+      {/* Multi-question editor */}
+      {MULTI_Q_PUZZLES.has(puzzle.id) && (
+        <QuestionsEditor
           puzzleId={puzzle.id}
-          questions={puzzle.musicQuestions}
-          onChange={onMusicChange}
+          questions={puzzle.questions ?? puzzle.musicQuestions ?? []}
+          allowAudio={puzzle.id === 8}
+          onChange={(next) => {
+            const patch: Partial<Puzzle> = { questions: next };
+            if (puzzle.id === 8) patch.musicQuestions = next;
+            onChange(patch);
+          }}
+        />
+      )}
+
+      {/* Hidden-scene editor for puzzle 2 */}
+      {puzzle.id === 2 && (
+        <HiddenSceneEditor
+          scene={puzzle.hiddenScene ?? { imageUrl: cathedralMural, markers: [] }}
+          onChange={(scene) => onChange({ hiddenScene: scene })}
+        />
+      )}
+
+      {/* Path-of-righteous editor for puzzle 4 */}
+      {puzzle.id === 4 && puzzle.pathConfig && (
+        <PathConfigEditor
+          config={puzzle.pathConfig}
+          onChange={(pc) => onChange({ pathConfig: pc })}
         />
       )}
     </div>
   );
 }
 
-function MusicQuestionsEditor({
+/* ----------------- Generic Questions editor ----------------- */
+function QuestionsEditor({
   puzzleId,
   questions,
+  allowAudio,
   onChange,
 }: {
   puzzleId: number;
-  questions: MusicQuestion[];
-  onChange: (qIdx: number, patch: Partial<MusicQuestion>) => void;
+  questions: Question[];
+  allowAudio: boolean;
+  onChange: (next: Question[]) => void;
 }) {
+  function update(idx: number, patch: Partial<Question>) {
+    onChange(questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+  }
+  function add() {
+    onChange([...questions, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
+  }
+  function remove(idx: number) {
+    onChange(questions.filter((_, i) => i !== idx));
+  }
+  function move(idx: number, dir: -1 | 1) {
+    const next = [...questions];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    onChange(next);
+  }
+
   return (
     <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4">
-      <div className="font-display text-xs uppercase tracking-widest text-gold mb-3">
-        Music Questions ({questions.length})
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-display text-xs uppercase tracking-widest text-gold">
+          Questions ({questions.length}) — players answer in order, −30s per wrong
+        </div>
+        <Button size="sm" variant="outline" onClick={add}>
+          + Add question
+        </Button>
       </div>
-      <div className="space-y-4">
+      {questions.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          No questions yet — uses the single-answer field above.
+        </p>
+      )}
+      <div className="space-y-3">
         {questions.map((q, i) => (
-          <MusicQuestionRow
-            key={i}
-            puzzleId={puzzleId}
-            qIdx={i}
-            question={q}
-            onChange={(patch) => onChange(i, patch)}
-          />
+          <div key={i} className="rounded border border-border bg-background/40 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                Question {i + 1}
+              </div>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
+                  ↑
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => move(i, 1)}
+                  disabled={i === questions.length - 1}
+                >
+                  ↓
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/50 text-destructive"
+                  onClick={() => remove(i)}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+            <Field label="Prompt">
+              <Textarea
+                value={q.prompt}
+                onChange={(e) => update(i, { prompt: e.target.value })}
+                rows={2}
+              />
+            </Field>
+            <div className="grid gap-2 md:grid-cols-2">
+              <Field label="Canonical answer">
+                <Input value={q.answer} onChange={(e) => update(i, { answer: e.target.value })} />
+              </Field>
+              <Field label="Hint (optional)">
+                <Input
+                  value={q.hint ?? ""}
+                  onChange={(e) => update(i, { hint: e.target.value })}
+                />
+              </Field>
+            </div>
+            <Field label="Acceptable alternates (comma-separated)">
+              <Input
+                value={(q.acceptable ?? []).join(", ")}
+                onChange={(e) =>
+                  update(i, {
+                    acceptable: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                  })
+                }
+              />
+            </Field>
+            {allowAudio && (
+              <AudioUploader
+                puzzleId={puzzleId}
+                qIdx={i}
+                audioUrl={q.audioUrl ?? ""}
+                onChange={(audioUrl) => update(i, { audioUrl })}
+              />
+            )}
+          </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-3">
-        Tip: leave audio empty for text-only questions. Click Save changes above to persist edits.
-      </p>
     </div>
   );
 }
 
-function MusicQuestionRow({
+function AudioUploader({
   puzzleId,
   qIdx,
-  question,
+  audioUrl,
   onChange,
 }: {
   puzzleId: number;
   qIdx: number;
-  question: MusicQuestion;
-  onChange: (patch: Partial<MusicQuestion>) => void;
+  audioUrl: string;
+  onChange: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
-  const [uploadErr, setUploadErr] = useState("");
-
+  const [err, setErr] = useState("");
   async function handleFile(file: File) {
     setUploading(true);
-    setUploadErr("");
+    setErr("");
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
       const path = `puzzle${puzzleId}/q${qIdx + 1}-${Date.now()}.${ext}`;
@@ -482,86 +617,400 @@ function MusicQuestionRow({
         .upload(path, file, { upsert: true, contentType: file.type || "audio/mpeg" });
       if (error) throw error;
       const { data } = supabase.storage.from("music-round").getPublicUrl(path);
-      onChange({ audioUrl: data.publicUrl });
+      onChange(data.publicUrl);
     } catch (e: any) {
-      setUploadErr(e.message ?? "Upload failed.");
+      setErr(e.message ?? "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+  return (
+    <Field label="Audio clip (MP3, optional)">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex">
+          <input
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+            disabled={uploading}
+          />
+          <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm hover:bg-accent">
+            {uploading ? "Uploading…" : audioUrl ? "Replace MP3" : "Upload MP3"}
+          </span>
+        </label>
+        {audioUrl && (
+          <>
+            <audio controls src={audioUrl} className="h-9 max-w-xs" />
+            <Button variant="outline" size="sm" onClick={() => onChange("")}>
+              Remove
+            </Button>
+          </>
+        )}
+      </div>
+      {err && <div className="text-xs text-destructive mt-1">{err}</div>}
+    </Field>
+  );
+}
+
+/* ----------------- Hidden Scene editor (puzzle 2) ----------------- */
+function HiddenSceneEditor({
+  scene,
+  onChange,
+}: {
+  scene: HiddenScene;
+  onChange: (scene: HiddenScene) => void;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState("");
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  async function handleImage(file: File) {
+    setUploading(true);
+    setErr("");
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `scene-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("hidden-scenes")
+        .upload(path, file, { upsert: true, contentType: file.type || "image/jpeg" });
+      if (error) throw error;
+      const { data } = supabase.storage.from("hidden-scenes").getPublicUrl(path);
+      onChange({ ...scene, imageUrl: data.publicUrl });
+    } catch (e: any) {
+      setErr(e.message ?? "Upload failed.");
     } finally {
       setUploading(false);
     }
   }
 
+  function addMarker(emoji: string) {
+    const m: HiddenMarker = {
+      id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      emoji,
+      x: 50,
+      y: 50,
+      radius: 8,
+      label: emoji,
+    };
+    onChange({ ...scene, markers: [...scene.markers, m] });
+  }
+
+  function updateMarker(id: string, patch: Partial<HiddenMarker>) {
+    onChange({
+      ...scene,
+      markers: scene.markers.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+    });
+  }
+
+  function removeMarker(id: string) {
+    onChange({ ...scene, markers: scene.markers.filter((m) => m.id !== id) });
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!draggingId || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    updateMarker(draggingId, { x, y });
+  }
+
+  const QUICK_EMOJIS = ["🕊️", "🐟", "✝️", "🐑", "🍞", "🔥", "👑", "📜", "🌿", "⭐"];
+
   return (
-    <div className="rounded border border-border bg-background/40 p-3 space-y-2">
-      <div className="text-xs uppercase tracking-widest text-muted-foreground">
-        Question {qIdx + 1}
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
+      <div className="font-display text-xs uppercase tracking-widest text-gold">
+        Hidden scene — drag markers to position. Click on canvas does NOT add (use buttons below).
       </div>
-      <Field label="Prompt">
-        <Textarea
-          value={question.prompt}
-          onChange={(e) => onChange({ prompt: e.target.value })}
-          rows={2}
-        />
-      </Field>
-      <div className="grid gap-2 md:grid-cols-2">
-        <Field label="Canonical answer">
-          <Input
-            value={question.answer}
-            onChange={(e) => onChange({ answer: e.target.value })}
-          />
-        </Field>
-        <Field label="Hint (shown under audio)">
-          <Input
-            value={question.hint ?? ""}
-            onChange={(e) => onChange({ hint: e.target.value })}
-          />
-        </Field>
-      </div>
-      <Field label="Acceptable alternates (comma-separated)">
-        <Input
-          value={(question.acceptable ?? []).join(", ")}
-          onChange={(e) =>
-            onChange({
-              acceptable: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-        />
-      </Field>
-      <Field label="Audio clip (MP3)">
+
+      <Field label="Background image">
         <div className="flex flex-wrap items-center gap-2">
           <label className="inline-flex">
             <input
               type="file"
-              accept="audio/*"
+              accept="image/*"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) handleFile(f);
+                if (f) handleImage(f);
                 e.target.value = "";
               }}
               disabled={uploading}
             />
             <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm hover:bg-accent">
-              {uploading ? "Uploading…" : question.audioUrl ? "Replace MP3" : "Upload MP3"}
+              {uploading ? "Uploading…" : "Upload image"}
             </span>
           </label>
-          {question.audioUrl && (
-            <>
-              <audio controls src={question.audioUrl} className="h-9 max-w-xs" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onChange({ audioUrl: "" })}
-              >
-                Remove
-              </Button>
-            </>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onChange({ ...scene, imageUrl: cathedralMural })}
+          >
+            Use default cathedral
+          </Button>
+          <Input
+            placeholder="…or paste image URL"
+            value={scene.imageUrl}
+            onChange={(e) => onChange({ ...scene, imageUrl: e.target.value })}
+            className="max-w-md"
+          />
         </div>
-        {uploadErr && <div className="text-xs text-destructive mt-1">{uploadErr}</div>}
+        {err && <div className="text-xs text-destructive mt-1">{err}</div>}
       </Field>
+
+      <div
+        ref={ref}
+        onPointerMove={onPointerMove}
+        onPointerUp={() => setDraggingId(null)}
+        onPointerLeave={() => setDraggingId(null)}
+        className="relative w-full overflow-hidden rounded-lg border border-gold/40 bg-background/40 select-none"
+        style={{ aspectRatio: "16/9", touchAction: "none" }}
+      >
+        {scene.imageUrl ? (
+          <img
+            src={scene.imageUrl}
+            alt="scene"
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
+            No image set
+          </div>
+        )}
+
+        {scene.markers.map((m) => (
+          <div
+            key={m.id}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setDraggingId(m.id);
+            }}
+            className="absolute -translate-x-1/2 -translate-y-1/2 cursor-move group"
+            style={{ left: `${m.x}%`, top: `${m.y}%` }}
+          >
+            {/* Radius ring */}
+            <div
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/60 bg-gold/10 pointer-events-none"
+              style={{
+                width: `${m.radius * 2}%`,
+                height: `${m.radius * 2 * (16 / 9)}%`, // approximate visual ring (image is 16:9)
+                left: 0,
+                top: 0,
+              }}
+            />
+            <span className="text-3xl drop-shadow-[0_0_8px_black] block">{m.emoji}</span>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+          Add marker
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {QUICK_EMOJIS.map((e) => (
+            <button
+              key={e}
+              onClick={() => addMarker(e)}
+              className="h-9 w-9 rounded border border-border hover:border-gold text-xl"
+              type="button"
+            >
+              {e}
+            </button>
+          ))}
+          <CustomEmojiAdd onAdd={addMarker} />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {scene.markers.map((m) => (
+          <div
+            key={m.id}
+            className="grid gap-2 md:grid-cols-[60px_1fr_1fr_1fr_1fr_auto] items-center rounded border border-border bg-background/40 p-2"
+          >
+            <Input
+              value={m.emoji}
+              onChange={(e) => updateMarker(m.id, { emoji: e.target.value })}
+              className="text-center text-lg"
+            />
+            <Input
+              value={m.label ?? ""}
+              onChange={(e) => updateMarker(m.id, { label: e.target.value })}
+              placeholder="label"
+            />
+            <NumberField
+              label="x %"
+              value={m.x}
+              min={0}
+              max={100}
+              onChange={(v) => updateMarker(m.id, { x: v })}
+            />
+            <NumberField
+              label="y %"
+              value={m.y}
+              min={0}
+              max={100}
+              onChange={(v) => updateMarker(m.id, { y: v })}
+            />
+            <NumberField
+              label="radius"
+              value={m.radius}
+              min={1}
+              max={30}
+              onChange={(v) => updateMarker(m.id, { radius: v })}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-destructive/50 text-destructive"
+              onClick={() => removeMarker(m.id)}
+            >
+              ✕
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomEmojiAdd({ onAdd }: { onAdd: (s: string) => void }) {
+  const [v, setV] = useState("");
+  return (
+    <div className="flex items-center gap-1">
+      <Input
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        placeholder="emoji or text"
+        className="h-9 w-32"
+      />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          if (v.trim()) {
+            onAdd(v.trim());
+            setV("");
+          }
+        }}
+      >
+        Add
+      </Button>
+    </div>
+  );
+}
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="text-xs">
+      <div className="text-muted-foreground">{label}</div>
+      <Input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={1}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          if (Number.isFinite(n)) onChange(Math.max(min, Math.min(max, n)));
+        }}
+        className="h-8"
+      />
+    </label>
+  );
+}
+
+/* ----------------- Path Config editor (puzzle 4) ----------------- */
+function PathConfigEditor({
+  config,
+  onChange,
+}: {
+  config: PathConfig;
+  onChange: (pc: PathConfig) => void;
+}) {
+  function setSafe(row: number, col: number) {
+    const next = [...config.safeCols];
+    next[row] = col;
+    onChange({ ...config, safeCols: next });
+  }
+  function setRows(rows: number) {
+    rows = Math.max(3, Math.min(30, rows));
+    const safeCols = [...config.safeCols];
+    while (safeCols.length < rows) safeCols.push(Math.floor(config.cols / 2));
+    while (safeCols.length > rows) safeCols.pop();
+    onChange({ ...config, rows, safeCols });
+  }
+  function setCols(cols: number) {
+    cols = Math.max(3, Math.min(15, cols));
+    const safeCols = config.safeCols.map((c) => Math.min(c, cols - 1));
+    onChange({ ...config, cols, safeCols });
+  }
+
+  return (
+    <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4 space-y-3">
+      <div className="font-display text-xs uppercase tracking-widest text-gold">
+        Path of the Righteous — click a cell in each row to mark the safe stone
+      </div>
+      <div className="grid gap-2 md:grid-cols-3">
+        <NumberField label="Rows (path length)" value={config.rows} min={3} max={30} onChange={setRows} />
+        <NumberField label="Columns (grid width)" value={config.cols} min={3} max={15} onChange={setCols} />
+        <NumberField
+          label="Preview seconds"
+          value={config.previewSeconds}
+          min={1}
+          max={20}
+          onChange={(v) => onChange({ ...config, previewSeconds: v })}
+        />
+      </div>
+      <div
+        className="mx-auto grid gap-1"
+        style={{
+          gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
+          maxWidth: Math.min(560, config.cols * 56),
+        }}
+      >
+        {Array.from({ length: config.rows * config.cols }).map((_, i) => {
+          const row = Math.floor(i / config.cols);
+          const col = i % config.cols;
+          const isSafe = config.safeCols[row] === col;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setSafe(row, col)}
+              className={`aspect-square rounded border transition ${
+                isSafe
+                  ? "border-gold bg-gold/40 shadow-[0_0_6px_rgba(212,175,55,0.6)]"
+                  : "border-border/60 bg-background/30 hover:border-gold/40"
+              }`}
+              aria-label={`r${row}c${col}${isSafe ? " (safe)" : ""}`}
+            />
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Players see the lit path for {config.previewSeconds}s, then it hides. Wrong stone = −30s. Asking
+        to see the path again = −2 minutes.
+      </p>
     </div>
   );
 }
