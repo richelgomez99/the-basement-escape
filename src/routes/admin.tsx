@@ -29,8 +29,9 @@ export const Route = createFileRoute("/admin")({
 const PW_KEY = "be_admin_pw";
 
 function getStoredPassword(): string {
-  if (typeof window === "undefined") return ADMIN_DEFAULT_PASSWORD;
-  return window.localStorage.getItem(PW_KEY) ?? ADMIN_DEFAULT_PASSWORD;
+  // For now: always use the default password so the host can always get in.
+  // (The "Update password" form is hidden below.)
+  return ADMIN_DEFAULT_PASSWORD;
 }
 function setStoredPassword(p: string) {
   if (typeof window === "undefined") return;
