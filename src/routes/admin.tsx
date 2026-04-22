@@ -386,7 +386,7 @@ function PuzzleEditor({
     <div className="stone-panel rounded-xl p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="font-display text-gold">
-          Lock {puzzle.id} — Artifact{" "}
+          Lock {puzzle.id} — Letter{" "}
           <span className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded border border-gold/50 bg-background/40">
             {puzzle.artifact}
           </span>
@@ -396,16 +396,26 @@ function PuzzleEditor({
         </Button>
       </div>
 
+      {/* Letter editor — prominent, full-width */}
+      <div className="mt-4 rounded border border-gold/40 bg-gold/5 p-3">
+        <Field label={`Letter for vault code (Lock ${puzzle.id})`}>
+          <div className="flex items-center gap-3">
+            <Input
+              value={puzzle.artifact}
+              maxLength={1}
+              onChange={(e) => onChange({ artifact: e.target.value.slice(0, 1).toUpperCase() })}
+              className="h-12 w-20 text-center font-display text-2xl uppercase tracking-widest"
+            />
+            <p className="text-xs text-muted-foreground">
+              This single character becomes letter #{puzzle.id} of the final vault code.
+            </p>
+          </div>
+        </Field>
+      </div>
+
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <Field label="Title">
           <Input value={puzzle.title} onChange={(e) => onChange({ title: e.target.value })} />
-        </Field>
-        <Field label="Artifact (1 char)">
-          <Input
-            value={puzzle.artifact}
-            maxLength={1}
-            onChange={(e) => onChange({ artifact: e.target.value.slice(0, 1) })}
-          />
         </Field>
         <Field label="Flavor">
           <Textarea

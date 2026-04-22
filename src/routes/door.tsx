@@ -52,12 +52,19 @@ function DoorScreen() {
 
   return (
     <div className="min-h-screen px-4 py-6 md:px-8">
-      <header className="mx-auto flex max-w-5xl items-center justify-between">
+      <header className="mx-auto flex max-w-5xl items-center justify-between gap-3">
         <div>
           <div className="font-display text-xs uppercase tracking-[0.3em] text-gold">Team</div>
           <div className="font-display text-xl">{team}</div>
         </div>
-        <Timer />
+        <div className="flex items-center gap-3">
+          <Link to="/">
+            <Button variant="outline" size="sm" className="border-gold/40">
+              ← Home
+            </Button>
+          </Link>
+          <Timer />
+        </div>
       </header>
 
       <main className="mx-auto mt-8 max-w-5xl">
