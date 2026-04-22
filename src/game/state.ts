@@ -61,11 +61,41 @@ export function addPenalty(seconds: number) {
   const cur = read<number>(KEYS.penalty, 0);
   write(KEYS.penalty, cur + seconds);
 }
+
+// ---- Pause support (used while narration plays for the first time) ----
+const PAUSE_KEY = "be_pause_start";
+export function pauseClock() {
+  if (typeof window === "undefined") return;
+  if (window.localStorage.getItem(PAUSE_KEY)) return; // already paused
+  window.localStorage.setItem(PAUSE_KEY, String(Date.now()));
+  window.dispatchEvent(new Event("be_state"));
+}
+export function resumeClock() {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(PAUSE_KEY);
+  if (!raw) return;
+  const startedAt = Number(raw);
+  window.localStorage.removeItem(PAUSE_KEY);
+  if (Number.isFinite(startedAt) && startedAt > 0) {
+    const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
+    if (pausedSecs > 0) addPenalty(-pausedSecs); // negative penalty = give time back
+  }
+  window.dispatchEvent(new Event("be_state"));
+}
+function getActivePauseOffsetSeconds(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = window.localStorage.getItem(PAUSE_KEY);
+  if (!raw) return 0;
+  const startedAt = Number(raw);
+  if (!Number.isFinite(startedAt) || startedAt <= 0) return 0;
+  return Math.floor((Date.now() - startedAt) / 1000);
+}
 export function getRemainingSeconds(): number {
   const start = read<number>(KEYS.start, 0);
   const penalty = read<number>(KEYS.penalty, 0);
   if (!start) return GAME_DURATION_SECONDS;
-  const elapsed = Math.floor((Date.now() - start) / 1000) + penalty;
+  const pauseOffset = getActivePauseOffsetSeconds();
+  const elapsed = Math.floor((Date.now() - start) / 1000) + penalty - pauseOffset;
   return Math.max(0, GAME_DURATION_SECONDS - elapsed);
 }
 export function isGameStarted() {
