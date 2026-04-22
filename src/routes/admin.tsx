@@ -963,53 +963,50 @@ function QuestionsEditor({
   seedAcceptable?: string[];
   onChange: (next: Question[]) => void;
 }) {
+  // If no questions are saved yet but the puzzle has a single-answer, show that
+  // answer as Question 1 (virtual) so the host doesn't see an empty editor that
+  // contradicts the filled single-answer field. The first edit/add materializes it.
+  const hasSeed = !!(seedAnswer?.trim() || (seedAcceptable && seedAcceptable.length));
+  const isVirtual = questions.length === 0 && hasSeed;
+  const display: Question[] = isVirtual
+    ? [{ prompt: "", answer: seedAnswer ?? "", acceptable: seedAcceptable ?? [], hint: "", audioUrl: "" }]
+    : questions;
+
+  function commit(next: Question[]) {
+    onChange(next);
+  }
   function update(idx: number, patch: Partial<Question>) {
-    onChange(questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+    commit(display.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
   }
   function add() {
-    // First time: seed with the puzzle's single-answer fields so the host doesn't
-    // have to retype them, plus an empty second question to show the pattern.
-    if (questions.length === 0 && (seedAnswer?.trim() || (seedAcceptable && seedAcceptable.length))) {
-      onChange([
-        {
-          prompt: "",
-          answer: seedAnswer ?? "",
-          acceptable: seedAcceptable ?? [],
-          hint: "",
-          audioUrl: "",
-        },
-        { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" },
-      ]);
-      return;
-    }
-    onChange([...questions, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
+    commit([...display, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
   }
   function remove(idx: number) {
-    onChange(questions.filter((_, i) => i !== idx));
+    commit(display.filter((_, i) => i !== idx));
   }
   function move(idx: number, dir: -1 | 1) {
-    const next = [...questions];
+    const next = [...display];
     const j = idx + dir;
     if (j < 0 || j >= next.length) return;
     [next[idx], next[j]] = [next[j], next[idx]];
-    onChange(next);
+    commit(next);
   }
 
   return (
     <div className="mt-6 rounded border border-gold/30 bg-background/20 p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="font-display text-xs uppercase tracking-widest text-gold">
-          Questions ({questions.length}) — players answer in order, −30s per wrong
+          Questions ({display.length}) — players answer in order, −30s per wrong
+          {isVirtual && (
+            <span className="ml-2 normal-case tracking-normal text-muted-foreground">
+              (Question 1 is auto-filled from the single-answer above. Add a 2nd to enable multi-question mode.)
+            </span>
+          )}
         </div>
         <Button size="sm" variant="outline" onClick={add}>
           + Add question
         </Button>
       </div>
-      {questions.length === 0 && (
-        <p className="text-xs text-muted-foreground">
-          No questions yet — click "Add question" above to create the first one.
-        </p>
-      )}
       <div className="space-y-3">
         {questions.map((q, i) => (
           <div key={i} className="rounded border border-border bg-background/40 p-3 space-y-2">
