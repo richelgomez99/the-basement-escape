@@ -45,6 +45,41 @@ export type PathConfig = {
   previewSeconds: number; // initial flash time
 };
 
+// Library (puzzle 3): list of books, real ones must be picked in order
+export type LibraryBook = {
+  id: string;
+  name: string;
+  real: boolean;
+  order?: number; // 1-based order among real books
+};
+export type LibraryConfig = {
+  books: LibraryBook[];
+  intro?: string;
+};
+
+// Stained Glass (puzzle 7): 3x3 jigsaw with letters revealed when solved
+export type StainedGlassConfig = {
+  imageUrl: string; // background image (sliced into 3x3)
+  // Letters keyed by piece index 0..8 (left-to-right, top-to-bottom of the SOLVED image).
+  // Empty string = no letter shown on that piece.
+  letters: string[]; // length 9
+  revealedWord: string; // for display copy after solve
+  intro?: string;
+};
+
+// Timeline (puzzle 9): events to order; some are imposters
+export type TimelineEvent = {
+  id: string;
+  label: string;
+  belongs: boolean; // true = part of the correct sequence
+  order?: number; // 1-based among belongs=true
+};
+export type TimelineConfig = {
+  events: TimelineEvent[];
+  intro?: string;
+  finalCode: string; // what to type to lock it (e.g. "12345")
+};
+
 export type Puzzle = {
   id: number;
   title: string;
@@ -63,6 +98,12 @@ export type Puzzle = {
   hiddenScene?: HiddenScene;
   // Puzzle 4 path config
   pathConfig?: PathConfig;
+  // Puzzle 3 library config
+  libraryConfig?: LibraryConfig;
+  // Puzzle 7 stained glass config
+  stainedGlassConfig?: StainedGlassConfig;
+  // Puzzle 9 timeline config
+  timelineConfig?: TimelineConfig;
 };
 
 // Default cathedral asset URL (resolved at runtime via dynamic import substitution).
