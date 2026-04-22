@@ -1136,22 +1136,13 @@ function QuestionsEditor({
                 />
               </Field>
 
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Flavor (optional, shown above prompt)">
-                  <Textarea
-                    value={q.flavor ?? ""}
-                    onChange={(e) => update(i, { flavor: e.target.value })}
-                    rows={2}
-                  />
-                </Field>
-                <Field label="Scripture (optional)">
-                  <Textarea
-                    value={q.scripture ?? ""}
-                    onChange={(e) => update(i, { scripture: e.target.value })}
-                    rows={2}
-                  />
-                </Field>
-              </div>
+              <Field label="Scripture (optional)">
+                <Textarea
+                  value={q.scripture ?? ""}
+                  onChange={(e) => update(i, { scripture: e.target.value })}
+                  rows={2}
+                />
+              </Field>
 
               <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Canonical answer">
