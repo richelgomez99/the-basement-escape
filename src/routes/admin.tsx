@@ -553,17 +553,54 @@ function NarrationStatusPanel({
     }
   }
 
+  // True for items missing audio OR whose text changed since last generation.
+  const stale = items.filter((it) => {
+    const row = byKey.get(it.key);
+    if (!row || !row.audio_url || row.status !== "ready") return true;
+    return row.text.trim() !== it.text;
+  });
+  const [bulkRunning, setBulkRunning] = useState(false);
+  async function generateAllStale() {
+    if (bulkRunning || stale.length === 0) return;
+    setBulkRunning(true);
+    for (const it of stale) {
+      if (!it.text) continue;
+      try {
+        await generateNarration({ data: { key: it.key, text: it.text } });
+      } catch (e) {
+        console.warn("bulk regen failed for", it.key, e);
+      }
+    }
+    setBulkRunning(false);
+  }
+
   return (
     <div className="stone-panel mt-4 rounded-xl p-4">
-      <div className="flex items-center gap-2">
-        <Volume2 className="h-4 w-4 text-gold" />
-        <div className="font-display text-xs uppercase tracking-widest text-gold">
-          Puzzle Master narration status
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-4 w-4 text-gold" />
+          <div className="font-display text-xs uppercase tracking-widest text-gold">
+            Puzzle Master narration status
+          </div>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={generateAllStale}
+          disabled={bulkRunning || stale.length === 0}
+          className="border-gold/40"
+        >
+          {bulkRunning
+            ? "Generating…"
+            : stale.length === 0
+              ? "All voices ready"
+              : `Generate ${stale.length} missing voice${stale.length === 1 ? "" : "s"}`}
+        </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        Each item below is auto-narrated by ElevenLabs (voice: Puzzle Master). Audio regenerates whenever the
-        text below changes and you press <strong>Save changes</strong>.
+        Audio is generated once and cached. It only regenerates when you change the text and press
+        <strong> Save changes</strong>, or when you click the buttons here. Players never trigger generation —
+        they just play the saved file.
       </p>
       <div className="mt-3 grid gap-2">
         {items.map((it) => {
