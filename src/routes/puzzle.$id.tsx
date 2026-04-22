@@ -4,10 +4,11 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
+import { addPenalty, getSolved, isGameStarted, isUnlocked, markSolved } from "@/game/state";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
+import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlass from "@/assets/stained-glass.jpg";
 
@@ -28,6 +29,9 @@ function PuzzleRoute() {
   const navigate = useNavigate();
   const numId = Number(id);
   const puzzle = getPuzzle(numId);
+  const totalPuzzles = getPuzzles().length;
+  const [showLetter, setShowLetter] = useState(false);
+  const alreadySolved = getSolved().includes(numId);
 
   useEffect(() => {
     if (!isGameStarted()) {
@@ -50,7 +54,6 @@ function PuzzleRoute() {
     );
   }
 
-  // Helper: render a text puzzle as either a single AnswerForm or a multi-question runner.
   const textPuzzle = (placeholder: string, inputMode?: "text" | "numeric") => {
     if (puzzle.questions && puzzle.questions.length > 0) {
       return <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} inputMode={inputMode} />;
@@ -60,6 +63,21 @@ function PuzzleRoute() {
 
   return (
     <PuzzleShell puzzle={puzzle}>
+      {alreadySolved && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded border border-gold/40 bg-gold/5 p-3 text-sm">
+          <span className="text-gold">
+            ✓ You've already opened this lock. Need the letter again?
+          </span>
+          <Button
+            size="sm"
+            className="bg-gold text-gold-foreground hover:bg-gold/90"
+            onClick={() => setShowLetter(true)}
+          >
+            Show letter
+          </Button>
+        </div>
+      )}
+
       {puzzle.id === 1 && textPuzzle("Type the missing word")}
       {puzzle.id === 2 && (
         <HiddenScene
@@ -79,6 +97,15 @@ function PuzzleRoute() {
       {puzzle.id === 7 && <StainedGlass />}
       {puzzle.id === 8 && <MusicRoundOrSingle />}
       {puzzle.id === 9 && <Timeline />}
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="replay"
+      />
     </PuzzleShell>
   );
 }
@@ -86,10 +113,12 @@ function PuzzleRoute() {
 /* ---------- Puzzle 3: Locked Library ---------- */
 function Library() {
   const puzzle = getPuzzles()[2];
+  const totalPuzzles = getPuzzles().length;
   const cfg = puzzle.libraryConfig;
   const books = cfg?.books ?? [];
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
 
   const realOrdered = books
@@ -116,7 +145,7 @@ function Library() {
     setPicked(next);
     if (next.length === realOrdered.length) {
       markSolved(3);
-      setTimeout(() => navigate({ to: "/door" }), 600);
+      setTimeout(() => setShowLetter(true), 400);
     }
   }
 
@@ -153,6 +182,17 @@ function Library() {
         })}
       </div>
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="solved"
+        continueLabel="Continue to the door"
+        onContinue={() => navigate({ to: "/door" })}
+      />
     </div>
   );
 }
@@ -231,9 +271,7 @@ function StainedGlass() {
         ) : (
           <>
             <p className="text-center text-sm text-gold">
-              {cfg?.revealedWord
-                ? `The window reveals: ${cfg.revealedWord}`
-                : "The window reveals a word."}
+              The window reveals a word — read the letters and type it below.
             </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
           </>

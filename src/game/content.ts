@@ -322,8 +322,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       },
     ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s. Think Kirk Franklin, Donald Lawrence, Marvin Sapp, Hezekiah Walker." },
-      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words right after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people. Q4 & Q5: both are well-known worship songs by Black gospel pastors — one about lifting hands early, the other about the greatness of God's name." },
+      { tier: 1, label: "Nudge", text: "All five answers are gospel staples from the 90s and early 2000s. Listen for the lyrics — they often quote the title back." },
+      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats the four words right after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people. Q4 & Q5: both are well-known worship songs by Black gospel pastors — one about lifting hands early, the other about the greatness of God's name." },
       { tier: 3, label: "Bypass", text: "Q1: Healed, You Rock My World • Q2: Rain Down On Me • Q3: Sounds of Blackness • Q4: Praise Him in Advance — Marvin Sapp • Q5: Wonderful Is Your Name — Hezekiah Walker." },
     ],
   },
