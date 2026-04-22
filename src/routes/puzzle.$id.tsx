@@ -262,18 +262,15 @@ function MusicRoundOrSingle() {
 }
 
 /* ---------- Puzzle 9: Timeline ---------- */
-type Event = { id: string; label: string; moses: boolean; order?: number };
 function Timeline() {
   const puzzle = getPuzzles()[8];
-  const all: Event[] = [
-    { id: "basket", label: "Hidden in a basket", moses: true, order: 1 },
-    { id: "babel", label: "Tower of Babel", moses: false },
-    { id: "bush", label: "Burning Bush", moses: true, order: 2 },
-    { id: "abraham", label: "Abraham's covenant", moses: false },
-    { id: "plagues", label: "Ten Plagues", moses: true, order: 3 },
-    { id: "redsea", label: "Crossing the Red Sea", moses: true, order: 4 },
-    { id: "ten", label: "Ten Commandments", moses: true, order: 5 },
-  ];
+  const cfg = puzzle.timelineConfig;
+  const all = cfg?.events ?? [];
+  const finalCode = cfg?.finalCode ?? puzzle.answer ?? "";
+  const ordered = all
+    .filter((e) => e.belongs && typeof e.order === "number")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
   const [removed, setRemoved] = useState<string[]>([]);
   const [order, setOrder] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -283,10 +280,11 @@ function Timeline() {
 
   function remove(id: string) {
     if (done) return;
-    const e = all.find((x) => x.id === id)!;
-    if (e.moses) {
+    const e = all.find((x) => x.id === id);
+    if (!e) return;
+    if (e.belongs) {
       addPenalty(TRAP_PENALTY_SECONDS);
-      setError(`"${e.label}" belongs to Moses! −30 seconds.`);
+      setError(`"${e.label}" belongs to the sequence! −30 seconds.`);
       return;
     }
     setError("");
@@ -295,14 +293,14 @@ function Timeline() {
 
   function pick(id: string) {
     if (done) return;
-    const e = all.find((x) => x.id === id)!;
-    if (!e.moses) {
+    const e = all.find((x) => x.id === id);
+    if (!e) return;
+    if (!e.belongs) {
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
-    const expected = all.filter((x) => x.moses).sort((a, b) => a.order! - b.order!);
-    if (expected[order.length].id !== id) {
+    if (ordered[order.length]?.id !== id) {
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`Out of order. −30 seconds.`);
       return;
@@ -310,16 +308,23 @@ function Timeline() {
     setError("");
     const next = [...order, id];
     setOrder(next);
-    if (next.length === 5) {
+    if (next.length === ordered.length) {
       setDone(true);
     }
+  }
+
+  if (all.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        No timeline events configured. Set them up in /admin.
+      </p>
+    );
   }
 
   return (
     <div className="space-y-4">
       <p className="text-center text-sm text-muted-foreground">
-        Tap to <strong className="text-gold">order</strong> Moses events. Tap ✕ to{" "}
-        <strong className="text-destructive">remove</strong> imposters. Wrong moves = −30s.
+        {cfg?.intro ?? "Tap to ORDER events. Tap ✕ to REMOVE imposters. Wrong moves = −30s."}
       </p>
       <div className="space-y-2">
         {visible.map((e) => (
@@ -346,7 +351,7 @@ function Timeline() {
           <div className="font-display text-xs uppercase tracking-widest text-gold">Ordered</div>
           <ol className="mt-1 list-decimal list-inside text-sm">
             {order.map((id) => (
-              <li key={id}>{all.find((x) => x.id === id)!.label}</li>
+              <li key={id}>{all.find((x) => x.id === id)?.label}</li>
             ))}
           </ol>
         </div>
@@ -354,8 +359,15 @@ function Timeline() {
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
       {done && (
         <>
-          <p className="text-center text-sm text-gold">Timeline complete. Type the order to lock it in.</p>
-          <AnswerForm puzzle={puzzle} placeholder="Type: 12345" inputMode="numeric" />
+          <p className="text-center text-sm text-gold">
+            Timeline complete. Type{" "}
+            {finalCode ? <code className="text-gold">{finalCode}</code> : "the order"} to lock it in.
+          </p>
+          <AnswerForm
+            puzzle={puzzle}
+            placeholder={finalCode ? `Type: ${finalCode}` : "Type the order"}
+            inputMode="numeric"
+          />
         </>
       )}
     </div>
