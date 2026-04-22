@@ -310,7 +310,7 @@ function StainedGlass() {
 
 /* ---------- Puzzle 8: Music round (multi-question with audio) ---------- */
 function MusicRoundOrSingle() {
-  const puzzle = getPuzzles()[7];
+  const puzzle = getPuzzles().find((p) => p.id === 8)!;
   const questions = puzzle.questions ?? puzzle.musicQuestions ?? [];
   if (questions.length === 0) {
     return (
@@ -324,7 +324,7 @@ function MusicRoundOrSingle() {
 
 /* ---------- Puzzle 9: Timeline ---------- */
 function Timeline() {
-  const puzzle = getPuzzles()[8];
+  const puzzle = getPuzzles().find((p) => p.id === 9)!;
   const cfg = puzzle.timelineConfig;
   const all = cfg?.events ?? [];
   const finalCode = cfg?.finalCode ?? puzzle.answer ?? "";
@@ -332,11 +332,21 @@ function Timeline() {
     .filter((e) => e.belongs && typeof e.order === "number")
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const [removed, setRemoved] = useState<string[]>([]);
-  const [order, setOrder] = useState<string[]>([]);
+  const savedT = getPuzzleState<{ removed: string[]; order: string[] }>(9, {
+    removed: [],
+    order: [],
+  });
+  const [removed, setRemoved] = useState<string[]>(savedT.removed ?? []);
+  const [order, setOrder] = useState<string[]>(savedT.order ?? []);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(
+    () => (savedT.order?.length ?? 0) === ordered.length && ordered.length > 0,
+  );
   const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPuzzleState(9, { removed, order });
+  }, [removed, order]);
 
   const visible = all.filter((e) => !removed.includes(e.id) && !order.includes(e.id));
   const confirmEvent = confirmId ? all.find((x) => x.id === confirmId) ?? null : null;
@@ -345,6 +355,7 @@ function Timeline() {
     const e = all.find((x) => x.id === id);
     if (!e) return;
     if (e.belongs) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" belongs to the sequence! −30 seconds.`);
       return;
@@ -358,11 +369,13 @@ function Timeline() {
     const e = all.find((x) => x.id === id);
     if (!e) return;
     if (!e.belongs) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`"${e.label}" doesn't belong. −30 seconds.`);
       return;
     }
     if (ordered[order.length]?.id !== id) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError(`Out of order. −30 seconds.`);
       return;
