@@ -810,75 +810,109 @@ function PuzzleEditor({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <Field label="Title">
-          <Input value={puzzle.title} onChange={(e) => onChange({ title: e.target.value })} />
-        </Field>
-        <Field label="Flavor">
-          <Textarea
-            value={puzzle.flavor}
-            onChange={(e) => onChange({ flavor: e.target.value })}
-            rows={2}
-          />
-        </Field>
-        <Field label="Scripture (optional)">
-          <Textarea
-            value={puzzle.scripture ?? ""}
-            onChange={(e) => onChange({ scripture: e.target.value })}
-            rows={2}
-          />
-        </Field>
-        {!MULTI_Q_PUZZLES.has(puzzle.id) && (
+      {(() => {
+        const hasQuestions =
+          MULTI_Q_PUZZLES.has(puzzle.id) &&
+          ((puzzle.questions?.length ?? 0) > 0 ||
+            (puzzle.musicQuestions?.length ?? 0) > 0);
+        return (
           <>
-            <Field label="Single-answer">
-              <Input value={puzzle.answer} onChange={(e) => onChange({ answer: e.target.value })} />
-            </Field>
-            <Field label="Acceptable alternates (comma-separated)">
-              <Input
-                value={(puzzle.acceptable ?? []).join(", ")}
-                onChange={(e) =>
-                  onChange({
-                    acceptable: e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  })
-                }
-              />
-            </Field>
-          </>
-        )}
-      </div>
-
-      {/* Hints */}
-      <div className="mt-4 space-y-2">
-        <div className="font-display text-xs uppercase tracking-widest text-gold">Hints</div>
-        {puzzle.hints.map((h, i) => (
-          <div key={h.tier} className="rounded border border-border bg-background/30 p-3">
-            <div className="grid gap-2 md:grid-cols-[120px_1fr]">
-              <Input
-                value={h.label}
-                onChange={(e) => {
-                  const next = [...puzzle.hints];
-                  next[i] = { ...h, label: e.target.value };
-                  setHints(next);
-                }}
-                placeholder={`Hint ${h.tier} label`}
-              />
-              <Textarea
-                value={h.text}
-                onChange={(e) => {
-                  const next = [...puzzle.hints];
-                  next[i] = { ...h, text: e.target.value };
-                  setHints(next);
-                }}
-                rows={2}
-                placeholder={`Hint ${h.tier} text`}
-              />
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <Field label="Title">
+                <Input
+                  value={puzzle.title}
+                  onChange={(e) => onChange({ title: e.target.value })}
+                />
+              </Field>
+              {!hasQuestions && (
+                <>
+                  <Field label="Flavor">
+                    <Textarea
+                      value={puzzle.flavor}
+                      onChange={(e) => onChange({ flavor: e.target.value })}
+                      rows={2}
+                    />
+                  </Field>
+                  <Field label="Scripture (optional)">
+                    <Textarea
+                      value={puzzle.scripture ?? ""}
+                      onChange={(e) => onChange({ scripture: e.target.value })}
+                      rows={2}
+                    />
+                  </Field>
+                  {!MULTI_Q_PUZZLES.has(puzzle.id) && (
+                    <>
+                      <Field label="Single-answer">
+                        <Input
+                          value={puzzle.answer}
+                          onChange={(e) => onChange({ answer: e.target.value })}
+                        />
+                      </Field>
+                      <Field label="Acceptable alternates (comma-separated)">
+                        <Input
+                          value={(puzzle.acceptable ?? []).join(", ")}
+                          onChange={(e) =>
+                            onChange({
+                              acceptable: e.target.value
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                        />
+                      </Field>
+                    </>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-        ))}
-      </div>
+
+            {!hasQuestions && (
+              <div className="mt-4 space-y-2">
+                <div className="font-display text-xs uppercase tracking-widest text-gold">
+                  Hints
+                </div>
+                {puzzle.hints.map((h, i) => (
+                  <div
+                    key={h.tier}
+                    className="rounded border border-border bg-background/30 p-3"
+                  >
+                    <div className="grid gap-2 md:grid-cols-[120px_1fr]">
+                      <Input
+                        value={h.label}
+                        onChange={(e) => {
+                          const next = [...puzzle.hints];
+                          next[i] = { ...h, label: e.target.value };
+                          setHints(next);
+                        }}
+                        placeholder={`Hint ${h.tier} label`}
+                      />
+                      <Textarea
+                        value={h.text}
+                        onChange={(e) => {
+                          const next = [...puzzle.hints];
+                          next[i] = { ...h, text: e.target.value };
+                          setHints(next);
+                        }}
+                        rows={2}
+                        placeholder={`Hint ${h.tier} text`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {hasQuestions && (
+              <p className="mt-3 text-[11px] text-muted-foreground italic">
+                Multi-question mode is on for this lock — Flavor, Scripture,
+                Answer and Hints are now edited per question below. Remove all
+                questions to return to single-answer mode.
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       {/* Multi-question editor */}
       {MULTI_Q_PUZZLES.has(puzzle.id) && (
