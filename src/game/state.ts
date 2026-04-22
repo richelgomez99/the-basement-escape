@@ -78,7 +78,9 @@ export function resumeClock() {
   window.localStorage.removeItem(PAUSE_KEY);
   if (Number.isFinite(startedAt) && startedAt > 0) {
     const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
-    if (pausedSecs > 0) addPenalty(-pausedSecs); // negative penalty = give time back
+    // Bake the paused duration into penalty so elapsed stays continuous
+    // (pauseOffset was subtracting these seconds while active; now it's gone).
+    if (pausedSecs > 0) addPenalty(pausedSecs);
   }
   window.dispatchEvent(new Event("be_state"));
 }
