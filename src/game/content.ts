@@ -37,13 +37,22 @@ export type HiddenScene = {
 };
 
 // Path-of-righteous configuration
+// `safeCols[row]` may be a single column index (number) OR an array of column indices
+// when the admin wants multiple valid stones per row (e.g. looping/branching paths).
 export type PathConfig = {
   cols: number;
   rows: number;
-  // Length must equal `rows`. Each entry is the safe column index (0-based) for that row.
-  safeCols: number[];
+  // Length must equal `rows`. Each entry is one or more safe column indices (0-based).
+  safeCols: Array<number | number[]>;
   previewSeconds: number; // initial flash time
 };
+
+// Helper: return the set of safe column indices for a given row, regardless of shape.
+export function safeColsForRow(cfg: PathConfig, row: number): number[] {
+  const v = cfg.safeCols[row];
+  if (v === undefined || v === null) return [];
+  return Array.isArray(v) ? v : [v];
+}
 
 // Library (puzzle 3): list of books, real ones must be picked in order
 export type LibraryBook = {
@@ -118,8 +127,8 @@ function defaultPath(): PathConfig {
   const rows = 15;
   const cols = 9;
   // Hand-tuned weaving columns for a memorable but tricky path of 15.
-  const safeCols = [4, 5, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 6, 5, 4];
-  return { cols, rows, safeCols, previewSeconds: 5 };
+  const safeCols: Array<number | number[]> = [4, 5, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 6, 5, 4];
+  return { cols, rows, safeCols, previewSeconds: 12 };
 }
 
 export const DEFAULT_PUZZLES: Puzzle[] = [
