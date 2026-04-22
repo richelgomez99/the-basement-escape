@@ -556,6 +556,9 @@ function NarrationStatusPanel({
     setLastError("");
     try {
       await generateNarration({ data: { key, text } });
+      // Defensive refetch — realtime should also fire, but don't depend on it.
+      const fresh = await fetchAllNarrations();
+      setRows(fresh);
     } catch (e: any) {
       console.warn("regen failed", key, e);
       setLastError(`${key}: ${e?.message ?? "failed"}`);
