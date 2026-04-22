@@ -824,15 +824,21 @@ function PuzzleEditor({
                   onChange={(e) => onChange({ title: e.target.value })}
                 />
               </Field>
+              <Field
+                label={
+                  hasQuestions
+                    ? "Flavor (intro shown once above all questions)"
+                    : "Flavor"
+                }
+              >
+                <Textarea
+                  value={puzzle.flavor}
+                  onChange={(e) => onChange({ flavor: e.target.value })}
+                  rows={2}
+                />
+              </Field>
               {!hasQuestions && (
                 <>
-                  <Field label="Flavor">
-                    <Textarea
-                      value={puzzle.flavor}
-                      onChange={(e) => onChange({ flavor: e.target.value })}
-                      rows={2}
-                    />
-                  </Field>
                   <Field label="Scripture (optional)">
                     <Textarea
                       value={puzzle.scripture ?? ""}
@@ -905,9 +911,10 @@ function PuzzleEditor({
 
             {hasQuestions && (
               <p className="mt-3 text-[11px] text-muted-foreground italic">
-                Multi-question mode is on for this lock — Flavor, Scripture,
-                Answer and Hints are now edited per question below. Remove all
-                questions to return to single-answer mode.
+                Multi-question mode is on for this lock. The puzzle Flavor
+                above is shown once as the intro; Scripture, Answer, and Hints
+                are now edited per question below. Remove all questions to
+                return to single-answer mode.
               </p>
             )}
           </>
