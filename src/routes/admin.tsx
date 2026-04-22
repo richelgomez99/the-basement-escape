@@ -215,7 +215,9 @@ function Editor() {
       }
       if (Object.keys(diff).length > 0) out[p.id] = diff;
     });
-    if (introText.trim() && introText.trim() !== DEFAULT_INTRO_TEXT) {
+    // Always persist intro when non-empty so the home page reflects exactly
+    // what the host typed — even if it happens to match the default text.
+    if (introText.trim()) {
       out._intro = introText.trim();
     }
     const vw = vaultWord.trim().toUpperCase();
