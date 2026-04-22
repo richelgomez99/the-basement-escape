@@ -318,16 +318,41 @@ function Editor() {
         </header>
 
         <div className="stone-panel mt-6 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-[260px]">
             <div className="font-display text-xs uppercase tracking-widest text-gold">
-              Live Vault Code
+              Vault word (9 letters)
             </div>
-            <div className="font-display text-2xl tracking-[0.3em] text-gold mt-1">
-              {vaultCode || "—"}
+            <div className="mt-1 flex items-center gap-2">
+              <Input
+                value={vaultWord}
+                maxLength={9}
+                onChange={(e) =>
+                  setVaultWord(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 9))
+                }
+                className="h-11 w-44 text-center font-display text-xl tracking-[0.3em] uppercase border-gold/50"
+                placeholder={DEFAULT_VAULT_WORD}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setVaultWord(DEFAULT_VAULT_WORD)}
+                title="Reset to default"
+              >
+                Default
+              </Button>
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {vaultWordValid
+                ? "Letters auto-scramble across the 9 locks. Players unscramble to win."
+                : "Enter exactly 9 letters (A–Z). No spaces."}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={save} disabled={saving} className="bg-gold text-gold-foreground hover:bg-gold/90">
+            <Button
+              onClick={save}
+              disabled={saving || !vaultWordValid}
+              className="bg-gold text-gold-foreground hover:bg-gold/90"
+            >
               {saving ? "Saving…" : "Save changes"}
             </Button>
             <Button variant="outline" onClick={exportJson}>Export JSON</Button>
