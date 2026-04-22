@@ -4,14 +4,6 @@ import { getPuzzle, getPuzzles, TRAP_PENALTY_SECONDS } from "@/game/content";
 import { PuzzleShell } from "@/components/game/PuzzleShell";
 import { AnswerForm } from "@/components/game/AnswerForm";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { addPenalty, isGameStarted, isUnlocked, markSolved } from "@/game/state";
 import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
@@ -384,35 +376,41 @@ function Timeline() {
         </>
       )}
 
-      <Dialog open={confirmId !== null} onOpenChange={(o) => !o && setConfirmId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove this event?</DialogTitle>
-            <DialogDescription>
+      {confirmId !== null && confirmEvent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setConfirmId(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border border-gold/40 bg-background p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-lg text-gold">Remove this event?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
               You're about to remove{" "}
-              <strong className="text-foreground">"{confirmEvent?.label}"</strong> from the board. If
-              it actually belongs to the sequence, you'll lose{" "}
+              <strong className="text-foreground">"{confirmEvent.label}"</strong> from the board.
+              If it actually belongs to the sequence, you'll lose{" "}
               <strong className="text-destructive">30 seconds</strong>. Are you sure?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmId(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="outline"
-              className="border-destructive/60 text-destructive hover:bg-destructive/10"
-              onClick={() => {
-                const id = confirmId;
-                setConfirmId(null);
-                if (id) doRemove(id);
-              }}
-            >
-              Yes, remove
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                className="border-destructive/60 text-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  const id = confirmId;
+                  setConfirmId(null);
+                  if (id) doRemove(id);
+                }}
+              >
+                Yes, remove
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
