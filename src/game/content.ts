@@ -173,9 +173,18 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "Genesis comes first. After that: a book about leaving Egypt, a book of priestly law, then a book of a census." },
       { tier: 3, label: "Bypass", text: "Genesis, Exodus, Leviticus, Numbers — that's 4 correct books." },
     ],
-  },
-  {
-    id: 4,
+    libraryConfig: {
+      intro: "Click books in correct biblical order. Decoys will sound the alarm.",
+      books: [
+        { id: "genesis", name: "Genesis", real: true, order: 1 },
+        { id: "hezekiah", name: "Hezekiah", real: false },
+        { id: "exodus", name: "Exodus", real: true, order: 2 },
+        { id: "opinions", name: "First Opinions", real: false },
+        { id: "leviticus", name: "Leviticus", real: true, order: 3 },
+        { id: "numbers", name: "Numbers", real: true, order: 4 },
+        { id: "melchizedek", name: "Melchizedek", real: false },
+      ],
+    },
     title: "Path of the Righteous",
     flavor:
       "The path is shown for a moment, then hidden. Cross row by row. A wrong stone costs 30 seconds. Asking to see the path again costs 2 minutes.",
