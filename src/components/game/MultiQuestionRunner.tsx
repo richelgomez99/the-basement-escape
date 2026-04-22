@@ -3,19 +3,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Puzzle, Question } from "@/game/content";
-import { TRAP_PENALTY_SECONDS } from "@/game/content";
+import { TRAP_PENALTY_SECONDS, getPuzzles } from "@/game/content";
 import { addPenalty, markSolved } from "@/game/state";
+import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 
 function normalize(s: string) {
   return s
     .trim()
     .toLowerCase()
-    // strip punctuation that doesn't affect meaning
     .replace(/[.!?'"]/g, "")
     .replace(/\s+/g, " ");
 }
 
-// Split on common "song / artist" separators: dash variants, comma, " by ", slash, "&", " and "
 function splitParts(s: string): string[] {
   return normalize(s)
     .split(/\s*(?:-|–|—|,|\/|&| by | and )\s*/g)
@@ -29,7 +28,6 @@ function isCorrect(input: string, q: Question) {
   if (n === canonical) return true;
   if ((q.acceptable ?? []).some((a) => normalize(a) === n)) return true;
 
-  // Order-insensitive multipart match (handles "Song - Artist" vs "Artist - Song" vs comma/by/etc.)
   const inputParts = splitParts(input).sort();
   const candidates = [q.answer, ...(q.acceptable ?? [])];
   for (const c of candidates) {
@@ -41,10 +39,6 @@ function isCorrect(input: string, q: Question) {
   return false;
 }
 
-/**
- * Runs a list of questions sequentially. 30s penalty per wrong answer.
- * On the final correct answer, marks the puzzle solved and routes to /door.
- */
 export function MultiQuestionRunner({
   puzzle,
   questions,
@@ -60,7 +54,9 @@ export function MultiQuestionRunner({
   const [val, setVal] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
+  const [showLetter, setShowLetter] = useState(false);
   const navigate = useNavigate();
+  const totalPuzzles = getPuzzles().length;
 
   const current = questions[idx];
 
@@ -78,7 +74,7 @@ export function MultiQuestionRunner({
     setVal("");
     if (idx + 1 >= questions.length) {
       markSolved(puzzle.id);
-      navigate({ to: "/door" });
+      setShowLetter(true);
     } else {
       setIdx(idx + 1);
     }
@@ -125,6 +121,17 @@ export function MultiQuestionRunner({
           {idx + 1 >= questions.length ? "Submit final answer" : "Next"}
         </Button>
       </form>
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="solved"
+        continueLabel="Continue to the door"
+        onContinue={() => navigate({ to: "/door" })}
+      />
     </div>
   );
 }
