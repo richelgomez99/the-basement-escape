@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import type { PathConfig, Puzzle } from "@/game/content";
 import { PATH_RECALL_PENALTY_SECONDS, TRAP_PENALTY_SECONDS, safeColsForRow } from "@/game/content";
 import { addPenalty } from "@/game/state";
+import { playSfx } from "@/game/sfx";
 
 export function PathOfRighteous({
   puzzle,
@@ -55,6 +56,7 @@ export function PathOfRighteous({
       return;
     }
     if (!safeIndices.has(idx)) {
+      playSfx("error");
       addPenalty(TRAP_PENALTY_SECONDS);
       setError("The stone crumbles! −30 seconds.");
       setPhase("fail");
