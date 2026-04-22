@@ -22,22 +22,23 @@ export function PathOfRighteous({
     }
   }
 
-  const [phase, setPhase] = useState<"preview" | "play" | "recall" | "crossed" | "fail">("preview");
+  const [phase, setPhase] = useState<"ready" | "preview" | "play" | "recall" | "crossed" | "fail">("ready");
   const [step, setStep] = useState(0);
   const [trail, setTrail] = useState<number[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (phase !== "preview") return;
+    if (phase !== "preview" && phase !== "recall") return;
     const t = setTimeout(() => setPhase("play"), previewSeconds * 1000);
     return () => clearTimeout(t);
   }, [phase, previewSeconds]);
 
-  useEffect(() => {
-    if (phase !== "recall") return;
-    const t = setTimeout(() => setPhase("play"), previewSeconds * 1000);
-    return () => clearTimeout(t);
-  }, [phase, previewSeconds]);
+  function revealPath() {
+    if (phase === "ready") {
+      setError("");
+      setPhase("preview");
+    }
+  }
 
   function showAgain() {
     if (phase !== "play") return;
@@ -78,12 +79,18 @@ export function PathOfRighteous({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
+          {phase === "ready" && `When you're ready, reveal the safe path. It will show for ${previewSeconds}s.`}
           {phase === "preview" && `Memorize the path — hidden in ${previewSeconds}s.`}
           {phase === "recall" && `Path revealed — hides in ${previewSeconds}s.`}
           {phase === "play" && `Row ${step + 1} of ${rows}. Wrong stone = −30s.`}
           {phase === "fail" && "Reset…"}
           {phase === "crossed" && "You crossed safely. Now name the way."}
         </p>
+        {phase === "ready" && (
+          <Button type="button" size="sm" onClick={revealPath}>
+            Reveal path ({previewSeconds}s)
+          </Button>
+        )}
         {phase === "play" && (
           <Button
             type="button"
