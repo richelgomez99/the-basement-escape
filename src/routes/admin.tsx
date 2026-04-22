@@ -1720,6 +1720,41 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/**
+ * Free-text input for comma-separated alternates. Keeps the raw string
+ * locally so the user can type spaces, trailing commas, etc. without the
+ * cursor jumping. Parses + commits on blur.
+ */
+function AcceptableInput({
+  value,
+  onCommit,
+}: {
+  value: string[];
+  onCommit: (next: string[]) => void;
+}) {
+  const [raw, setRaw] = useState<string>((value ?? []).join(", "));
+  // Re-sync if the parent value changes from outside (e.g., reset/load).
+  const lastExternal = useRef<string>((value ?? []).join(", "));
+  useEffect(() => {
+    const incoming = (value ?? []).join(", ");
+    if (incoming !== lastExternal.current) {
+      lastExternal.current = incoming;
+      setRaw(incoming);
+    }
+  }, [value]);
+  return (
+    <Input
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => {
+        const parsed = raw.split(",").map((s) => s.trim()).filter(Boolean);
+        lastExternal.current = parsed.join(", ");
+        onCommit(parsed);
+      }}
+    />
+  );
+}
+
 /* ----------------- Library editor (puzzle 3) ----------------- */
 function LibraryEditor({
   config,
