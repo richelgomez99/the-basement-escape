@@ -780,22 +780,26 @@ function PuzzleEditor({
             rows={2}
           />
         </Field>
-        <Field label="Single-answer (used when no questions below)">
-          <Input value={puzzle.answer} onChange={(e) => onChange({ answer: e.target.value })} />
-        </Field>
-        <Field label="Acceptable alternates (comma-separated)">
-          <Input
-            value={(puzzle.acceptable ?? []).join(", ")}
-            onChange={(e) =>
-              onChange({
-                acceptable: e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-          />
-        </Field>
+        {!MULTI_Q_PUZZLES.has(puzzle.id) && (
+          <>
+            <Field label="Single-answer">
+              <Input value={puzzle.answer} onChange={(e) => onChange({ answer: e.target.value })} />
+            </Field>
+            <Field label="Acceptable alternates (comma-separated)">
+              <Input
+                value={(puzzle.acceptable ?? []).join(", ")}
+                onChange={(e) =>
+                  onChange({
+                    acceptable: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+              />
+            </Field>
+          </>
+        )}
       </div>
 
       {/* Hints */}
@@ -935,7 +939,7 @@ function QuestionsEditor({
       </div>
       {questions.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          No questions yet — uses the single-answer field above.
+          No questions yet — click "Add question" above to create the first one.
         </p>
       )}
       <div className="space-y-3">
