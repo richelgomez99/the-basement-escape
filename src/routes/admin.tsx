@@ -648,21 +648,20 @@ function PuzzleEditor({
         </Button>
       </div>
 
-      {/* Letter editor — prominent, full-width */}
+      {/* Letter readout — auto-derived from the vault word above */}
       <div className="mt-4 rounded border border-gold/40 bg-gold/5 p-3">
-        <Field label={`Letter for vault code (Lock ${puzzle.id})`}>
-          <div className="flex items-center gap-3">
-            <Input
-              value={puzzle.artifact}
-              maxLength={1}
-              onChange={(e) => onChange({ artifact: e.target.value.slice(0, 1).toUpperCase() })}
-              className="h-12 w-20 text-center font-display text-2xl uppercase tracking-widest"
-            />
-            <p className="text-xs text-muted-foreground">
-              This single character becomes letter #{puzzle.id} of the final vault code.
-            </p>
+        <div className="text-xs font-display uppercase tracking-widest text-gold">
+          Scrambled letter (auto-assigned)
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded border border-gold/50 bg-background/40 font-display text-2xl text-gold">
+            {puzzle.artifact}
           </div>
-        </Field>
+          <p className="text-xs text-muted-foreground">
+            This letter is dealt automatically from the vault word above. Change the
+            vault word to re-deal letters across all nine locks.
+          </p>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
