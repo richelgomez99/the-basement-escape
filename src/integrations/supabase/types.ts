@@ -14,7 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      puzzle_overrides: {
+        Row: {
+          data: Json
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          data?: Json
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
