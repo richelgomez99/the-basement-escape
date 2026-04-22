@@ -182,6 +182,17 @@ function Library() {
         })}
       </div>
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="solved"
+        continueLabel="Continue to the door"
+        onContinue={() => navigate({ to: "/door" })}
+      />
     </div>
   );
 }
