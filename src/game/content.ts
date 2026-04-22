@@ -293,7 +293,8 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
+        prompt:
+          'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Pastor and gospel artist who sang about lifting hands before the breakthrough arrives.",
         answer: "praise him in advance - marvin sapp",
         acceptable: [
@@ -301,11 +302,13 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "marvin sapp - praise him in advance",
           "praise him in advance, marvin sapp",
           "marvin sapp, praise him in advance",
+          "praise him in advance by marvin sapp",
         ],
         audioUrl: "",
       },
       {
-        prompt: "10 seconds — name the song AND the artist. Format: Song - Artist",
+        prompt:
+          'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Bishop and Love Fellowship Choir leader. The song declares that God's name is ___.",
         answer: "wonderful is your name - hezekiah walker",
         acceptable: [
@@ -313,13 +316,14 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "hezekiah walker - wonderful is your name",
           "wonderful is your name, hezekiah walker",
           "hezekiah walker, wonderful is your name",
+          "wonderful is your name by hezekiah walker",
         ],
         audioUrl: "",
       },
     ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s — Kirk Franklin, Sounds of Blackness, Marvin Sapp, Hezekiah Walker." },
-      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people." },
+      { tier: 1, label: "Nudge", text: "Most answers are gospel staples from the 90s and early 2000s. Think Kirk Franklin, Donald Lawrence, Marvin Sapp, Hezekiah Walker." },
+      { tier: 2, label: "Direction", text: "Q1: a Donald Lawrence track that interpolates an MJ song from 'Invincible.' Q2: the title repeats four words right after 'Melodies from heaven.' Q3: an ensemble whose name pairs a sound word with a people. Q4 & Q5: both are well-known worship songs by Black gospel pastors — one about lifting hands early, the other about the greatness of God's name." },
       { tier: 3, label: "Bypass", text: "Q1: Healed, You Rock My World • Q2: Rain Down On Me • Q3: Sounds of Blackness • Q4: Praise Him in Advance — Marvin Sapp • Q5: Wonderful Is Your Name — Hezekiah Walker." },
     ],
   },
