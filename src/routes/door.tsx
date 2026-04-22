@@ -7,6 +7,7 @@ import {
   addPenalty,
   getTeamName,
   isGameStarted,
+  resetGame,
   useCountdown,
 } from "@/game/state";
 import {
@@ -30,6 +31,7 @@ function DoorScreen() {
   const { solved } = useCountdown();
   const [team, setTeam] = useState("");
   const [recallOpen, setRecallOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const puzzles = getPuzzles();
 
   useEffect(() => {
@@ -118,13 +120,22 @@ function DoorScreen() {
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <Button
-            variant="outline"
-            className="border-destructive/50 text-destructive hover:bg-destructive/10"
-            onClick={() => setRecallOpen(true)}
-          >
-            Recall Past Clue (−2:00)
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setRecallOpen(true)}
+            >
+              Recall Past Clue (−2:00)
+            </Button>
+            <Button
+              variant="outline"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setResetOpen(true)}
+            >
+              Reset Game
+            </Button>
+          </div>
 
           {allSolved ? (
             <Link to="/vault">
@@ -161,6 +172,34 @@ function DoorScreen() {
               }}
             >
               Yes, recall (−2:00)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset the entire game?</DialogTitle>
+            <DialogDescription>
+              This will <strong className="text-destructive">erase your progress</strong> — all
+              solved locks, the timer, and your team name — and send you back to the home page where
+              you can enter a new team name and start over. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                resetGame();
+                setResetOpen(false);
+                navigate({ to: "/" });
+              }}
+            >
+              Yes, reset
             </Button>
           </DialogFooter>
         </DialogContent>
