@@ -65,41 +65,44 @@ export function addPenalty(seconds: number) {
 }
 
 // ---- Pause support (used while narration plays for the first time) ----
+// While paused, the timer display freezes. On resume, we add the paused
+// duration to penalty so the post-resume countdown continues from the same
+// frozen value (no jumps backward or forward).
 const PAUSE_KEY = "be_pause_start";
+function getPauseStart(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = window.localStorage.getItem(PAUSE_KEY);
+  if (!raw) return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+export function isClockPaused(): boolean {
+  return getPauseStart() > 0;
+}
 export function pauseClock() {
   if (typeof window === "undefined") return;
-  if (window.localStorage.getItem(PAUSE_KEY)) return; // already paused
+  if (getPauseStart()) return; // already paused
   window.localStorage.setItem(PAUSE_KEY, String(Date.now()));
   window.dispatchEvent(new Event("be_state"));
 }
 export function resumeClock() {
   if (typeof window === "undefined") return;
-  const raw = window.localStorage.getItem(PAUSE_KEY);
-  if (!raw) return;
-  const startedAt = Number(raw);
+  const startedAt = getPauseStart();
+  if (!startedAt) return;
   window.localStorage.removeItem(PAUSE_KEY);
-  if (Number.isFinite(startedAt) && startedAt > 0) {
-    const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
-    // Bake the paused duration into penalty so elapsed stays continuous
-    // (pauseOffset was subtracting these seconds while active; now it's gone).
-    if (pausedSecs > 0) addPenalty(pausedSecs);
-  }
+  const pausedSecs = Math.floor((Date.now() - startedAt) / 1000);
+  // Bake paused duration into penalty so elapsed stays continuous across resume.
+  if (pausedSecs > 0) addPenalty(pausedSecs);
   window.dispatchEvent(new Event("be_state"));
-}
-function getActivePauseOffsetSeconds(): number {
-  if (typeof window === "undefined") return 0;
-  const raw = window.localStorage.getItem(PAUSE_KEY);
-  if (!raw) return 0;
-  const startedAt = Number(raw);
-  if (!Number.isFinite(startedAt) || startedAt <= 0) return 0;
-  return Math.floor((Date.now() - startedAt) / 1000);
 }
 export function getRemainingSeconds(): number {
   const start = read<number>(KEYS.start, 0);
   const penalty = read<number>(KEYS.penalty, 0);
   if (!start) return GAME_DURATION_SECONDS;
-  const pauseOffset = getActivePauseOffsetSeconds();
-  const elapsed = Math.floor((Date.now() - start) / 1000) + penalty - pauseOffset;
+  // While paused, freeze "now" at the moment the pause began.
+  const pauseStart = getPauseStart();
+  const nowMs = pauseStart || Date.now();
+  const elapsed = Math.floor((nowMs - start) / 1000) + penalty;
   return Math.max(0, GAME_DURATION_SECONDS - elapsed);
 }
 export function isGameStarted() {
