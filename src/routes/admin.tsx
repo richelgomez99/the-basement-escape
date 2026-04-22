@@ -593,6 +593,9 @@ function NarrationStatusPanel({
     }
     setActiveKey(null);
     setBulkProgress(null);
+    // Defensive refetch to ensure UI shows the latest rows.
+    const fresh = await fetchAllNarrations();
+    setRows(fresh);
   }
 
   return (
