@@ -480,11 +480,14 @@ export async function saveOverridesToCloud(overrides: Overrides): Promise<void> 
 
 export function getPuzzles(): Puzzle[] {
   const overrides = cachedOverrides;
-  return DEFAULT_PUZZLES.map((p) => {
+  const scrambled = scrambleLettersForPuzzles(getVaultWord());
+  return DEFAULT_PUZZLES.map((p, idx) => {
     const o = overrides[p.id];
-    if (!o) return p;
-    const merged: Puzzle = { ...p, ...o, hints: o.hints ?? p.hints };
-    // Mirror musicQuestions ↔ questions for puzzle 8
+    const base: Puzzle = o ? { ...p, ...o, hints: o.hints ?? p.hints } : p;
+    // Each puzzle's artifact is the scrambled letter at its index — admin
+    // does NOT override individual artifact letters anymore; they edit the
+    // single vault word and the letters re-deal automatically.
+    const merged: Puzzle = { ...base, artifact: scrambled[idx] ?? "?" };
     if (p.id === 8) {
       if (merged.questions && !merged.musicQuestions) merged.musicQuestions = merged.questions;
       if (merged.musicQuestions && !merged.questions) merged.questions = merged.musicQuestions;
@@ -518,15 +521,15 @@ export function clearOverrides() {
   saveOverridesToCloud({}).catch(() => {});
 }
 
+// The "vault code" is now the UNSCRAMBLED 9-letter word. Players collect
+// scrambled letters from each lock and must rearrange them to type this word.
 export function getVaultCode(): string {
-  return getPuzzles()
-    .map((p) => p.artifact)
-    .join("");
+  return getVaultWord();
 }
 
 // Backwards-compatible exports
 export const PUZZLES = DEFAULT_PUZZLES;
-export const VAULT_CODE = DEFAULT_PUZZLES.map((p) => p.artifact).join("");
+export const VAULT_CODE = DEFAULT_VAULT_WORD;
 
 export const KEY_VERSE =
   '"And ye shall know the truth, and the truth shall make you free." — John 8:32';
