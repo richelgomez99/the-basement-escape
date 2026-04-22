@@ -31,6 +31,7 @@ function DoorScreen() {
   const { solved } = useCountdown();
   const [team, setTeam] = useState("");
   const [recallOpen, setRecallOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const puzzles = getPuzzles();
 
   useEffect(() => {
