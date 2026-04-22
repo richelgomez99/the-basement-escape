@@ -855,16 +855,9 @@ function PuzzleEditor({
                     />
                   </Field>
                   <Field label="Acceptable alternates (comma-separated)">
-                    <Input
-                      value={(puzzle.acceptable ?? []).join(", ")}
-                      onChange={(e) =>
-                        onChange({
-                          acceptable: e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean),
-                        })
-                      }
+                    <AcceptableInput
+                      value={puzzle.acceptable ?? []}
+                      onCommit={(acceptable) => onChange({ acceptable })}
                     />
                   </Field>
                 </>
@@ -1149,13 +1142,9 @@ function QuestionsEditor({
                   <Input value={q.answer} onChange={(e) => update(i, { answer: e.target.value })} />
                 </Field>
                 <Field label="Acceptable alternates (comma-separated)">
-                  <Input
-                    value={(q.acceptable ?? []).join(", ")}
-                    onChange={(e) =>
-                      update(i, {
-                        acceptable: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                      })
-                    }
+                  <AcceptableInput
+                    value={q.acceptable ?? []}
+                    onCommit={(acceptable) => update(i, { acceptable })}
                   />
                 </Field>
               </div>
@@ -1717,6 +1706,41 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </div>
       {children}
     </label>
+  );
+}
+
+/**
+ * Free-text input for comma-separated alternates. Keeps the raw string
+ * locally so the user can type spaces, trailing commas, etc. without the
+ * cursor jumping. Parses + commits on blur.
+ */
+function AcceptableInput({
+  value,
+  onCommit,
+}: {
+  value: string[];
+  onCommit: (next: string[]) => void;
+}) {
+  const [raw, setRaw] = useState<string>((value ?? []).join(", "));
+  // Re-sync if the parent value changes from outside (e.g., reset/load).
+  const lastExternal = useRef<string>((value ?? []).join(", "));
+  useEffect(() => {
+    const incoming = (value ?? []).join(", ");
+    if (incoming !== lastExternal.current) {
+      lastExternal.current = incoming;
+      setRaw(incoming);
+    }
+  }, [value]);
+  return (
+    <Input
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => {
+        const parsed = raw.split(",").map((s) => s.trim()).filter(Boolean);
+        lastExternal.current = parsed.join(", ");
+        onCommit(parsed);
+      }}
+    />
   );
 }
 
