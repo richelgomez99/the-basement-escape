@@ -363,19 +363,55 @@ DEFAULT_PUZZLES.forEach((p) => {
 /* ---------------- Persistence: Cloud + local fallback ---------------- */
 
 const OVERRIDES_KEY = "be_content_overrides";
-// Numeric keys map to per-puzzle overrides. Special key "_intro" stores the
-// home-page intro narration text (string).
-type Overrides = Partial<Record<number, Partial<Puzzle>>> & { _intro?: string };
+// Numeric keys map to per-puzzle overrides. Special keys:
+//   _intro     — home-page intro narration text (string)
+//   _vaultWord — admin-set 9-letter vault word; players must UNSCRAMBLE
+//                their nine collected letters to spell it.
+type Overrides = Partial<Record<number, Partial<Puzzle>>> & {
+  _intro?: string;
+  _vaultWord?: string;
+};
 
 export function getIntroText(): string {
-  // Lazy import to avoid circular dep
   const stored = (cachedOverrides as any)?._intro;
   return typeof stored === "string" && stored.trim() ? stored : DEFAULT_INTRO_TEXT_INLINE;
 }
 
+// The 9-letter word players must unscramble at the final vault.
+// Default = SALVATION (S+A+L+V+A+T+I+O+N — derived from the original artifact letters).
+export const DEFAULT_VAULT_WORD = "SALVATION";
+
+export function getVaultWord(): string {
+  const stored = (cachedOverrides as any)?._vaultWord;
+  if (typeof stored === "string" && stored.trim().length === 9) {
+    return stored.trim().toUpperCase();
+  }
+  return DEFAULT_VAULT_WORD;
+}
+
 // Inline default to avoid importing client-only module in shared content file.
 const DEFAULT_INTRO_TEXT_INLINE =
-  "You wake in the basement of an old church. The door is sealed by nine sacred locks, and the clock above is already counting down. Each lock guards a letter. Solve every puzzle, gather every letter, and you will find the code that sets you free. Trust the scriptures. Trust each other. The hour begins now.";
+  "You wake in the basement of an old church. The door is sealed by nine sacred locks, and the clock above is already counting down. Each lock guards a letter. Solve every puzzle, gather every letter, and you will then unscramble them to form the word that sets you free. Trust the scriptures. Trust each other. The hour begins now.";
+
+/**
+ * Deterministic shuffle of the vault word's letters across the 9 puzzles.
+ * Same word = same shuffle, so players see a stable assignment and the admin
+ * can preview which lock owns which letter.
+ */
+function scrambleLettersForPuzzles(word: string): string[] {
+  const letters = word.toUpperCase().split("").slice(0, 9);
+  while (letters.length < 9) letters.push("?");
+  // Seeded shuffle from a hash of the word so it's deterministic per word.
+  let seed = 0;
+  for (let i = 0; i < word.length; i++) seed = (seed * 31 + word.charCodeAt(i)) >>> 0;
+  const arr = [...letters];
+  for (let i = arr.length - 1; i > 0; i--) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 let cachedOverrides: Overrides = {};
 let loadedFromCloud = false;
