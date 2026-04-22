@@ -29,6 +29,9 @@ function PuzzleRoute() {
   const navigate = useNavigate();
   const numId = Number(id);
   const puzzle = getPuzzle(numId);
+  const totalPuzzles = getPuzzles().length;
+  const [showLetter, setShowLetter] = useState(false);
+  const alreadySolved = getSolved().includes(numId);
 
   useEffect(() => {
     if (!isGameStarted()) {
@@ -51,7 +54,6 @@ function PuzzleRoute() {
     );
   }
 
-  // Helper: render a text puzzle as either a single AnswerForm or a multi-question runner.
   const textPuzzle = (placeholder: string, inputMode?: "text" | "numeric") => {
     if (puzzle.questions && puzzle.questions.length > 0) {
       return <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} inputMode={inputMode} />;
@@ -61,6 +63,21 @@ function PuzzleRoute() {
 
   return (
     <PuzzleShell puzzle={puzzle}>
+      {alreadySolved && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded border border-gold/40 bg-gold/5 p-3 text-sm">
+          <span className="text-gold">
+            ✓ You've already opened this lock. Need the letter again?
+          </span>
+          <Button
+            size="sm"
+            className="bg-gold text-gold-foreground hover:bg-gold/90"
+            onClick={() => setShowLetter(true)}
+          >
+            Show letter
+          </Button>
+        </div>
+      )}
+
       {puzzle.id === 1 && textPuzzle("Type the missing word")}
       {puzzle.id === 2 && (
         <HiddenScene
@@ -80,6 +97,15 @@ function PuzzleRoute() {
       {puzzle.id === 7 && <StainedGlass />}
       {puzzle.id === 8 && <MusicRoundOrSingle />}
       {puzzle.id === 9 && <Timeline />}
+
+      <LetterUnlockedDialog
+        open={showLetter}
+        onClose={() => setShowLetter(false)}
+        puzzleId={puzzle.id}
+        totalPuzzles={totalPuzzles}
+        letter={puzzle.artifact}
+        variant="replay"
+      />
     </PuzzleShell>
   );
 }
