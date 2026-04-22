@@ -544,12 +544,23 @@ function NarrationStatusPanel({
     })),
   ];
 
+  // Track which keys we (this admin tab) are actively generating right now,
+  // so the UI shows real per-row progress instead of the DB's stale "pending".
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [lastError, setLastError] = useState<string>("");
+
   async function regenOne(key: string, text: string) {
-    if (!text) return;
+    if (!text || activeKey) return;
+    setActiveKey(key);
+    setLastError("");
     try {
       await generateNarration({ data: { key, text } });
-    } catch (e) {
+    } catch (e: any) {
       console.warn("regen failed", key, e);
+      setLastError(`${key}: ${e?.message ?? "failed"}`);
+    } finally {
+      setActiveKey(null);
     }
   }
 
@@ -559,19 +570,26 @@ function NarrationStatusPanel({
     if (!row || !row.audio_url || row.status !== "ready") return true;
     return row.text.trim() !== it.text;
   });
-  const [bulkRunning, setBulkRunning] = useState(false);
+  const bulkRunning = bulkProgress !== null;
   async function generateAllStale() {
     if (bulkRunning || stale.length === 0) return;
-    setBulkRunning(true);
-    for (const it of stale) {
-      if (!it.text) continue;
+    const queue = stale.filter((it) => it.text);
+    setLastError("");
+    setBulkProgress({ done: 0, total: queue.length });
+    let done = 0;
+    for (const it of queue) {
+      setActiveKey(it.key);
       try {
         await generateNarration({ data: { key: it.key, text: it.text } });
-      } catch (e) {
+      } catch (e: any) {
         console.warn("bulk regen failed for", it.key, e);
+        setLastError(`${it.key}: ${e?.message ?? "failed"}`);
       }
+      done += 1;
+      setBulkProgress({ done, total: queue.length });
     }
-    setBulkRunning(false);
+    setActiveKey(null);
+    setBulkProgress(null);
   }
 
   return (
