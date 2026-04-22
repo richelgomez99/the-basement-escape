@@ -2,8 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { fetchNarration, type NarrationRow } from "@/game/narration";
 import { supabase } from "@/integrations/supabase/client";
+import { pauseClock, resumeClock } from "@/game/state";
 
 const MUTE_KEY = "be_narration_muted";
+const PLAYED_KEY_PREFIX = "be_narration_played:";
+
+function hasPlayedBefore(key: string): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(PLAYED_KEY_PREFIX + key) === "1";
+}
+function markPlayed(key: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PLAYED_KEY_PREFIX + key, "1");
+}
 
 function getMuted(): boolean {
   if (typeof window === "undefined") return false;
