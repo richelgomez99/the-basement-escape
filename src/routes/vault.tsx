@@ -70,7 +70,7 @@ function Vault() {
         </div>
         <h1 className="mt-2 font-display text-4xl md:text-5xl">The Final Vault</h1>
         <p className="mt-3 text-muted-foreground">
-          Combine your nine artifacts in the order they were earned.
+          You hold nine scrambled letters. Rearrange them to spell the sacred word.
         </p>
 
         <div className="stone-panel mt-8 rounded-xl p-6">
@@ -78,14 +78,17 @@ function Vault() {
             {puzzles.map((p) => (
               <div
                 key={p.id}
-                className="aspect-square rounded border border-gold/30 bg-background/40 flex items-center justify-center font-display text-lg text-muted-foreground/40"
+                className="aspect-square rounded border border-gold/30 bg-background/40 flex flex-col items-center justify-center"
               >
-                {p.id}
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                  {p.id}
+                </div>
+                <div className="font-display text-xl text-gold/80">{p.artifact}</div>
               </div>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            (Nine letters — one per lock, in order. Type them below.)
+            Nine letters — one per lock. Unscramble them into a single 9-letter word.
           </p>
 
           <form onSubmit={submit} className={`mt-6 space-y-3 ${shake ? "shake" : ""}`}>
@@ -97,7 +100,7 @@ function Vault() {
                 setError("");
               }}
               maxLength={puzzles.length}
-              placeholder={`${puzzles.length}-character code`}
+              placeholder="The 9-letter word"
               className="h-14 text-center text-2xl font-display tracking-[0.4em] border-gold/40 bg-background/60"
             />
             {error && <div className="text-sm text-destructive">{error}</div>}
