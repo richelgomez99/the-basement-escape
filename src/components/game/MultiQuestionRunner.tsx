@@ -6,6 +6,7 @@ import type { Puzzle, Question } from "@/game/content";
 import { TRAP_PENALTY_SECONDS, getPuzzles } from "@/game/content";
 import { addPenalty, markSolved } from "@/game/state";
 import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
+import { HintBox } from "./HintBox";
 
 function normalize(s: string) {
   return s
