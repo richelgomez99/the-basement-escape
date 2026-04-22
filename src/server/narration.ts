@@ -5,7 +5,12 @@ import crypto from "crypto";
 const PUZZLE_MASTER_VOICE_ID = "bqQ7DQwY9bell4LCvnXs";
 
 function hashText(text: string): string {
-  return crypto.createHash("sha256").update(text.trim()).digest("hex").slice(0, 16);
+  // Voice ID is part of the hash so changing the voice invalidates cached audio.
+  return crypto
+    .createHash("sha256")
+    .update(`${PUZZLE_MASTER_VOICE_ID}::${text.trim()}`)
+    .digest("hex")
+    .slice(0, 16);
 }
 
 /**
