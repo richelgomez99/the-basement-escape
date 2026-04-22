@@ -119,13 +119,6 @@ function TitleScreen() {
             ← Resume current game
           </Link>
         )}
-        <button
-          type="button"
-          onClick={() => setResetOpen(true)}
-          className="block w-full text-center text-xs text-muted-foreground hover:text-gold"
-        >
-          Reset game (host)
-        </button>
       </form>
 
       <p className="mt-8 text-xs text-muted-foreground">

@@ -1,4 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { resetGame } from "@/game/state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,6 +139,8 @@ function Editor() {
   const [saveErr, setSaveErr] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwMsg, setPwMsg] = useState("");
+  const [resetGameOpen, setResetGameOpen] = useState(false);
+  const [resetGameDone, setResetGameDone] = useState(false);
   const vaultWordValid = /^[A-Z]{9}$/.test(vaultWord.toUpperCase());
 
   // Pull latest from cloud once on mount
@@ -311,6 +322,14 @@ function Editor() {
             <Link to="/">
               <Button variant="outline" size="sm">← Title</Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setResetGameOpen(true)}
+            >
+              Reset game
+            </Button>
             <Button variant="outline" size="sm" onClick={logout}>
               Lock admin
             </Button>
@@ -427,6 +446,34 @@ function Editor() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={resetGameOpen} onOpenChange={(o) => { setResetGameOpen(o); if (!o) setResetGameDone(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset the current game?</DialogTitle>
+            <DialogDescription>
+              Clears the active team's progress, timer, solved locks, and unlocked letters
+              stored in this browser. <strong>Puzzle content edits are not affected.</strong>
+              Use this between teams or to start a fresh playthrough.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {resetGameDone ? (
+              <div className="text-sm text-gold">Game reset. ✓</div>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setResetGameOpen(false)}>Cancel</Button>
+                <Button
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => { resetGame(); setResetGameDone(true); }}
+                >
+                  Reset game
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -838,6 +885,8 @@ function PuzzleEditor({
           puzzleId={puzzle.id}
           questions={puzzle.questions ?? puzzle.musicQuestions ?? []}
           allowAudio={puzzle.id === 8}
+          seedAnswer={puzzle.answer}
+          seedAcceptable={puzzle.acceptable}
           onChange={(next) => {
             const patch: Partial<Puzzle> = { questions: next };
             if (puzzle.id === 8) patch.musicQuestions = next;
@@ -903,17 +952,36 @@ function QuestionsEditor({
   puzzleId,
   questions,
   allowAudio,
+  seedAnswer,
+  seedAcceptable,
   onChange,
 }: {
   puzzleId: number;
   questions: Question[];
   allowAudio: boolean;
+  seedAnswer?: string;
+  seedAcceptable?: string[];
   onChange: (next: Question[]) => void;
 }) {
   function update(idx: number, patch: Partial<Question>) {
     onChange(questions.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
   }
   function add() {
+    // First time: seed with the puzzle's single-answer fields so the host doesn't
+    // have to retype them, plus an empty second question to show the pattern.
+    if (questions.length === 0 && (seedAnswer?.trim() || (seedAcceptable && seedAcceptable.length))) {
+      onChange([
+        {
+          prompt: "",
+          answer: seedAnswer ?? "",
+          acceptable: seedAcceptable ?? [],
+          hint: "",
+          audioUrl: "",
+        },
+        { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" },
+      ]);
+      return;
+    }
     onChange([...questions, { prompt: "", answer: "", acceptable: [], hint: "", audioUrl: "" }]);
   }
   function remove(idx: number) {
