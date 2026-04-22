@@ -240,9 +240,13 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       { tier: 2, label: "Direction", text: "'I am the way, the ____, and the life.' Five letters, starts with T." },
       { tier: 3, label: "Bypass", text: "The word is: TRUTH" },
     ],
-  },
-  {
-    id: 8,
+    stainedGlassConfig: {
+      imageUrl: "", // resolved at runtime to the bundled stained-glass asset
+      // Pieces are 0..8 in solved-image order. Letters spell TRUTH on pieces 0,2,4,6,8.
+      letters: ["T", "", "R", "", "U", "", "T", "", "H"],
+      revealedWord: "TRUTH",
+      intro: "Tap two pieces to swap them. Reassemble the window — letters will appear.",
+    },
     title: "Songs of the Saints",
     flavor: "Five gospel music challenges. Wrong answers cost 30 seconds. Pass them all.",
     artifact: "I",
