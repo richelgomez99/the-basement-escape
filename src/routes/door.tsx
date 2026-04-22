@@ -176,6 +176,34 @@ function DoorScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset the entire game?</DialogTitle>
+            <DialogDescription>
+              This will <strong className="text-destructive">erase your progress</strong> — all
+              solved locks, the timer, and your team name — and send you back to the home page where
+              you can enter a new team name and start over. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                resetGame();
+                setResetOpen(false);
+                navigate({ to: "/" });
+              }}
+            >
+              Yes, reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
