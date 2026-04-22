@@ -609,23 +609,40 @@ function NarrationStatusPanel({
           className="border-gold/40"
         >
           {bulkRunning
-            ? "Generating…"
+            ? `Generating ${bulkProgress!.done + 1} of ${bulkProgress!.total}…`
             : stale.length === 0
               ? "All voices ready"
               : `Generate ${stale.length} missing voice${stale.length === 1 ? "" : "s"}`}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        Audio is generated once and cached. It only regenerates when you change the text and press
-        <strong> Save changes</strong>, or when you click the buttons here. Players never trigger generation —
-        they just play the saved file.
+        Audio is generated <strong>one at a time</strong> (about 5–15s each) to stay within
+        ElevenLabs rate limits — running them all together is safe. Audio is cached and only
+        regenerates when text changes or you click a button here. Players never trigger generation.
       </p>
+      {bulkRunning && (
+        <div className="mt-2">
+          <div className="h-1.5 w-full overflow-hidden rounded bg-background/40">
+            <div
+              className="h-full bg-gold transition-all"
+              style={{ width: `${(bulkProgress!.done / bulkProgress!.total) * 100}%` }}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {bulkProgress!.done} / {bulkProgress!.total} complete
+          </div>
+        </div>
+      )}
+      {lastError && (
+        <div className="mt-2 text-xs text-destructive">Last error → {lastError}</div>
+      )}
       <div className="mt-3 grid gap-2">
         {items.map((it) => {
           const row = byKey.get(it.key);
-          const status = row?.status ?? "pending";
+          const isActive = activeKey === it.key;
+          const isQueued = bulkRunning && !isActive && stale.some((s) => s.key === it.key);
           const upToDate =
-            row?.audio_url &&
+            !!row?.audio_url &&
             row.status === "ready" &&
             row.text.trim() === it.text;
           return (
@@ -635,12 +652,14 @@ function NarrationStatusPanel({
             >
               <div className="min-w-[180px] text-sm">{it.label}</div>
               <div className="flex-1 min-w-[160px] flex items-center gap-2 text-xs">
-                {status === "generating" || status === "pending" ? (
+                {isActive ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-gold" />
-                    <span className="text-gold">Generating…</span>
+                    <span className="text-gold">Generating now…</span>
                   </>
-                ) : status === "error" ? (
+                ) : isQueued ? (
+                  <span className="text-muted-foreground italic">Queued…</span>
+                ) : row?.status === "error" ? (
                   <>
                     <AlertCircle className="h-4 w-4 text-destructive" />
                     <span className="text-destructive truncate">{row?.error ?? "Error"}</span>
@@ -652,7 +671,7 @@ function NarrationStatusPanel({
                   </>
                 ) : row?.audio_url ? (
                   <span className="text-muted-foreground italic">
-                    Out of date — press Save to regenerate
+                    Out of date — regenerate to refresh
                   </span>
                 ) : (
                   <span className="text-muted-foreground italic">Not generated yet</span>
@@ -665,7 +684,7 @@ function NarrationStatusPanel({
                 size="sm"
                 variant="outline"
                 onClick={() => regenOne(it.key, it.text)}
-                disabled={!it.text || status === "generating"}
+                disabled={!it.text || isActive || isQueued}
               >
                 Regenerate
               </Button>
