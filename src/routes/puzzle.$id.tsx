@@ -40,7 +40,9 @@ function PuzzleRoute() {
   const puzzle = getPuzzle(numId);
   const totalPuzzles = getPuzzles().length;
   const [showLetter, setShowLetter] = useState(false);
+  const [confirmRecall, setConfirmRecall] = useState(false);
   const alreadySolved = getSolved().includes(numId);
+  const RECALL_PENALTY_SECONDS = 120;
 
   useEffect(() => {
     if (!isGameStarted()) {
@@ -73,19 +75,43 @@ function PuzzleRoute() {
   return (
     <PuzzleShell puzzle={puzzle}>
       {alreadySolved && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded border border-gold/40 bg-gold/5 p-3 text-sm">
-          <span className="text-gold">
-            ✓ You've already opened this lock. Need the letter again?
-          </span>
-          <Button
-            size="sm"
-            className="bg-gold text-gold-foreground hover:bg-gold/90"
-            onClick={() => setShowLetter(true)}
-          >
-            Show letter
-          </Button>
+        <div className="mb-4 rounded border border-gold/40 bg-gold/5 p-3 text-sm space-y-2">
+          <div className="text-gold">
+            ✓ You've already opened this lock. The letter is hidden — recall it for a penalty, or replay the puzzle below to see it again for free.
+          </div>
+          {confirmRecall ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                Reveal letter? Adds <span className="text-gold">2 minutes</span> to your time.
+              </span>
+              <Button
+                size="sm"
+                className="bg-gold text-gold-foreground hover:bg-gold/90"
+                onClick={() => {
+                  addPenalty(RECALL_PENALTY_SECONDS);
+                  setConfirmRecall(false);
+                  setShowLetter(true);
+                }}
+              >
+                Yes, take −2 min
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setConfirmRecall(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gold/50 text-gold hover:bg-gold/10"
+              onClick={() => setConfirmRecall(true)}
+            >
+              Recall letter (−2 min)
+            </Button>
+          )}
         </div>
       )}
+
 
       {puzzle.id === 1 && textPuzzle("Type the missing word")}
       {puzzle.id === 2 && (
