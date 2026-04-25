@@ -341,6 +341,11 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         prompt:
           "___ released by Donald Lawrence in 2004 samples ___ released by Michael Jackson in 2001.",
         hint: "The gospel song's title is what God does for the brokenhearted (Psalm 147:3). The MJ track is from Invincible.",
+        hints: [
+          { tier: 1, label: "Nudge", text: "Two titles. The gospel one is a single past-tense verb — what God does for the brokenhearted (Psalm 147:3). The MJ one is the lead single from his last studio album, Invincible (2001)." },
+          { tier: 2, label: "Direction", text: "Donald Lawrence & The Tri-City Singers built the track around the bassline + groove of Michael Jackson's 'You Rock My World.' The gospel title is one word: 'Healed.'" },
+          { tier: 3, label: "Bypass", text: "Healed, You Rock My World" },
+        ],
         answer: "healed, you rock my world",
         acceptable: [
           "healed, you rock my world",
@@ -353,6 +358,11 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       {
         prompt: 'Finish the lyric: "Melodies from heaven, ___ ___ ___ ___."',
         hint: "Kirk Franklin & God's Property, 1997. The four missing words describe what those melodies do.",
+        hints: [
+          { tier: 1, label: "Nudge", text: "Kirk Franklin & God's Property, 1997 — from the self-titled album. The four missing words describe what those melodies do TO the singer." },
+          { tier: 2, label: "Direction", text: "It's a weather metaphor — the melodies come down like precipitation, and they land on the person singing." },
+          { tier: 3, label: "Bypass", text: "rain down on me" },
+        ],
         answer: "rain down on me",
         acceptable: ["rain down on me"],
         audioUrl: "",
@@ -360,6 +370,11 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
       {
         prompt: 'What group released "Optimistic" in 1991?',
         hint: "A Minneapolis-based ensemble whose name pairs an audio word with a community.",
+        hints: [
+          { tier: 1, label: "Nudge", text: "A large Minneapolis-based ensemble (40+ members) led by Gary Hines. Their name is two words: an audio/sensory word + a people group." },
+          { tier: 2, label: "Direction", text: "First word is what you hear with your ears. Second word names a community of people. The song hit #3 on Billboard's R&B chart." },
+          { tier: 3, label: "Bypass", text: "Sounds of Blackness" },
+        ],
         answer: "sounds of blackness",
         acceptable: ["sounds of blackness", "the sounds of blackness"],
         audioUrl: "",
@@ -368,6 +383,11 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         prompt:
           'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Pastor and gospel artist who sang about lifting hands before the breakthrough arrives.",
+        hints: [
+          { tier: 1, label: "Nudge", text: "The artist is a pastor at Lighthouse Full Life Center Church in Grand Rapids, MI. The song is about worshipping God BEFORE you see the answer to your prayer." },
+          { tier: 2, label: "Direction", text: "Released in 2005 on the album 'Be Exalted.' The title is a 4-word phrase: 'Praise Him in ___' — the missing word means 'ahead of time.' The artist's last name is also a fruit." },
+          { tier: 3, label: "Bypass", text: "Praise Him in Advance — Marvin Sapp" },
+        ],
         answer: "praise him in advance - marvin sapp",
         acceptable: [
           "praise him in advance - marvin sapp",
@@ -382,6 +402,11 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         prompt:
           'Name the song AND the artist. Type both, in any order, separated by a dash, comma, or "by". (e.g. "Song - Artist", "Artist, Song", or "Song by Artist")',
         hint: "Bishop and Love Fellowship Choir leader. The song declares that God's name is ___.",
+        hints: [
+          { tier: 1, label: "Nudge", text: "The artist is a Bishop from Brooklyn, NY who leads the Love Fellowship Choir. The song's title is a declaration about God's name — the missing word is an adjective meaning 'amazing / awe-inspiring.'" },
+          { tier: 2, label: "Direction", text: "Five words in the title: '___ Is Your Name.' The Bishop's first name comes from an Old Testament king of Judah famous for trusting God against Assyria. His last name is a common verb — what you do with your feet." },
+          { tier: 3, label: "Bypass", text: "Wonderful Is Your Name — Hezekiah Walker" },
+        ],
         answer: "wonderful is your name - hezekiah walker",
         acceptable: [
           "wonderful is your name - hezekiah walker",
