@@ -44,6 +44,8 @@ import {
 import {
   DEFAULT_INTRO_TEXT,
   INTRO_KEY,
+  VICTORY_KEY,
+  FAILURE_KEY,
   fetchAllNarrations,
   puzzleNarrationKey,
   type NarrationRow,
