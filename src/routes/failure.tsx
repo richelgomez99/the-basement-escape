@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getFailureConfig, loadOverridesFromCloud } from "@/game/content";
 import { getTeamName, resetGame } from "@/game/state";
+import { NarrationPlayer } from "@/components/game/NarrationPlayer";
+import { FAILURE_KEY } from "@/game/narration";
 
 export const Route = createFileRoute("/failure")({
   head: () => ({ meta: [{ title: "Time's Up — The Basement Escape" }] }),
