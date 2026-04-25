@@ -625,9 +625,13 @@ function IntroEditor({
 function NarrationStatusPanel({
   introText,
   puzzles,
+  victoryText,
+  failureText,
 }: {
   introText: string;
   puzzles: Puzzle[];
+  victoryText: string;
+  failureText: string;
 }) {
   const [rows, setRows] = useState<NarrationRow[]>([]);
 
@@ -664,7 +668,10 @@ function NarrationStatusPanel({
       label: `Lock ${p.id} — ${p.title}`,
       text: p.flavor.trim(),
     })),
+    { key: VICTORY_KEY, label: "Victory page", text: victoryText.trim() },
+    { key: FAILURE_KEY, label: "Failure page", text: failureText.trim() },
   ];
+
 
   // Track which keys we (this admin tab) are actively generating right now,
   // so the UI shows real per-row progress instead of the DB's stale "pending".
