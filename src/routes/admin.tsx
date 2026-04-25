@@ -2123,3 +2123,80 @@ function TimelineEditor({
     </div>
   );
 }
+
+function EndingEditor({
+  title,
+  tone,
+  value,
+  defaults,
+  onChange,
+}: {
+  title: string;
+  tone: "gold" | "destructive";
+  value: typeof DEFAULT_VICTORY;
+  defaults: typeof DEFAULT_VICTORY;
+  onChange: (next: typeof DEFAULT_VICTORY) => void;
+}) {
+  const accent = tone === "gold" ? "text-gold" : "text-destructive";
+  function patch(p: Partial<typeof DEFAULT_VICTORY>) {
+    onChange({ ...value, ...p });
+  }
+  return (
+    <div className="stone-panel mt-4 rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className={`font-display text-xs uppercase tracking-widest ${accent}`}>
+          {title}
+        </div>
+        <Button size="sm" variant="outline" onClick={() => onChange({ ...defaults })}>
+          Reset to default
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Eyebrow (small uppercase line above title)</span>
+          <Input
+            value={value.eyebrow}
+            onChange={(e) => patch({ eyebrow: e.target.value })}
+            placeholder={defaults.eyebrow}
+          />
+        </label>
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Title</span>
+          <Input
+            value={value.title}
+            onChange={(e) => patch({ title: e.target.value })}
+            placeholder={defaults.title}
+          />
+        </label>
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Body label (e.g. "Key Verse" or "Debrief")</span>
+          <Input
+            value={value.bodyLabel}
+            onChange={(e) => patch({ bodyLabel: e.target.value })}
+            placeholder={defaults.bodyLabel}
+          />
+        </label>
+        <label className="text-xs text-muted-foreground space-y-1">
+          <span>Button label</span>
+          <Input
+            value={value.buttonLabel}
+            onChange={(e) => patch({ buttonLabel: e.target.value })}
+            placeholder={defaults.buttonLabel}
+          />
+        </label>
+      </div>
+      <label className="text-xs text-muted-foreground space-y-1 block">
+        <span>Body text (verse, debrief, reflection prompt)</span>
+        <Textarea
+          rows={3}
+          value={value.body}
+          onChange={(e) => patch({ body: e.target.value })}
+          placeholder={defaults.body}
+        />
+      </label>
+      <p className="text-[11px] text-muted-foreground">
+        Saved with the main "Save changes" button at the top.
+      </p>
+    </div>
+  );
+}
