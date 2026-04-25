@@ -126,7 +126,7 @@ function DoorScreen() {
                   </div>
                   {isSolved && (
                     <div className="mt-1 text-[10px] uppercase tracking-widest text-gold/80">
-                      Tap to view letter
+                      Tap to replay
                     </div>
                   )}
                 </div>
@@ -134,14 +134,9 @@ function DoorScreen() {
 
               if (isSolved) {
                 return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => showLetterFor(p.id, "replay")}
-                    className="text-left"
-                  >
+                  <Link key={p.id} to="/puzzle/$id" params={{ id: String(p.id) }}>
                     {tile}
-                  </button>
+                  </Link>
                 );
               }
               if (available) {
