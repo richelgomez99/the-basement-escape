@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { getFailureConfig, loadOverridesFromCloud } from "@/game/content";
 import { getTeamName, resetGame } from "@/game/state";
 
 export const Route = createFileRoute("/failure")({
@@ -10,23 +11,28 @@ export const Route = createFileRoute("/failure")({
 
 function Failure() {
   const [team, setTeam] = useState("");
-  useEffect(() => setTeam(getTeamName()), []);
+  const [cfg, setCfg] = useState(() => getFailureConfig());
+  useEffect(() => {
+    setTeam(getTeamName());
+    loadOverridesFromCloud().then(() => setCfg(getFailureConfig()));
+    const onChange = () => setCfg(getFailureConfig());
+    window.addEventListener("be_content", onChange);
+    return () => window.removeEventListener("be_content", onChange);
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10 text-center">
       <div className="font-display text-xs uppercase tracking-[0.4em] text-destructive">
-        The hour has passed
+        {cfg.eyebrow}
       </div>
-      <h1 className="mt-4 font-display text-5xl md:text-7xl text-destructive">Time's Up</h1>
+      <h1 className="mt-4 font-display text-5xl md:text-7xl text-destructive">{cfg.title}</h1>
       <p className="mt-4 text-lg text-muted-foreground">
         Team <span className="font-display text-foreground">{team}</span> remains in the basement…
       </p>
 
       <div className="stone-panel mt-10 max-w-xl rounded-xl p-8">
-        <div className="font-display text-xs uppercase tracking-widest text-gold">Debrief</div>
-        <p className="mt-3 italic">
-          "Even when we run out of time, His mercy endures. What did your team learn together?"
-        </p>
+        <div className="font-display text-xs uppercase tracking-widest text-gold">{cfg.bodyLabel}</div>
+        <p className="mt-3 italic whitespace-pre-line">{cfg.body}</p>
       </div>
 
       <Link to="/" className="mt-10">
@@ -34,7 +40,7 @@ function Failure() {
           onClick={() => resetGame()}
           className="bg-gold text-gold-foreground hover:bg-gold/90 font-display tracking-widest"
         >
-          TRY AGAIN
+          {cfg.buttonLabel}
         </Button>
       </Link>
     </div>

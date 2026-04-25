@@ -439,9 +439,19 @@ const OVERRIDES_KEY = "be_content_overrides";
 //   _intro     — home-page intro narration text (string)
 //   _vaultWord — admin-set 9-letter vault word; players must UNSCRAMBLE
 //                their nine collected letters to spell it.
+type EndingConfig = {
+  eyebrow?: string;
+  title?: string;
+  bodyLabel?: string;
+  body?: string;
+  buttonLabel?: string;
+};
+
 type Overrides = Partial<Record<number, Partial<Puzzle>>> & {
   _intro?: string;
   _vaultWord?: string;
+  _victory?: EndingConfig;
+  _failure?: EndingConfig;
 };
 
 export function getIntroText(): string {
@@ -459,6 +469,32 @@ export function getVaultWord(): string {
     return stored.trim().toUpperCase();
   }
   return DEFAULT_VAULT_WORD;
+}
+
+export const DEFAULT_VICTORY: Required<EndingConfig> = {
+  eyebrow: "The door opens",
+  title: "Victory",
+  bodyLabel: "Key Verse",
+  body: '"And ye shall know the truth, and the truth shall make you free." — John 8:32',
+  buttonLabel: "PLAY AGAIN",
+};
+
+export const DEFAULT_FAILURE: Required<EndingConfig> = {
+  eyebrow: "The hour has passed",
+  title: "Time's Up",
+  bodyLabel: "Debrief",
+  body: '"Even when we run out of time, His mercy endures. What did your team learn together?"',
+  buttonLabel: "TRY AGAIN",
+};
+
+export function getVictoryConfig(): Required<EndingConfig> {
+  const o = (cachedOverrides as any)?._victory ?? {};
+  return { ...DEFAULT_VICTORY, ...o };
+}
+
+export function getFailureConfig(): Required<EndingConfig> {
+  const o = (cachedOverrides as any)?._failure ?? {};
+  return { ...DEFAULT_FAILURE, ...o };
 }
 
 // Inline default to avoid importing client-only module in shared content file.
