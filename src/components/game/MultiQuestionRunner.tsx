@@ -115,17 +115,19 @@ export function MultiQuestionRunner({
             (No audio uploaded yet — host can add one in /admin)
           </p>
         )}
-        {(!current.hints || current.hints.every((h) => !h.text.trim())) && current.hint && (
-          <p className="text-xs text-muted-foreground italic">{current.hint}</p>
-        )}
       </div>
 
-      {current.hints && current.hints.some((h) => h.text.trim()) && (
-        <HintBox
-          key={`q-${idx}`}
-          hints={current.hints.filter((h) => h.text.trim()) as typeof current.hints}
-        />
-      )}
+      {(() => {
+        const qHints = (current.hints ?? []).filter((h) => h.text.trim());
+        const fallback = (puzzle.hints ?? []).filter((h) => h.text.trim());
+        const hintsToShow = qHints.length > 0 ? qHints : fallback;
+        if (hintsToShow.length === 0) {
+          return current.hint ? (
+            <p className="text-xs text-muted-foreground italic">{current.hint}</p>
+          ) : null;
+        }
+        return <HintBox key={`q-${idx}`} hints={hintsToShow as typeof hintsToShow} />;
+      })()}
 
       <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
         <Input
