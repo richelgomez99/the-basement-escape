@@ -145,7 +145,14 @@ export function PathOfRighteous({
 
       {error && <div className="text-center text-sm text-destructive">{error}</div>}
       {phase === "crossed" && (
-        <AnswerForm puzzle={puzzle} placeholder="The way is ______" />
+        <div className="space-y-3">
+          {puzzle.scripture && (
+            <blockquote className="rounded border-l-2 border-gold/60 bg-background/40 p-3 text-sm italic text-foreground/90">
+              "{puzzle.scripture}"
+            </blockquote>
+          )}
+          <AnswerForm puzzle={puzzle} placeholder="The way is ______" />
+        </div>
       )}
     </div>
   );
