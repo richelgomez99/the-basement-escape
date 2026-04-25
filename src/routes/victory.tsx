@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getVictoryConfig, loadOverridesFromCloud } from "@/game/content";
 import { getElapsedFormatted, getTeamName, resetGame } from "@/game/state";
+import { NarrationPlayer } from "@/components/game/NarrationPlayer";
+import { VICTORY_KEY } from "@/game/narration";
 
 export const Route = createFileRoute("/victory")({
   head: () => ({ meta: [{ title: "Victory — The Basement Escape" }] }),
