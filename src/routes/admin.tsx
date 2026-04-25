@@ -2136,29 +2136,53 @@ function TimelineEditor({
 function EndingEditor({
   title,
   tone,
+  narrationKey,
   value,
   defaults,
   onChange,
 }: {
   title: string;
   tone: "gold" | "destructive";
+  narrationKey: string;
   value: typeof DEFAULT_VICTORY;
   defaults: typeof DEFAULT_VICTORY;
   onChange: (next: typeof DEFAULT_VICTORY) => void;
 }) {
   const accent = tone === "gold" ? "text-gold" : "text-destructive";
+  const [generating, setGenerating] = useState(false);
   function patch(p: Partial<typeof DEFAULT_VICTORY>) {
     onChange({ ...value, ...p });
   }
+  async function regen() {
+    if (!value.body.trim()) return;
+    setGenerating(true);
+    try {
+      await generateNarration({ data: { key: narrationKey, text: value.body.trim() } });
+    } catch (e) {
+      console.warn("Ending narration regen failed", narrationKey, e);
+    } finally {
+      setGenerating(false);
+    }
+  }
   return (
     <div className="stone-panel mt-4 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className={`font-display text-xs uppercase tracking-widest ${accent}`}>
           {title}
         </div>
-        <Button size="sm" variant="outline" onClick={() => onChange({ ...defaults })}>
-          Reset to default
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => onChange({ ...defaults })}>
+            Reset to default
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={regen}
+            disabled={generating || !value.body.trim()}
+          >
+            {generating ? "Generating…" : "Regenerate audio now"}
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <label className="text-xs text-muted-foreground space-y-1">
