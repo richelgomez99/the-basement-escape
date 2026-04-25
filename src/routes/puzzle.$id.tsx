@@ -40,7 +40,9 @@ function PuzzleRoute() {
   const puzzle = getPuzzle(numId);
   const totalPuzzles = getPuzzles().length;
   const [showLetter, setShowLetter] = useState(false);
+  const [confirmRecall, setConfirmRecall] = useState(false);
   const alreadySolved = getSolved().includes(numId);
+  const RECALL_PENALTY_SECONDS = 120;
 
   useEffect(() => {
     if (!isGameStarted()) {
