@@ -280,8 +280,10 @@ function StainedGlass() {
               aria-label={`piece-${piece}`}
             >
               {solved && letter && (
-                <span className="absolute inset-0 flex items-center justify-center font-display text-3xl text-gold drop-shadow-[0_0_8px_black]">
-                  {letter}
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="flex items-center justify-center h-12 w-12 rounded-full bg-background/85 ring-2 ring-gold gold-glow font-display text-3xl text-gold">
+                    {letter}
+                  </span>
                 </span>
               )}
             </button>
