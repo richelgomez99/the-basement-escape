@@ -67,19 +67,22 @@ function setSessionId(id: string) {
 
 async function createSessionRow(team: string): Promise<string | null> {
   if (typeof window === "undefined") return null;
+  // Generate the id client-side so we don't need a SELECT policy on
+  // game_sessions (we never want sessions readable by the public).
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await supabase
-      .from("game_sessions")
-      .insert({
-        team_name: team,
-        outcome: "in_progress",
-        user_agent: navigator.userAgent.slice(0, 500),
-      })
-      .select("id")
-      .single();
+    const { error } = await supabase.from("game_sessions").insert({
+      id,
+      team_name: team,
+      outcome: "in_progress",
+      user_agent: navigator.userAgent.slice(0, 500),
+    });
     if (error) throw error;
-    return (data as any)?.id ?? null;
+    return id;
   } catch (e) {
     console.warn("Session create failed (continuing offline):", e);
     return null;
