@@ -1429,7 +1429,7 @@ function HiddenSceneEditor({
         onPointerUp={() => setDraggingId(null)}
         onPointerLeave={() => setDraggingId(null)}
         className="relative w-full overflow-hidden rounded-lg border border-gold/40 bg-background/40 select-none"
-        style={{ aspectRatio: "16/9", touchAction: "none" }}
+        style={{ aspectRatio: "16/9", touchAction: "none", containerType: "inline-size" }}
       >
         {scene.imageUrl ? (
           <img
@@ -1444,6 +1444,20 @@ function HiddenSceneEditor({
           </div>
         )}
 
+        {/* Radius rings — sized relative to the canvas (matches runtime hit detection) */}
+        {scene.markers.map((m) => (
+          <div
+            key={`ring-${m.id}`}
+            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-gold/70 bg-gold/15 pointer-events-none"
+            style={{
+              left: `${m.x}%`,
+              top: `${m.y}%`,
+              width: `${m.radius * 2}%`,
+              // Convert width-% radius to height-% so the ring is a true circle on a 16:9 canvas
+              height: `${m.radius * 2 * (16 / 9)}%`,
+            }}
+          />
+        ))}
         {scene.markers.map((m) => (
           <div
             key={m.id}
@@ -1451,20 +1465,16 @@ function HiddenSceneEditor({
               e.preventDefault();
               setDraggingId(m.id);
             }}
-            className="absolute -translate-x-1/2 -translate-y-1/2 cursor-move group"
-            style={{ left: `${m.x}%`, top: `${m.y}%` }}
+            className="absolute -translate-x-1/2 -translate-y-1/2 cursor-move flex items-center justify-center"
+            style={{
+              left: `${m.x}%`,
+              top: `${m.y}%`,
+              // Emoji scales with radius — ~1.4× the radius (in % of canvas width)
+              fontSize: `clamp(1rem, ${m.radius * 1.4}cqw, 6rem)`,
+              lineHeight: 1,
+            }}
           >
-            {/* Radius ring */}
-            <div
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/60 bg-gold/10 pointer-events-none"
-              style={{
-                width: `${m.radius * 2}%`,
-                height: `${m.radius * 2 * (16 / 9)}%`, // approximate visual ring (image is 16:9)
-                left: 0,
-                top: 0,
-              }}
-            />
-            <span className="text-3xl drop-shadow-[0_0_8px_black] block">{m.emoji}</span>
+            <span className="drop-shadow-[0_0_8px_black] select-none">{m.emoji}</span>
           </div>
         ))}
       </div>
