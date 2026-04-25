@@ -121,7 +121,10 @@ export function MultiQuestionRunner({
       </div>
 
       {current.hints && current.hints.some((h) => h.text.trim()) && (
-        <HintBox hints={current.hints.filter((h) => h.text.trim()) as typeof current.hints} />
+        <HintBox
+          key={`q-${idx}`}
+          hints={current.hints.filter((h) => h.text.trim()) as typeof current.hints}
+        />
       )}
 
       <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
