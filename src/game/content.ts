@@ -243,14 +243,71 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
     id: 6,
     title: "Faith by Numbers",
     flavor:
-      "(Days of Noah's flood) − (apostles × Jonah's days in the fish). Type the resulting number.",
-    scripture: '"And rain was upon the earth forty days and forty nights." — Genesis 7:12',
+      "Five sacred sums. Each step is given in order — just do them one after another. Wrong answers cost 30 seconds.",
     artifact: "T",
     answer: "4",
+    questions: [
+      {
+        prompt:
+          "Start with the days it rained on Noah's flood. Then subtract the original number of Jesus' apostles. Then add the days Jonah spent in the great fish. What number do you have?",
+        scripture: '"And rain was upon the earth forty days and forty nights." — Genesis 7:12',
+        answer: "31",
+        acceptable: ["31", "thirty one", "thirty-one"],
+        hints: [
+          { tier: 1, label: "Nudge", text: "Forty days of rain. Twelve apostles. Three days inside the fish." },
+          { tier: 2, label: "Direction", text: "40 − 12, then add 3." },
+          { tier: 3, label: "Bypass", text: "40 − 12 + 3 = 31." },
+        ],
+      },
+      {
+        prompt:
+          "Start with the number of commandments Moses received. Then add the number of plagues that struck Egypt. Then subtract the number of days Jesus was in the tomb. What number do you have?",
+        answer: "17",
+        acceptable: ["17", "seventeen"],
+        hints: [
+          { tier: 1, label: "Nudge", text: "Two famous tens, then subtract a small number tied to the resurrection." },
+          { tier: 2, label: "Direction", text: "10 + 10, then subtract 3." },
+          { tier: 3, label: "Bypass", text: "10 + 10 − 3 = 17." },
+        ],
+      },
+      {
+        prompt:
+          "Start with the number of books in the New Testament. Then subtract the number of Gospels. Then add the number of disciples Jesus chose. What number do you have?",
+        answer: "35",
+        acceptable: ["35", "thirty five", "thirty-five"],
+        hints: [
+          { tier: 1, label: "Nudge", text: "27 books in the New Testament. 4 Gospels. 12 disciples." },
+          { tier: 2, label: "Direction", text: "27 − 4, then add 12." },
+          { tier: 3, label: "Bypass", text: "27 − 4 + 12 = 35." },
+        ],
+      },
+      {
+        prompt:
+          "Start with the days Jesus fasted in the wilderness. Then add the years the Israelites wandered in the desert. Then subtract the number of days God worked before resting at creation. What number do you have?",
+        answer: "74",
+        acceptable: ["74", "seventy four", "seventy-four"],
+        hints: [
+          { tier: 1, label: "Nudge", text: "Forty days of fasting. Forty years of wandering. Six days of creation." },
+          { tier: 2, label: "Direction", text: "40 + 40, then subtract 6." },
+          { tier: 3, label: "Bypass", text: "40 + 40 − 6 = 74." },
+        ],
+      },
+      {
+        prompt:
+          "Start with the age Methuselah lived to. Then subtract Noah's age when the flood came. Then add the number of people saved on the ark. What number do you have?",
+        answer: "377",
+        acceptable: ["377", "three hundred seventy seven", "three hundred and seventy seven"],
+        hints: [
+          { tier: 1, label: "Nudge", text: "Methuselah: the oldest man (Genesis 5:27). Noah was 600 when the flood began (Genesis 7:6). Eight people boarded the ark (1 Peter 3:20)." },
+          { tier: 2, label: "Direction", text: "969 − 600, then add 8." },
+          { tier: 3, label: "Bypass", text: "969 − 600 + 8 = 377." },
+        ],
+      },
+    ],
     hints: [
-      { tier: 1, label: "Nudge", text: "Start with how long it rained on Noah, then subtract a smaller number tied to the apostles and Jonah." },
-      { tier: 2, label: "Direction", text: "Flood days − (apostles × Jonah's days in the fish). All three numbers are famous Bible counts." },
-      { tier: 3, label: "Bypass", text: "40 − (12 × 3) = 4." },
+      { tier: 1, label: "Nudge", text: "Each question tells you the steps in order. Just compute left to right." },
+      { tier: 2, label: "Direction", text: "Every number in these problems is a famous biblical count — flood days, apostles, plagues, etc." },
+      { tier: 3, label: "Bypass", text: "Answers in order: 31, 17, 35, 74, 377." },
     ],
   },
   {
