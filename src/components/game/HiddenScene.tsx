@@ -57,11 +57,11 @@ export function HiddenScene({ puzzle, scene }: { puzzle: Puzzle; scene: HiddenSc
           return (
             <span
               key={m.id}
-              className="absolute -translate-x-1/2 -translate-y-1/2 text-3xl md:text-4xl drop-shadow-[0_0_10px_gold] pointer-events-none"
+              className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center rounded-full h-12 w-12 md:h-14 md:w-14 text-2xl md:text-3xl bg-background/85 ring-2 ring-gold gold-glow animate-in zoom-in-50 duration-300"
               style={{ left: `${m.x}%`, top: `${m.y}%` }}
               aria-label={m.label ?? m.id}
             >
-              {m.emoji}
+              <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{m.emoji}</span>
             </span>
           );
         })}
