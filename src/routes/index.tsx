@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isGameStarted, resetGame, startGame } from "@/game/state";
 import { getIntroText, loadOverridesFromCloud } from "@/game/content";
-import { INTRO_KEY } from "@/game/narration";
+import { INTRO_KEY, stripNarrationTags } from "@/game/narration";
 import { NarrationPlayer } from "@/components/game/NarrationPlayer";
 import {
   Dialog,
