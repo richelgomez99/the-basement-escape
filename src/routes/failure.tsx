@@ -33,6 +33,9 @@ function Failure() {
       <div className="stone-panel mt-10 max-w-xl rounded-xl p-8">
         <div className="font-display text-xs uppercase tracking-widest text-gold">{cfg.bodyLabel}</div>
         <p className="mt-3 italic whitespace-pre-line">{cfg.body}</p>
+        <div className="mt-4 flex justify-center">
+          <NarrationPlayer narrationKey={FAILURE_KEY} />
+        </div>
       </div>
 
       <Link to="/" className="mt-10">
