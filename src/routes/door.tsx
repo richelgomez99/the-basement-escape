@@ -85,7 +85,7 @@ function DoorScreen() {
             {solved.length} of {puzzles.length} locks opened
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Tap a solved lock to view its letter again, or tap an open lock to play it.
+            Tap an open lock to play it. Solved locks can be replayed — recalling a letter without replay costs 2 minutes.
           </p>
         </div>
 
