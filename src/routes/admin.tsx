@@ -1429,7 +1429,7 @@ function HiddenSceneEditor({
         onPointerUp={() => setDraggingId(null)}
         onPointerLeave={() => setDraggingId(null)}
         className="relative w-full overflow-hidden rounded-lg border border-gold/40 bg-background/40 select-none"
-        style={{ aspectRatio: "16/9", touchAction: "none" }}
+        style={{ aspectRatio: "16/9", touchAction: "none", containerType: "inline-size" }}
       >
         {scene.imageUrl ? (
           <img
