@@ -85,7 +85,7 @@ function TitleScreen() {
               The Puzzle Master speaks
             </div>
             <p className="text-sm md:text-base text-foreground/90 leading-relaxed italic">
-              {introText}
+              {stripNarrationTags(introText)}
             </p>
             <div className="mt-3">
               <NarrationPlayer narrationKey={INTRO_KEY} />

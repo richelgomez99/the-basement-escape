@@ -7,6 +7,20 @@ export const DEFAULT_INTRO_TEXT =
 export const INTRO_KEY = "intro";
 export const puzzleNarrationKey = (id: number) => `puzzle-${id}-flavor`;
 
+/**
+ * Remove ElevenLabs v3 inline audio direction tags like [whispers],
+ * [mischievously], [sarcastic], [excited], etc. so they don't appear in
+ * on-screen text. The raw text (with tags) is still sent to TTS.
+ */
+export function stripNarrationTags(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/\[[^\]\n]{1,40}\]/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .trim();
+}
+
 export type NarrationRow = {
   key: string;
   text_hash: string;
