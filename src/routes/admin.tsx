@@ -166,8 +166,18 @@ function Editor() {
     setPuzzles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
 
-  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } {
-    const out: Partial<Record<number, Partial<Puzzle>>> & { _intro?: string; _vaultWord?: string } = {};
+  function buildOverrides(): Partial<Record<number, Partial<Puzzle>>> & {
+    _intro?: string;
+    _vaultWord?: string;
+    _victory?: typeof DEFAULT_VICTORY;
+    _failure?: typeof DEFAULT_FAILURE;
+  } {
+    const out: Partial<Record<number, Partial<Puzzle>>> & {
+      _intro?: string;
+      _vaultWord?: string;
+      _victory?: typeof DEFAULT_VICTORY;
+      _failure?: typeof DEFAULT_FAILURE;
+    } = {};
     puzzles.forEach((p) => {
       const def = DEFAULT_PUZZLES.find((d) => d.id === p.id)!;
       const diff: Partial<Puzzle> = {};
@@ -231,6 +241,12 @@ function Editor() {
     const vw = vaultWord.trim().toUpperCase();
     if (vw && vw.length === 9 && /^[A-Z]{9}$/.test(vw) && vw !== DEFAULT_VAULT_WORD) {
       out._vaultWord = vw;
+    }
+    if (JSON.stringify(victoryCfg) !== JSON.stringify(DEFAULT_VICTORY)) {
+      out._victory = { ...victoryCfg };
+    }
+    if (JSON.stringify(failureCfg) !== JSON.stringify(DEFAULT_FAILURE)) {
+      out._failure = { ...failureCfg };
     }
     return out;
   }
