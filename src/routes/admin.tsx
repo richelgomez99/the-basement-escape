@@ -461,6 +461,22 @@ function Editor() {
 
         <NarrationStatusPanel introText={introText} puzzles={puzzles} />
 
+        <EndingEditor
+          title="Victory page"
+          tone="gold"
+          value={victoryCfg}
+          defaults={DEFAULT_VICTORY}
+          onChange={setVictoryCfg}
+        />
+
+        <EndingEditor
+          title="Failure page"
+          tone="destructive"
+          value={failureCfg}
+          defaults={DEFAULT_FAILURE}
+          onChange={setFailureCfg}
+        />
+
         <div className="mt-6 space-y-6">
           {puzzles.map((p) => (
             <PuzzleEditor
