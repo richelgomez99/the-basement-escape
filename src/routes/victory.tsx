@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getVictoryConfig, loadOverridesFromCloud } from "@/game/content";
 import { getElapsedFormatted, getTeamName, resetGame } from "@/game/state";
+import { NarrationPlayer } from "@/components/game/NarrationPlayer";
+import { VICTORY_KEY } from "@/game/narration";
 
 export const Route = createFileRoute("/victory")({
   head: () => ({ meta: [{ title: "Victory — The Basement Escape" }] }),
@@ -38,6 +40,9 @@ function Victory() {
       <div className="stone-panel mt-10 max-w-xl rounded-xl p-8">
         <div className="font-display text-xs uppercase tracking-widest text-gold">{cfg.bodyLabel}</div>
         <p className="mt-3 font-display text-xl md:text-2xl whitespace-pre-line">{cfg.body}</p>
+        <div className="mt-4 flex justify-center">
+          <NarrationPlayer narrationKey={VICTORY_KEY} />
+        </div>
       </div>
 
       <Link to="/" className="mt-10">

@@ -5,6 +5,8 @@ export const DEFAULT_INTRO_TEXT =
   "You wake in the basement of an old church. The door is sealed by nine sacred locks, and the clock above is already counting down. Each lock guards a letter. Solve every puzzle, gather every letter, and you will then unscramble them to form the word that sets you free. Trust the scriptures. Trust each other. The hour begins now.";
 
 export const INTRO_KEY = "intro";
+export const VICTORY_KEY = "victory";
+export const FAILURE_KEY = "failure";
 export const puzzleNarrationKey = (id: number) => `puzzle-${id}-flavor`;
 
 /**

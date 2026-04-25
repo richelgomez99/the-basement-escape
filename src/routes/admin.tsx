@@ -44,6 +44,8 @@ import {
 import {
   DEFAULT_INTRO_TEXT,
   INTRO_KEY,
+  VICTORY_KEY,
+  FAILURE_KEY,
   fetchAllNarrations,
   puzzleNarrationKey,
   type NarrationRow,
@@ -459,11 +461,10 @@ function Editor() {
           onReset={() => setIntroText(DEFAULT_INTRO_TEXT)}
         />
 
-        <NarrationStatusPanel introText={introText} puzzles={puzzles} />
-
         <EndingEditor
           title="Victory page"
           tone="gold"
+          narrationKey={VICTORY_KEY}
           value={victoryCfg}
           defaults={DEFAULT_VICTORY}
           onChange={setVictoryCfg}
@@ -472,9 +473,17 @@ function Editor() {
         <EndingEditor
           title="Failure page"
           tone="destructive"
+          narrationKey={FAILURE_KEY}
           value={failureCfg}
           defaults={DEFAULT_FAILURE}
           onChange={setFailureCfg}
+        />
+
+        <NarrationStatusPanel
+          introText={introText}
+          puzzles={puzzles}
+          victoryText={victoryCfg.body}
+          failureText={failureCfg.body}
         />
 
         <div className="mt-6 space-y-6">
@@ -616,9 +625,13 @@ function IntroEditor({
 function NarrationStatusPanel({
   introText,
   puzzles,
+  victoryText,
+  failureText,
 }: {
   introText: string;
   puzzles: Puzzle[];
+  victoryText: string;
+  failureText: string;
 }) {
   const [rows, setRows] = useState<NarrationRow[]>([]);
 
@@ -655,7 +668,10 @@ function NarrationStatusPanel({
       label: `Lock ${p.id} — ${p.title}`,
       text: p.flavor.trim(),
     })),
+    { key: VICTORY_KEY, label: "Victory page", text: victoryText.trim() },
+    { key: FAILURE_KEY, label: "Failure page", text: failureText.trim() },
   ];
+
 
   // Track which keys we (this admin tab) are actively generating right now,
   // so the UI shows real per-row progress instead of the DB's stale "pending".
@@ -2127,29 +2143,53 @@ function TimelineEditor({
 function EndingEditor({
   title,
   tone,
+  narrationKey,
   value,
   defaults,
   onChange,
 }: {
   title: string;
   tone: "gold" | "destructive";
+  narrationKey: string;
   value: typeof DEFAULT_VICTORY;
   defaults: typeof DEFAULT_VICTORY;
   onChange: (next: typeof DEFAULT_VICTORY) => void;
 }) {
   const accent = tone === "gold" ? "text-gold" : "text-destructive";
+  const [generating, setGenerating] = useState(false);
   function patch(p: Partial<typeof DEFAULT_VICTORY>) {
     onChange({ ...value, ...p });
   }
+  async function regen() {
+    if (!value.body.trim()) return;
+    setGenerating(true);
+    try {
+      await generateNarration({ data: { key: narrationKey, text: value.body.trim() } });
+    } catch (e) {
+      console.warn("Ending narration regen failed", narrationKey, e);
+    } finally {
+      setGenerating(false);
+    }
+  }
   return (
     <div className="stone-panel mt-4 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className={`font-display text-xs uppercase tracking-widest ${accent}`}>
           {title}
         </div>
-        <Button size="sm" variant="outline" onClick={() => onChange({ ...defaults })}>
-          Reset to default
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => onChange({ ...defaults })}>
+            Reset to default
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={regen}
+            disabled={generating || !value.body.trim()}
+          >
+            {generating ? "Generating…" : "Regenerate audio now"}
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <label className="text-xs text-muted-foreground space-y-1">
