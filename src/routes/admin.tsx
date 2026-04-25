@@ -461,11 +461,10 @@ function Editor() {
           onReset={() => setIntroText(DEFAULT_INTRO_TEXT)}
         />
 
-        <NarrationStatusPanel introText={introText} puzzles={puzzles} />
-
         <EndingEditor
           title="Victory page"
           tone="gold"
+          narrationKey={VICTORY_KEY}
           value={victoryCfg}
           defaults={DEFAULT_VICTORY}
           onChange={setVictoryCfg}
@@ -474,9 +473,17 @@ function Editor() {
         <EndingEditor
           title="Failure page"
           tone="destructive"
+          narrationKey={FAILURE_KEY}
           value={failureCfg}
           defaults={DEFAULT_FAILURE}
           onChange={setFailureCfg}
+        />
+
+        <NarrationStatusPanel
+          introText={introText}
+          puzzles={puzzles}
+          victoryText={victoryCfg.body}
+          failureText={failureCfg.body}
         />
 
         <div className="mt-6 space-y-6">
