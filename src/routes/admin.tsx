@@ -139,6 +139,8 @@ function Editor() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>(getPuzzles());
   const [introText, setIntroText] = useState<string>(getIntroText());
   const [vaultWord, setVaultWord] = useState<string>(getVaultWord());
+  const [victoryCfg, setVictoryCfg] = useState(() => getVictoryConfig());
+  const [failureCfg, setFailureCfg] = useState(() => getFailureConfig());
   const [savedAt, setSavedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
@@ -155,6 +157,8 @@ function Editor() {
       setPuzzles(getPuzzles());
       setIntroText(getIntroText());
       setVaultWord(getVaultWord());
+      setVictoryCfg(getVictoryConfig());
+      setFailureCfg(getFailureConfig());
     })();
   }, []);
 
