@@ -13,10 +13,10 @@ import { Route as VictoryRouteImport } from './routes/victory'
 import { Route as VaultRouteImport } from './routes/vault'
 import { Route as FailureRouteImport } from './routes/failure'
 import { Route as DoorRouteImport } from './routes/door'
+import { Route as AdminSessionsRouteImport } from './routes/admin-sessions'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PuzzleIdRouteImport } from './routes/puzzle.$id'
-import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
 
 const VictoryRoute = VictoryRouteImport.update({
   id: '/victory',
@@ -38,6 +38,11 @@ const DoorRoute = DoorRouteImport.update({
   path: '/door',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSessionsRoute = AdminSessionsRouteImport.update({
+  id: '/admin-sessions',
+  path: '/admin-sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -53,41 +58,36 @@ const PuzzleIdRoute = PuzzleIdRouteImport.update({
   path: '/puzzle/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminSessionsRoute = AdminSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => AdminRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/admin-sessions': typeof AdminSessionsRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
   '/victory': typeof VictoryRoute
-  '/admin/sessions': typeof AdminSessionsRoute
   '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/admin-sessions': typeof AdminSessionsRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
   '/victory': typeof VictoryRoute
-  '/admin/sessions': typeof AdminSessionsRoute
   '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/admin-sessions': typeof AdminSessionsRoute
   '/door': typeof DoorRoute
   '/failure': typeof FailureRoute
   '/vault': typeof VaultRoute
   '/victory': typeof VictoryRoute
-  '/admin/sessions': typeof AdminSessionsRoute
   '/puzzle/$id': typeof PuzzleIdRoute
 }
 export interface FileRouteTypes {
@@ -95,37 +95,38 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-sessions'
     | '/door'
     | '/failure'
     | '/vault'
     | '/victory'
-    | '/admin/sessions'
     | '/puzzle/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/admin-sessions'
     | '/door'
     | '/failure'
     | '/vault'
     | '/victory'
-    | '/admin/sessions'
     | '/puzzle/$id'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-sessions'
     | '/door'
     | '/failure'
     | '/vault'
     | '/victory'
-    | '/admin/sessions'
     | '/puzzle/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
+  AdminRoute: typeof AdminRoute
+  AdminSessionsRoute: typeof AdminSessionsRoute
   DoorRoute: typeof DoorRoute
   FailureRoute: typeof FailureRoute
   VaultRoute: typeof VaultRoute
@@ -163,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-sessions': {
+      id: '/admin-sessions'
+      path: '/admin-sessions'
+      fullPath: '/admin-sessions'
+      preLoaderRoute: typeof AdminSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -184,29 +192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PuzzleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/sessions': {
-      id: '/admin/sessions'
-      path: '/sessions'
-      fullPath: '/admin/sessions'
-      preLoaderRoute: typeof AdminSessionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
   }
 }
 
-interface AdminRouteChildren {
-  AdminSessionsRoute: typeof AdminSessionsRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminSessionsRoute: AdminSessionsRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
+  AdminRoute: AdminRoute,
+  AdminSessionsRoute: AdminSessionsRoute,
   DoorRoute: DoorRoute,
   FailureRoute: FailureRoute,
   VaultRoute: VaultRoute,

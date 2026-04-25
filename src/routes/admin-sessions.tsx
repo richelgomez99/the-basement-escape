@@ -33,7 +33,7 @@ export const listSessions = createServerFn({ method: "GET" }).handler(async () =
   return { sessions: (data ?? []) as SessionRow[], error: null };
 });
 
-export const Route = createFileRoute("/admin/sessions")({
+export const Route = createFileRoute("/admin-sessions")({
   head: () => ({ meta: [{ title: "Sessions — Admin" }] }),
   component: AdminSessions,
 });
