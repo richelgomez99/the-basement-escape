@@ -25,7 +25,12 @@ export function HintBox({ hints }: { hints: Hint[] }) {
               {h.text}
             </div>
             {h.audioUrl && (
-              <audio controls className="w-full" src={h.audioUrl} />
+              <ClipAudio
+                src={h.audioUrl}
+                startSec={h.audioStartSec}
+                endSec={h.audioEndSec}
+                className="w-full"
+              />
             )}
           </div>
         ))}
