@@ -28,6 +28,10 @@ export type Question = {
   /** Where to render the audio. "prompt" plays it next to the question;
    *  "hint2" attaches it to the second hint (Direction tier) instead. */
   audioRole?: "prompt" | "hint2";
+  /** Optional clip start time in seconds (defaults to 0). */
+  audioStartSec?: number;
+  /** Optional clip end time in seconds — playback auto-pauses here. */
+  audioEndSec?: number;
 };
 
 export function emptyQuestionHints(): Hint[] {
