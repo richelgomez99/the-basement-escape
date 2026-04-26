@@ -1238,12 +1238,26 @@ function QuestionsEditor({
               </div>
 
               {allowAudio && (
-                <AudioUploader
-                  puzzleId={puzzleId}
-                  qIdx={i}
-                  audioUrl={q.audioUrl ?? ""}
-                  onChange={(audioUrl) => update(i, { audioUrl })}
-                />
+                <div className="space-y-2">
+                  <AudioUploader
+                    puzzleId={puzzleId}
+                    qIdx={i}
+                    audioUrl={q.audioUrl ?? ""}
+                    onChange={(audioUrl) => update(i, { audioUrl })}
+                  />
+                  <Field label="How should this audio be used?">
+                    <select
+                      className="h-9 w-full rounded border border-border bg-background px-2 text-sm"
+                      value={q.audioRole ?? "prompt"}
+                      onChange={(e) =>
+                        update(i, { audioRole: e.target.value as "prompt" | "hint2" })
+                      }
+                    >
+                      <option value="prompt">Part of the prompt (plays with the question)</option>
+                      <option value="hint2">As the second hint (Direction tier)</option>
+                    </select>
+                  </Field>
+                </div>
               )}
             </div>
           );

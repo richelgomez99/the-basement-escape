@@ -8,7 +8,7 @@ export const PATH_RECALL_PENALTY_SECONDS = 120; // 2 min for replaying the Path 
 
 export const ADMIN_DEFAULT_PASSWORD = "glorious2025";
 
-export type Hint = { tier: 1 | 2 | 3; label: string; text: string };
+export type Hint = { tier: 1 | 2 | 3; label: string; text: string; audioUrl?: string };
 
 // A generic single-question unit. Used for puzzles 1, 4, 5, 6, 7 multi-question mode
 // and the music round (puzzle 8). Optional `audioUrl` for music questions.
@@ -25,6 +25,9 @@ export type Question = {
   answer: string;
   acceptable?: string[];
   audioUrl?: string; // optional MP3 (puzzle 8)
+  /** Where to render the audio. "prompt" plays it next to the question;
+   *  "hint2" attaches it to the second hint (Direction tier) instead. */
+  audioRole?: "prompt" | "hint2";
 };
 
 export function emptyQuestionHints(): Hint[] {
@@ -354,6 +357,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "healed - you rock my world",
         ],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt: 'Finish the lyric: "Melodies from heaven, ___ ___ ___ ___."',
@@ -366,6 +370,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         answer: "rain down on me",
         acceptable: ["rain down on me"],
         audioUrl: "",
+        audioRole: "prompt",
       },
       {
         prompt: 'What group released "Optimistic" in 1991?',
@@ -378,6 +383,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         answer: "sounds of blackness",
         acceptable: ["sounds of blackness", "the sounds of blackness"],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt:
@@ -397,6 +403,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "praise him in advance by marvin sapp",
         ],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt:
@@ -416,6 +423,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "wonderful is your name by hezekiah walker",
         ],
         audioUrl: "",
+        audioRole: "prompt",
       },
     ],
     hints: [

@@ -18,9 +18,14 @@ export function HintBox({ hints }: { hints: Hint[] }) {
       </div>
       <div className="space-y-2">
         {hints.slice(0, revealed).map((h) => (
-          <div key={h.tier} className="rounded border border-border bg-background/40 p-3 text-sm">
-            <span className="font-display text-gold mr-2">{h.label}:</span>
-            {h.text}
+          <div key={h.tier} className="rounded border border-border bg-background/40 p-3 text-sm space-y-2">
+            <div>
+              <span className="font-display text-gold mr-2">{h.label}:</span>
+              {h.text}
+            </div>
+            {h.audioUrl && (
+              <audio controls className="w-full" src={h.audioUrl} />
+            )}
           </div>
         ))}
         {revealed < hints.length &&
