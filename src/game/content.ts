@@ -641,6 +641,25 @@ export function getPuzzles(): Puzzle[] {
     // single vault word and the letters re-deal automatically.
     const merged: Puzzle = { ...base, artifact: scrambled[idx] ?? "?" };
     if (p.id === 8) {
+      // Backfill per-question hints + audioRole from defaults when older
+      // saved overrides omitted them. Match by normalized answer first, then
+      // fall back to positional index.
+      const defQs = p.questions ?? [];
+      const norm = (s: string) => (s ?? "").trim().toLowerCase();
+      const backfill = (q: Question, i: number): Question => {
+        const def =
+          defQs.find((d) => norm(d.answer) === norm(q.answer)) ?? defQs[i];
+        if (!def) return q;
+        return {
+          ...q,
+          hints:
+            q.hints && q.hints.some((h) => h.text?.trim()) ? q.hints : def.hints,
+          audioRole: q.audioRole ?? def.audioRole ?? "prompt",
+        };
+      };
+      if (merged.questions) merged.questions = merged.questions.map(backfill);
+      if (merged.musicQuestions)
+        merged.musicQuestions = merged.musicQuestions.map(backfill);
       if (merged.questions && !merged.musicQuestions) merged.musicQuestions = merged.questions;
       if (merged.musicQuestions && !merged.questions) merged.questions = merged.musicQuestions;
     }
