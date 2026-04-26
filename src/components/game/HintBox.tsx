@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Hint } from "@/game/content";
 import { Button } from "@/components/ui/button";
 import { addPenalty } from "@/game/state";
+import { ClipAudio } from "./ClipAudio";
 
 const HINT_PENALTY_SECONDS = 120; // 2 minutes per hint reveal
 
