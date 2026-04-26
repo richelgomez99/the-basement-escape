@@ -107,10 +107,10 @@ export function MultiQuestionRunner({
           </blockquote>
         )}
         <p className="font-display text-lg">{current.prompt}</p>
-        {showAudio && current.audioUrl && (
+        {showAudio && current.audioRole !== "hint2" && current.audioUrl && (
           <audio key={current.audioUrl} controls className="w-full" src={current.audioUrl} />
         )}
-        {showAudio && !current.audioUrl && (
+        {showAudio && current.audioRole !== "hint2" && !current.audioUrl && (
           <p className="text-xs italic text-muted-foreground">
             (No audio uploaded yet — host can add one in /admin)
           </p>
@@ -120,7 +120,13 @@ export function MultiQuestionRunner({
       {(() => {
         const qHints = (current.hints ?? []).filter((h) => h.text.trim());
         const fallback = (puzzle.hints ?? []).filter((h) => h.text.trim());
-        const hintsToShow = qHints.length > 0 ? qHints : fallback;
+        let hintsToShow = qHints.length > 0 ? qHints : fallback;
+        // If this question's audio is meant to live on the second hint, attach it.
+        if (showAudio && current.audioRole === "hint2" && current.audioUrl) {
+          hintsToShow = hintsToShow.map((h) =>
+            h.tier === 2 ? { ...h, audioUrl: current.audioUrl } : h,
+          );
+        }
         if (hintsToShow.length === 0) {
           return current.hint ? (
             <p className="text-xs text-muted-foreground italic">{current.hint}</p>
