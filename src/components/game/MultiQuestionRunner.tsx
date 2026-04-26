@@ -109,7 +109,13 @@ export function MultiQuestionRunner({
         )}
         <p className="font-display text-lg">{current.prompt}</p>
         {showAudio && current.audioRole !== "hint2" && current.audioUrl && (
-          <audio key={current.audioUrl} controls className="w-full" src={current.audioUrl} />
+          <ClipAudio
+            key={current.audioUrl}
+            src={current.audioUrl}
+            startSec={current.audioStartSec}
+            endSec={current.audioEndSec}
+            className="w-full"
+          />
         )}
         {showAudio && current.audioRole !== "hint2" && !current.audioUrl && (
           <p className="text-xs italic text-muted-foreground">
@@ -125,7 +131,14 @@ export function MultiQuestionRunner({
         // If this question's audio is meant to live on the second hint, attach it.
         if (showAudio && current.audioRole === "hint2" && current.audioUrl) {
           hintsToShow = hintsToShow.map((h) =>
-            h.tier === 2 ? { ...h, audioUrl: current.audioUrl } : h,
+            h.tier === 2
+              ? {
+                  ...h,
+                  audioUrl: current.audioUrl,
+                  audioStartSec: current.audioStartSec,
+                  audioEndSec: current.audioEndSec,
+                }
+              : h,
           );
         }
         if (hintsToShow.length === 0) {
