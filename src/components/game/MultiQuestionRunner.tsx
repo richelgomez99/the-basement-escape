@@ -8,6 +8,7 @@ import { addPenalty, getPuzzleState, markSolved, setPuzzleState } from "@/game/s
 import { playSfx } from "@/game/sfx";
 import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 import { HintBox } from "./HintBox";
+import { ClipAudio } from "./ClipAudio";
 
 function normalize(s: string) {
   return s
