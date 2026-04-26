@@ -96,12 +96,25 @@ type SessionPatch = {
   penalty_seconds?: number;
   solved_count?: number;
 };
+async function ensureSessionRow(): Promise<string | null> {
+  let id = getSessionId();
+  if (id) return id;
+  // Lazy-create if missing (e.g. game started before session tracking shipped,
+  // or initial insert failed). Use the stored team name, falling back to a
+  // placeholder so we always have a row to attach updates to.
+  const team = getTeamName() || "(unknown team)";
+  id = await createSessionRow(team);
+  if (id) setSessionId(id);
+  return id;
+}
+
 async function updateSessionRow(patch: SessionPatch) {
-  const id = getSessionId();
+  const id = await ensureSessionRow();
   if (!id) return;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    await supabase.from("game_sessions").update(patch).eq("id", id);
+    const { error } = await supabase.from("game_sessions").update(patch).eq("id", id);
+    if (error) throw error;
   } catch (e) {
     console.warn("Session update failed:", e);
   }
