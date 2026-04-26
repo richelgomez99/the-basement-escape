@@ -1257,6 +1257,46 @@ function QuestionsEditor({
                       <option value="hint2">As the second hint (Direction tier)</option>
                     </select>
                   </Field>
+                  {q.audioUrl && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="Start (sec, optional)">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          className="h-9 w-full rounded border border-border bg-background px-2 text-sm"
+                          value={q.audioStartSec ?? ""}
+                          placeholder="0"
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            update(i, {
+                              audioStartSec: v === "" ? undefined : Number(v),
+                            });
+                          }}
+                        />
+                      </Field>
+                      <Field label="End (sec, optional)">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          className="h-9 w-full rounded border border-border bg-background px-2 text-sm"
+                          value={q.audioEndSec ?? ""}
+                          placeholder="play full clip"
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            update(i, {
+                              audioEndSec: v === "" ? undefined : Number(v),
+                            });
+                          }}
+                        />
+                      </Field>
+                      <p className="col-span-2 text-[11px] italic text-muted-foreground">
+                        Players' audio will auto-pause at the End time. Leave both blank to play
+                        the whole clip.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
