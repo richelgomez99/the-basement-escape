@@ -96,12 +96,22 @@ type SessionPatch = {
   penalty_seconds?: number;
   solved_count?: number;
 };
+async function ensureSessionRow(): Promise<string | null> {
+  const existing = getSessionId();
+  if (existing) return existing;
+  const team = getTeamName() || "(unknown team)";
+  const created = await createSessionRow(team);
+  if (created) setSessionId(created);
+  return created;
+}
+
 async function updateSessionRow(patch: SessionPatch) {
-  const id = getSessionId();
+  const id = await ensureSessionRow();
   if (!id) return;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    await supabase.from("game_sessions").update(patch).eq("id", id);
+    const { error } = await supabase.from("game_sessions").update(patch).eq("id", id);
+    if (error) throw error;
   } catch (e) {
     console.warn("Session update failed:", e);
   }
