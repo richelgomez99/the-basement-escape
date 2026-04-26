@@ -357,6 +357,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "healed - you rock my world",
         ],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt: 'Finish the lyric: "Melodies from heaven, ___ ___ ___ ___."',
@@ -369,6 +370,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         answer: "rain down on me",
         acceptable: ["rain down on me"],
         audioUrl: "",
+        audioRole: "prompt",
       },
       {
         prompt: 'What group released "Optimistic" in 1991?',
@@ -381,6 +383,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
         answer: "sounds of blackness",
         acceptable: ["sounds of blackness", "the sounds of blackness"],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt:
@@ -400,6 +403,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "praise him in advance by marvin sapp",
         ],
         audioUrl: "",
+        audioRole: "hint2",
       },
       {
         prompt:
@@ -419,6 +423,7 @@ export const DEFAULT_PUZZLES: Puzzle[] = [
           "wonderful is your name by hezekiah walker",
         ],
         audioUrl: "",
+        audioRole: "prompt",
       },
     ],
     hints: [
