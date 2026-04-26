@@ -1257,6 +1257,11 @@ function QuestionsEditor({
                       <option value="hint2">As the second hint (Direction tier)</option>
                     </select>
                   </Field>
+                  <p className="text-[11px] italic text-muted-foreground">
+                    {(q.audioRole ?? "prompt") === "hint2"
+                      ? "✓ Players will only hear this audio after they reveal Hint 2 (Direction). It will NOT appear with the prompt."
+                      : "✓ Players will hear this audio together with the question prompt."}
+                  </p>
                   {q.audioUrl && (
                     <div className="grid grid-cols-2 gap-2">
                       <Field label="Start (sec, optional)">
