@@ -25,6 +25,9 @@ export type Question = {
   answer: string;
   acceptable?: string[];
   audioUrl?: string; // optional MP3 (puzzle 8)
+  /** Where to render the audio. "prompt" plays it next to the question;
+   *  "hint2" attaches it to the second hint (Direction tier) instead. */
+  audioRole?: "prompt" | "hint2";
 };
 
 export function emptyQuestionHints(): Hint[] {
