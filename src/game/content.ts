@@ -8,7 +8,14 @@ export const PATH_RECALL_PENALTY_SECONDS = 120; // 2 min for replaying the Path 
 
 export const ADMIN_DEFAULT_PASSWORD = "glorious2025";
 
-export type Hint = { tier: 1 | 2 | 3; label: string; text: string; audioUrl?: string };
+export type Hint = {
+  tier: 1 | 2 | 3;
+  label: string;
+  text: string;
+  audioUrl?: string;
+  audioStartSec?: number;
+  audioEndSec?: number;
+};
 
 // A generic single-question unit. Used for puzzles 1, 4, 5, 6, 7 multi-question mode
 // and the music round (puzzle 8). Optional `audioUrl` for music questions.
