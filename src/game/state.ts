@@ -97,15 +97,12 @@ type SessionPatch = {
   solved_count?: number;
 };
 async function ensureSessionRow(): Promise<string | null> {
-  let id = getSessionId();
-  if (id) return id;
-  // Lazy-create if missing (e.g. game started before session tracking shipped,
-  // or initial insert failed). Use the stored team name, falling back to a
-  // placeholder so we always have a row to attach updates to.
+  const existing = getSessionId();
+  if (existing) return existing;
   const team = getTeamName() || "(unknown team)";
-  id = await createSessionRow(team);
-  if (id) setSessionId(id);
-  return id;
+  const created = await createSessionRow(team);
+  if (created) setSessionId(created);
+  return created;
 }
 
 async function updateSessionRow(patch: SessionPatch) {
