@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getFailureConfig, loadOverridesFromCloud } from "@/game/content";
-import { getTeamName, resetGame } from "@/game/state";
+import { getTeamName, isFinished, resetGame, setFinished } from "@/game/state";
 import { NarrationPlayer } from "@/components/game/NarrationPlayer";
 import { FAILURE_KEY } from "@/game/narration";
 
@@ -16,6 +16,9 @@ function Failure() {
   const [cfg, setCfg] = useState(() => getFailureConfig());
   useEffect(() => {
     setTeam(getTeamName());
+    // Backstop: if user landed here without the timer marking the session
+    // as finished (e.g. fast nav, tab refresh), record the failure now.
+    if (!isFinished()) setFinished(true, "failure");
     loadOverridesFromCloud().then(() => setCfg(getFailureConfig()));
     const onChange = () => setCfg(getFailureConfig());
     window.addEventListener("be_content", onChange);
