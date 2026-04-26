@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Hint } from "@/game/content";
 import { Button } from "@/components/ui/button";
 import { addPenalty } from "@/game/state";
+import { ClipAudio } from "./ClipAudio";
 
 const HINT_PENALTY_SECONDS = 120; // 2 minutes per hint reveal
 
@@ -24,7 +25,12 @@ export function HintBox({ hints }: { hints: Hint[] }) {
               {h.text}
             </div>
             {h.audioUrl && (
-              <audio controls className="w-full" src={h.audioUrl} />
+              <ClipAudio
+                src={h.audioUrl}
+                startSec={h.audioStartSec}
+                endSec={h.audioEndSec}
+                className="w-full"
+              />
             )}
           </div>
         ))}
