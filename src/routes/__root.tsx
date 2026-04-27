@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { loadOverridesFromCloud } from "@/game/content";
+import { installSessionUnloadHook } from "@/game/state";
 
 function NotFoundComponent() {
   return (
@@ -74,6 +75,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   useEffect(() => {
     void loadOverridesFromCloud();
+    installSessionUnloadHook();
   }, []);
   return <Outlet />;
 }
