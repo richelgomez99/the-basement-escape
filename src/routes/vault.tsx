@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
 import { getPuzzles, getVaultCode, RECALL_PENALTY_SECONDS } from "@/game/content";
-import { addPenalty, getSolved, isGameStarted, setFinished } from "@/game/state";
+import { addPenalty, getSolved, isGameStarted, resumeClock, setFinished } from "@/game/state";
 import {
   Dialog,
   DialogContent,
