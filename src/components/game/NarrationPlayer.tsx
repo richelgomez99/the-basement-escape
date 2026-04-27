@@ -98,9 +98,8 @@ export function NarrationPlayer({
     }
   }
 
-  // Pause the clock if browser blocks autoplay too — only the *first* time per key.
-  // We resume when audio ends, OR when the user mutes mid-play.
-  // Auto-play when ready
+  // Pause the clock during EVERY auto-play of narration (resume on end / mute / unmount).
+  // Manual replays do NOT pause the clock.
   useEffect(() => {
     if (!autoplay || muted) return;
     if (row?.status !== "ready" || !row.audio_url) return;
@@ -109,14 +108,11 @@ export function NarrationPlayer({
     const a = audioRef.current;
     if (!a) return;
     a.currentTime = 0;
-    const isFirst = !hasPlayedBefore(narrationKey);
-    if (isFirst) {
-      pauseClock();
-      pausingRef.current = true;
-    }
+    pauseClock();
+    pausingRef.current = true;
     a.play()
       .then(() => {
-        if (isFirst) markPlayed(narrationKey);
+        markPlayed(narrationKey);
       })
       .catch(() => {
         // Autoplay blocked — don't keep clock paused waiting for a play that never happens.
