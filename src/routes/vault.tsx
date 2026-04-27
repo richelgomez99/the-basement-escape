@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getPuzzles, getVaultCode, RECALL_PENALTY_SECONDS } from "@/game/content";
 import { addPenalty, getSolved, isGameStarted, setFinished } from "@/game/state";
 import {
@@ -21,15 +20,16 @@ export const Route = createFileRoute("/vault")({
 });
 
 function Vault() {
-  const [code, setCode] = useState("");
+  const puzzles = getPuzzles();
+  const wordLength = puzzles.length;
+  const [letters, setLetters] = useState<string[]>(() => Array(wordLength).fill(""));
   const [shake, setShake] = useState(false);
   const [error, setError] = useState("");
   const [wrongPositions, setWrongPositions] = useState<Set<number>>(new Set());
   const [recallOpen, setRecallOpen] = useState(false);
   const [revealedId, setRevealedId] = useState<number | null>(null);
   const navigate = useNavigate();
-  const puzzles = getPuzzles();
-  const wordLength = puzzles.length;
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     if (!isGameStarted()) {
@@ -41,27 +41,90 @@ function Vault() {
     }
   }, [navigate, puzzles.length]);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const guess = code.trim().toUpperCase();
+  useEffect(() => {
+    inputsRef.current[0]?.focus();
+  }, []);
+
+  function focusBox(i: number) {
+    const el = inputsRef.current[i];
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  }
+
+  function setLetterAt(i: number, ch: string) {
+    setError("");
+    setWrongPositions(new Set());
+    const cleaned = ch.toUpperCase().replace(/[^A-Z]/g, "");
+    const next = [...letters];
+    if (cleaned.length === 0) {
+      next[i] = "";
+      setLetters(next);
+      return;
+    }
+    // Allow paste of multi-char into one box: spread across slots.
+    let idx = i;
+    for (const c of cleaned) {
+      if (idx >= wordLength) break;
+      next[idx] = c;
+      idx++;
+    }
+    setLetters(next);
+    if (idx < wordLength) focusBox(idx);
+    else inputsRef.current[wordLength - 1]?.blur();
+  }
+
+  function onKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace") {
+      if (letters[i]) {
+        // Clear current box; stay here.
+        const next = [...letters];
+        next[i] = "";
+        setLetters(next);
+        e.preventDefault();
+      } else if (i > 0) {
+        // Empty box → move back and clear that one.
+        const next = [...letters];
+        next[i - 1] = "";
+        setLetters(next);
+        focusBox(i - 1);
+        e.preventDefault();
+      }
+    } else if (e.key === "ArrowLeft" && i > 0) {
+      focusBox(i - 1);
+      e.preventDefault();
+    } else if (e.key === "ArrowRight" && i < wordLength - 1) {
+      focusBox(i + 1);
+      e.preventDefault();
+    } else if (e.key === "Enter") {
+      submit();
+      e.preventDefault();
+    }
+  }
+
+  function submit(e?: React.FormEvent) {
+    e?.preventDefault();
+    const guess = letters.join("").toUpperCase();
     const answer = getVaultCode().toUpperCase();
+    if (guess.length < wordLength) {
+      setError(`Fill all ${wordLength} boxes before submitting.`);
+      return;
+    }
     if (guess === answer) {
       setFinished(true, "victory");
       navigate({ to: "/victory" });
       return;
     }
     setShake(true);
-    setError("The vault holds firm. Wrong letters glow red below.");
+    setError("The vault holds firm. Wrong letters glow red — fix them and try again.");
     const wrong = new Set<number>();
     for (let i = 0; i < wordLength; i++) {
-      const ch = guess[i] || "";
-      if (ch !== answer[i]) wrong.add(i);
+      if ((guess[i] || "") !== answer[i]) wrong.add(i);
     }
     setWrongPositions(wrong);
     setTimeout(() => setShake(false), 450);
   }
-
-  const guess = code.trim().toUpperCase();
 
   return (
     <div className="min-h-screen px-4 py-6">
@@ -80,35 +143,56 @@ function Vault() {
         </div>
         <h1 className="mt-2 font-display text-4xl md:text-5xl">The Final Vault</h1>
         <p className="mt-3 text-muted-foreground">
-          Each lock you cracked gave you a single letter. Rearrange those letters in your head into
-          one {wordLength}-letter word, then{" "}
-          <strong className="text-gold">type your answer in the box below</strong> and press{" "}
-          <strong className="text-gold">UNLOCK THE VAULT</strong>.
+          Each lock you cracked gave you a single letter. Rearrange those letters into one{" "}
+          {wordLength}-letter word and{" "}
+          <strong className="text-gold">type one letter into each box below</strong>.
         </p>
 
         <div className="stone-panel mt-8 rounded-xl p-6">
-          {/* Type the word here — promoted to the top so it can't be missed */}
-          <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
-            <label
-              htmlFor="vault-answer"
-              className="block font-display text-[11px] uppercase tracking-widest text-gold"
+          <form onSubmit={submit} className="space-y-4">
+            <div className="font-display text-[11px] uppercase tracking-widest text-gold">
+              Type the {wordLength}-letter word — one letter per box
+            </div>
+
+            <div
+              className={`flex justify-center gap-2 flex-wrap ${shake ? "shake" : ""}`}
+              role="group"
+              aria-label="Vault answer"
             >
-              Type the {wordLength}-letter word here
-            </label>
-            <Input
-              id="vault-answer"
-              autoFocus
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""));
-                setError("");
-                setWrongPositions(new Set());
-              }}
-              maxLength={wordLength}
-              placeholder={`Type ${wordLength} letters…`}
-              className="h-14 text-center text-2xl font-display tracking-[0.4em] border-gold/40 bg-background/60"
-            />
+              {letters.map((ch, i) => {
+                const isWrong = wrongPositions.has(i);
+                return (
+                  <input
+                    key={i}
+                    ref={(el) => {
+                      inputsRef.current[i] = el;
+                    }}
+                    type="text"
+                    inputMode="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    maxLength={1}
+                    value={ch}
+                    onChange={(e) => setLetterAt(i, e.target.value)}
+                    onKeyDown={(e) => onKeyDown(i, e)}
+                    onFocus={(e) => e.currentTarget.select()}
+                    aria-label={`Letter ${i + 1} of ${wordLength}`}
+                    className={`h-14 w-12 rounded-md border-2 bg-background/60 text-center font-display text-2xl uppercase outline-none transition-colors focus:ring-2 focus:ring-gold/60 ${
+                      isWrong
+                        ? "border-destructive bg-destructive/10 text-destructive"
+                        : ch
+                          ? "border-gold text-gold"
+                          : "border-gold/40 text-foreground"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+
             {error && <div className="text-sm text-destructive">{error}</div>}
+
             <Button
               type="submit"
               className="w-full h-12 bg-gold text-gold-foreground hover:bg-gold/90 font-display tracking-widest"
@@ -117,65 +201,7 @@ function Vault() {
             </Button>
           </form>
 
-          {/* Per-position feedback after a wrong guess */}
-          {wrongPositions.size > 0 && (
-            <div className="mt-6">
-              <div className="font-display text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
-                Your last guess
-              </div>
-              <div className="flex justify-center gap-2 flex-wrap">
-                {Array.from({ length: wordLength }).map((_, i) => {
-                  const ch = guess[i] || "";
-                  const isWrong = wrongPositions.has(i);
-                  return (
-                    <div
-                      key={i}
-                      className={`h-12 w-10 rounded-md border-2 font-display text-xl flex items-center justify-center ${
-                        ch
-                          ? isWrong
-                            ? "border-destructive bg-destructive/15 text-destructive"
-                            : "border-emerald-500 bg-emerald-500/15 text-emerald-400"
-                          : "border-dashed border-gold/30 text-muted-foreground/40"
-                      }`}
-                    >
-                      {ch || "_"}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Red = wrong letter in that slot. Green = correct so far.
-              </p>
-            </div>
-          )}
-
-          {/* Lock reference grid (visual only — letters hidden) */}
-          <div className="mt-8 pt-6 border-t border-gold/10">
-            <div className="font-display text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
-              The nine locks (letters hidden)
-            </div>
-            <div className="grid grid-cols-9 gap-2">
-              {puzzles.map((p) => (
-                <div
-                  key={p.id}
-                  className="aspect-square rounded border border-gold/30 bg-background/40 flex flex-col items-center justify-center"
-                  aria-label={`Lock ${p.id}, letter hidden`}
-                >
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
-                    {p.id}
-                  </div>
-                  <div className="font-display text-xl text-gold/60">?</div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Forgot a letter? Use <strong>Recall</strong> below (−2:00) or replay any lock for
-              free.
-            </p>
-          </div>
-
-
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-6 pt-4 border-t border-gold/10 flex flex-wrap justify-center gap-2">
             <Button
               variant="outline"
               size="sm"
