@@ -80,33 +80,42 @@ function Vault() {
         </div>
         <h1 className="mt-2 font-display text-4xl md:text-5xl">The Final Vault</h1>
         <p className="mt-3 text-muted-foreground">
-          Each lock you cracked gave you a single letter. Remember them all? Rearrange them in your
-          head into one {wordLength}-letter word and type it below.
+          Each lock you cracked gave you a single letter. Rearrange those letters in your head into
+          one {wordLength}-letter word, then{" "}
+          <strong className="text-gold">type your answer in the box below</strong> and press{" "}
+          <strong className="text-gold">UNLOCK THE VAULT</strong>.
         </p>
 
         <div className="stone-panel mt-8 rounded-xl p-6">
-          {/* Lock slots — letters are HIDDEN. Recall (with penalty) reveals them. */}
-          <div>
-            <div className="font-display text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
-              The nine locks
-            </div>
-            <div className="grid grid-cols-9 gap-2">
-              {puzzles.map((p) => (
-                <div
-                  key={p.id}
-                  className="aspect-square rounded border border-gold/30 bg-background/40 flex flex-col items-center justify-center"
-                >
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
-                    {p.id}
-                  </div>
-                  <div className="font-display text-xl text-gold/60">?</div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Letters are hidden — recall costs time, replays are free.
-            </p>
-          </div>
+          {/* Type the word here — promoted to the top so it can't be missed */}
+          <form onSubmit={submit} className={`space-y-3 ${shake ? "shake" : ""}`}>
+            <label
+              htmlFor="vault-answer"
+              className="block font-display text-[11px] uppercase tracking-widest text-gold"
+            >
+              Type the {wordLength}-letter word here
+            </label>
+            <Input
+              id="vault-answer"
+              autoFocus
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""));
+                setError("");
+                setWrongPositions(new Set());
+              }}
+              maxLength={wordLength}
+              placeholder={`Type ${wordLength} letters…`}
+              className="h-14 text-center text-2xl font-display tracking-[0.4em] border-gold/40 bg-background/60"
+            />
+            {error && <div className="text-sm text-destructive">{error}</div>}
+            <Button
+              type="submit"
+              className="w-full h-12 bg-gold text-gold-foreground hover:bg-gold/90 font-display tracking-widest"
+            >
+              UNLOCK THE VAULT
+            </Button>
+          </form>
 
           {/* Per-position feedback after a wrong guess */}
           {wrongPositions.size > 0 && (
@@ -140,27 +149,31 @@ function Vault() {
             </div>
           )}
 
-          <form onSubmit={submit} className={`mt-6 space-y-3 ${shake ? "shake" : ""}`}>
-            <Input
-              autoFocus
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value.toUpperCase());
-                setError("");
-                setWrongPositions(new Set());
-              }}
-              maxLength={wordLength}
-              placeholder={`The ${wordLength}-letter word`}
-              className="h-14 text-center text-2xl font-display tracking-[0.4em] border-gold/40 bg-background/60"
-            />
-            {error && <div className="text-sm text-destructive">{error}</div>}
-            <Button
-              type="submit"
-              className="w-full h-12 bg-gold text-gold-foreground hover:bg-gold/90 font-display tracking-widest"
-            >
-              UNLOCK THE VAULT
-            </Button>
-          </form>
+          {/* Lock reference grid (visual only — letters hidden) */}
+          <div className="mt-8 pt-6 border-t border-gold/10">
+            <div className="font-display text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
+              The nine locks (letters hidden)
+            </div>
+            <div className="grid grid-cols-9 gap-2">
+              {puzzles.map((p) => (
+                <div
+                  key={p.id}
+                  className="aspect-square rounded border border-gold/30 bg-background/40 flex flex-col items-center justify-center"
+                  aria-label={`Lock ${p.id}, letter hidden`}
+                >
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground/60">
+                    {p.id}
+                  </div>
+                  <div className="font-display text-xl text-gold/60">?</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Forgot a letter? Use <strong>Recall</strong> below (−2:00) or replay any lock for
+              free.
+            </p>
+          </div>
+
 
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button
