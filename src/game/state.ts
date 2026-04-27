@@ -117,6 +117,27 @@ async function updateSessionRow(patch: SessionPatch) {
   }
 }
 
+// Synchronous, beacon-based session write. Use this when the user is leaving
+// the page (pagehide / time-up) so the request survives tab closure.
+// sendBeacon doesn't accept custom headers so we hit the Supabase REST endpoint
+// directly with the publishable key embedded in the payload URL.
+function beaconUpdateSession(patch: SessionPatch) {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return;
+  if (typeof navigator.sendBeacon !== "function") return;
+  const id = getSessionId();
+  if (!id) return;
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return;
+  const endpoint = `${url}/rest/v1/game_sessions?id=eq.${id}&apikey=${key}`;
+  const blob = new Blob([JSON.stringify(patch)], { type: "application/json" });
+  try {
+    navigator.sendBeacon(endpoint, blob);
+  } catch (e) {
+    console.warn("Beacon session update failed:", e);
+  }
+}
+
 export function startGame(name: string) {
   write(KEYS.team, name);
   write(KEYS.start, Date.now());
