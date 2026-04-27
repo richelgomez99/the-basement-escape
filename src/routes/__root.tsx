@@ -75,6 +75,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   useEffect(() => {
     void loadOverridesFromCloud();
+    installSessionUnloadHook();
   }, []);
   return <Outlet />;
 }
