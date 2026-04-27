@@ -197,7 +197,7 @@ function Vault() {
                     aria-label={`Letter ${i + 1} of ${wordLength}`}
                     className={`h-14 w-12 rounded-md border-2 bg-background/60 text-center font-display text-2xl uppercase outline-none transition-colors focus:ring-2 focus:ring-gold/60 ${
                       isWrong
-                        ? "border-destructive bg-destructive/10 text-destructive"
+                        ? "border-destructive bg-destructive/20 text-destructive ring-2 ring-destructive/60 shadow-[0_0_16px_rgba(220,38,38,0.55)] animate-pulse"
                         : ch
                           ? "border-gold text-gold"
                           : "border-gold/40 text-foreground"
