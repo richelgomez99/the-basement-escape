@@ -3,8 +3,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPuzzles, getVaultCode } from "@/game/content";
-import { getSolved, isGameStarted, setFinished } from "@/game/state";
+import { getPuzzles, getVaultCode, RECALL_PENALTY_SECONDS } from "@/game/content";
+import { addPenalty, getSolved, isGameStarted, setFinished } from "@/game/state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
 
 export const Route = createFileRoute("/vault")({
   head: () => ({ meta: [{ title: "The Final Vault — The Basement Escape" }] }),
