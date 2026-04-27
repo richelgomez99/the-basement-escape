@@ -287,8 +287,77 @@ function Vault() {
               UNLOCK THE VAULT
             </Button>
           </form>
+
+          <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-gold/10">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setRecallOpen(true)}
+            >
+              Forgot a letter? Recall (−2:00)
+            </Button>
+            <Link to="/door">
+              <Button variant="outline" size="sm" className="border-gold/40">
+                Replay a lock for free
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
+
+      <Dialog open={recallOpen} onOpenChange={setRecallOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recall a letter</DialogTitle>
+            <DialogDescription>
+              Forgot which letter came from which lock? Pick one — the Oracle reveals it for{" "}
+              <strong className="text-destructive">−2 minutes</strong>. Or close this and head back
+              to the Door to replay any solved lock for free.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 py-2">
+            {puzzles.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  addPenalty(RECALL_PENALTY_SECONDS);
+                  setRecallOpen(false);
+                  setRevealedId(p.id);
+                }}
+                className="rounded border border-gold/50 bg-gold/5 p-3 text-center hover:bg-gold/15"
+              >
+                <div className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+                  Lock {p.id}
+                </div>
+                <div className="mt-1 font-display text-xl text-gold">?</div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRecallOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {(() => {
+        const revealedPuzzle = revealedId ? puzzles.find((p) => p.id === revealedId) : null;
+        if (!revealedPuzzle) return null;
+        return (
+          <LetterUnlockedDialog
+            open={revealedId !== null}
+            onClose={() => setRevealedId(null)}
+            puzzleId={revealedPuzzle.id}
+            totalPuzzles={puzzles.length}
+            letter={revealedPuzzle.artifact}
+            variant="recall"
+          />
+        );
+      })()}
     </div>
   );
 }
+
