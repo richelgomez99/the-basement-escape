@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { getFailureConfig, loadOverridesFromCloud } from "@/game/content";
 import { getTeamName, isFinished, resetGame, setFinished } from "@/game/state";
 import { NarrationPlayer } from "@/components/game/NarrationPlayer";
-import { FAILURE_KEY } from "@/game/narration";
+import { FAILURE_KEY, stripNarrationTags } from "@/game/narration";
 
 export const Route = createFileRoute("/failure")({
   head: () => ({ meta: [{ title: "Time's Up — The Basement Escape" }] }),
@@ -37,7 +37,7 @@ function Failure() {
 
       <div className="stone-panel mt-10 max-w-xl rounded-xl p-8">
         <div className="font-display text-xs uppercase tracking-widest text-gold">{cfg.bodyLabel}</div>
-        <p className="mt-3 italic whitespace-pre-line">{cfg.body}</p>
+        <p className="mt-3 italic whitespace-pre-line">{stripNarrationTags(cfg.body)}</p>
         <div className="mt-4 flex justify-center">
           <NarrationPlayer narrationKey={FAILURE_KEY} />
         </div>
