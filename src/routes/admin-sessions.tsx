@@ -19,7 +19,24 @@ type SessionRow = {
   solved_count: number;
 };
 
+// Auto-mark stale in_progress sessions as failure (the user closed the tab
+// before the timer hit 0, so the client never recorded the failure).
+// Game lasts 60 minutes — anything started >60 min ago and still in_progress
+// is definitively a failure.
+const GAME_DURATION_SECONDS = 60 * 60;
+
 export const listSessions = createServerFn({ method: "GET" }).handler(async () => {
+  // Self-heal stale rows first.
+  const cutoff = new Date(Date.now() - GAME_DURATION_SECONDS * 1000).toISOString();
+  await supabaseAdmin
+    .from("game_sessions")
+    .update({
+      outcome: "failure",
+      finished_at: new Date().toISOString(),
+    })
+    .eq("outcome", "in_progress")
+    .lt("started_at", cutoff);
+
   const { data, error } = await supabaseAdmin
     .from("game_sessions")
     .select(
