@@ -128,12 +128,17 @@ function Vault() {
       return;
     }
     setShake(true);
-    setError("The vault holds firm. Wrong letters glow red — fix them and try again.");
     const wrong = new Set<number>();
     for (let i = 0; i < wordLength; i++) {
       if ((guess[i] || "") !== answer[i]) wrong.add(i);
     }
     setWrongPositions(wrong);
+    setError(
+      `${wrong.size} letter${wrong.size === 1 ? "" : "s"} in the wrong place — they're glowing red below. Fix them and try again.`,
+    );
+    // Move focus to the first wrong box so the user can immediately retype it.
+    const firstWrong = [...wrong].sort((a, b) => a - b)[0];
+    if (firstWrong !== undefined) setTimeout(() => focusBox(firstWrong), 0);
     setTimeout(() => setShake(false), 450);
   }
 
