@@ -237,17 +237,56 @@ export function setFinished(v: boolean, outcome?: "victory" | "failure") {
   write(KEYS.finished, v);
   if (v && outcome) {
     const elapsed = getElapsedSecondsRaw();
-    void updateSessionRow({
+    const patch: SessionPatch = {
       outcome,
       finished_at: new Date().toISOString(),
       elapsed_seconds: elapsed,
       penalty_seconds: read<number>(KEYS.penalty, 0),
       solved_count: getSolved().length,
-    });
+    };
+    // Async write (fast network) AND synchronous beacon (survives tab close).
+    void updateSessionRow(patch);
+    beaconUpdateSession(patch);
   }
 }
 export function isFinished() {
   return read<boolean>(KEYS.finished, false);
+}
+
+// Global safety net: if the user closes the tab while the game is running,
+// flush state via sendBeacon. If the timer expired, record failure;
+// otherwise just persist latest progress.
+let _unloadHookInstalled = false;
+export function installSessionUnloadHook() {
+  if (typeof window === "undefined" || _unloadHookInstalled) return;
+  _unloadHookInstalled = true;
+  const onLeave = () => {
+    if (!isGameStarted() || isFinished()) return;
+    const remaining = getRemainingSeconds();
+    const elapsed = getElapsedSecondsRaw();
+    const penalty = read<number>(KEYS.penalty, 0);
+    const solved = getSolved().length;
+    if (remaining <= 0) {
+      write(KEYS.finished, true);
+      beaconUpdateSession({
+        outcome: "failure",
+        finished_at: new Date().toISOString(),
+        elapsed_seconds: elapsed,
+        penalty_seconds: penalty,
+        solved_count: solved,
+      });
+    } else {
+      beaconUpdateSession({
+        elapsed_seconds: elapsed,
+        penalty_seconds: penalty,
+        solved_count: solved,
+      });
+    }
+  };
+  window.addEventListener("pagehide", onLeave);
+  window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") onLeave();
+  });
 }
 export function getElapsedFormatted() {
   return formatTime(getElapsedSecondsRaw());
