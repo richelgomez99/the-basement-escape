@@ -28,6 +28,8 @@ function Vault() {
   const [error, setError] = useState("");
   const [wrongLetters, setWrongLetters] = useState<Set<number>>(new Set());
   const [showHelper, setShowHelper] = useState(true);
+  const [recallOpen, setRecallOpen] = useState(false);
+  const [revealedId, setRevealedId] = useState<number | null>(null);
   const navigate = useNavigate();
   const puzzles = getPuzzles();
 
