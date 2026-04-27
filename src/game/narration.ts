@@ -17,7 +17,12 @@ export const puzzleNarrationKey = (id: number) => `puzzle-${id}-flavor`;
 export function stripNarrationTags(text: string): string {
   if (!text) return text;
   return text
+    // ElevenLabs v3 inline direction tags like [whispers]
     .replace(/\[[^\]\n]{1,40}\]/g, "")
+    // SSML-style tags like <phoneme alphabet="..." ph="...">Azel</phoneme>,
+    // <break time="500ms"/>, <emphasis>...</emphasis>. Keep inner text.
+    .replace(/<\s*([a-zA-Z][\w-]*)\b[^>]*\/\s*>/g, "") // self-closing <break/>
+    .replace(/<\s*\/?\s*[a-zA-Z][\w-]*\b[^>]*>/g, "") // open & close tags
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+([.,!?;:])/g, "$1")
     .trim();
