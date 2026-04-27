@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Timer } from "@/components/game/Timer";
 import { Button } from "@/components/ui/button";
 import { getPuzzles, getVaultCode, RECALL_PENALTY_SECONDS } from "@/game/content";
-import { addPenalty, getSolved, isGameStarted, setFinished } from "@/game/state";
+import { addPenalty, getSolved, isGameStarted, resumeClock, setFinished } from "@/game/state";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,11 @@ function Vault() {
     }
     if (getSolved().length < puzzles.length) {
       navigate({ to: "/door" });
+      return;
     }
+    // Vault has no narration — make sure the clock isn't left paused from a
+    // previous puzzle screen.
+    resumeClock();
   }, [navigate, puzzles.length]);
 
   useEffect(() => {
@@ -55,7 +59,14 @@ function Vault() {
 
   function setLetterAt(i: number, ch: string) {
     setError("");
-    setWrongPositions(new Set());
+    // Only clear the wrong-marker for the box the user is editing — keep the
+    // other red boxes visible so they know which letters were wrong.
+    setWrongPositions((prev) => {
+      if (!prev.has(i)) return prev;
+      const next = new Set(prev);
+      next.delete(i);
+      return next;
+    });
     const cleaned = ch.toUpperCase().replace(/[^A-Z]/g, "");
     const next = [...letters];
     if (cleaned.length === 0) {
@@ -117,12 +128,17 @@ function Vault() {
       return;
     }
     setShake(true);
-    setError("The vault holds firm. Wrong letters glow red — fix them and try again.");
     const wrong = new Set<number>();
     for (let i = 0; i < wordLength; i++) {
       if ((guess[i] || "") !== answer[i]) wrong.add(i);
     }
     setWrongPositions(wrong);
+    setError(
+      `${wrong.size} letter${wrong.size === 1 ? "" : "s"} in the wrong place — they're glowing red below. Fix them and try again.`,
+    );
+    // Move focus to the first wrong box so the user can immediately retype it.
+    const firstWrong = [...wrong].sort((a, b) => a - b)[0];
+    if (firstWrong !== undefined) setTimeout(() => focusBox(firstWrong), 0);
     setTimeout(() => setShake(false), 450);
   }
 
@@ -181,7 +197,7 @@ function Vault() {
                     aria-label={`Letter ${i + 1} of ${wordLength}`}
                     className={`h-14 w-12 rounded-md border-2 bg-background/60 text-center font-display text-2xl uppercase outline-none transition-colors focus:ring-2 focus:ring-gold/60 ${
                       isWrong
-                        ? "border-destructive bg-destructive/10 text-destructive"
+                        ? "border-destructive bg-destructive/20 text-destructive ring-2 ring-destructive/60 shadow-[0_0_16px_rgba(220,38,38,0.55)] animate-pulse"
                         : ch
                           ? "border-gold text-gold"
                           : "border-gold/40 text-foreground"
