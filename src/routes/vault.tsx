@@ -38,7 +38,11 @@ function Vault() {
     }
     if (getSolved().length < puzzles.length) {
       navigate({ to: "/door" });
+      return;
     }
+    // Vault has no narration — make sure the clock isn't left paused from a
+    // previous puzzle screen.
+    resumeClock();
   }, [navigate, puzzles.length]);
 
   useEffect(() => {
