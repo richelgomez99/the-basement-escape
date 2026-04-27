@@ -28,15 +28,15 @@ function Failure() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10 text-center">
       <div className="font-display text-xs uppercase tracking-[0.4em] text-destructive">
-        {cfg.eyebrow}
+        {stripNarrationTags(cfg.eyebrow)}
       </div>
-      <h1 className="mt-4 font-display text-5xl md:text-7xl text-destructive">{cfg.title}</h1>
+      <h1 className="mt-4 font-display text-5xl md:text-7xl text-destructive">{stripNarrationTags(cfg.title)}</h1>
       <p className="mt-4 text-lg text-muted-foreground">
         Team <span className="font-display text-foreground">{team}</span> remains in the basement…
       </p>
 
       <div className="stone-panel mt-10 max-w-xl rounded-xl p-8">
-        <div className="font-display text-xs uppercase tracking-widest text-gold">{cfg.bodyLabel}</div>
+        <div className="font-display text-xs uppercase tracking-widest text-gold">{stripNarrationTags(cfg.bodyLabel)}</div>
         <p className="mt-3 italic whitespace-pre-line">{stripNarrationTags(cfg.body)}</p>
         <div className="mt-4 flex justify-center">
           <NarrationPlayer narrationKey={FAILURE_KEY} />
@@ -48,7 +48,7 @@ function Failure() {
           onClick={() => resetGame()}
           className="bg-gold text-gold-foreground hover:bg-gold/90 font-display tracking-widest"
         >
-          {cfg.buttonLabel}
+          {stripNarrationTags(cfg.buttonLabel)}
         </Button>
       </Link>
     </div>
