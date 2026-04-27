@@ -59,7 +59,14 @@ function Vault() {
 
   function setLetterAt(i: number, ch: string) {
     setError("");
-    setWrongPositions(new Set());
+    // Only clear the wrong-marker for the box the user is editing — keep the
+    // other red boxes visible so they know which letters were wrong.
+    setWrongPositions((prev) => {
+      if (!prev.has(i)) return prev;
+      const next = new Set(prev);
+      next.delete(i);
+      return next;
+    });
     const cleaned = ch.toUpperCase().replace(/[^A-Z]/g, "");
     const next = [...letters];
     if (cleaned.length === 0) {
