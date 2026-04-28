@@ -105,12 +105,25 @@ async function ensureSessionRow(): Promise<string | null> {
   return created;
 }
 
+function rpcArgs(id: string, patch: SessionPatch) {
+  return {
+    p_id: id,
+    p_outcome: patch.outcome ?? null,
+    p_finished_at: patch.finished_at ?? null,
+    p_elapsed_seconds: patch.elapsed_seconds ?? null,
+    p_penalty_seconds: patch.penalty_seconds ?? null,
+    p_solved_count: patch.solved_count ?? null,
+  };
+}
+
 async function updateSessionRow(patch: SessionPatch) {
   const id = await ensureSessionRow();
   if (!id) return;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    const { error } = await supabase.from("game_sessions").update(patch).eq("id", id);
+    // Use SECURITY DEFINER RPC because game_sessions has no public SELECT
+    // policy — without it, PostgREST UPDATE silently matches zero rows.
+    const { error } = await supabase.rpc("update_game_session", rpcArgs(id, patch));
     if (error) throw error;
   } catch (e) {
     console.warn("Session update failed:", e);
@@ -119,8 +132,7 @@ async function updateSessionRow(patch: SessionPatch) {
 
 // Synchronous, beacon-based session write. Use this when the user is leaving
 // the page (pagehide / time-up) so the request survives tab closure.
-// sendBeacon doesn't accept custom headers so we hit the Supabase REST endpoint
-// directly with the publishable key embedded in the payload URL.
+// sendBeacon hits the PostgREST RPC endpoint with the publishable key in the URL.
 function beaconUpdateSession(patch: SessionPatch) {
   if (typeof window === "undefined" || typeof navigator === "undefined") return;
   if (typeof navigator.sendBeacon !== "function") return;
@@ -129,8 +141,10 @@ function beaconUpdateSession(patch: SessionPatch) {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return;
-  const endpoint = `${url}/rest/v1/game_sessions?id=eq.${id}&apikey=${key}`;
-  const blob = new Blob([JSON.stringify(patch)], { type: "application/json" });
+  const endpoint = `${url}/rest/v1/rpc/update_game_session?apikey=${key}`;
+  const blob = new Blob([JSON.stringify(rpcArgs(id, patch))], {
+    type: "application/json",
+  });
   try {
     navigator.sendBeacon(endpoint, blob);
   } catch (e) {
