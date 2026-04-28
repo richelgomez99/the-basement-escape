@@ -108,11 +108,11 @@ async function ensureSessionRow(): Promise<string | null> {
 function rpcArgs(id: string, patch: SessionPatch) {
   return {
     p_id: id,
-    p_outcome: patch.outcome ?? null,
-    p_finished_at: patch.finished_at ?? null,
-    p_elapsed_seconds: patch.elapsed_seconds ?? null,
-    p_penalty_seconds: patch.penalty_seconds ?? null,
-    p_solved_count: patch.solved_count ?? null,
+    p_outcome: patch.outcome,
+    p_finished_at: patch.finished_at ?? undefined,
+    p_elapsed_seconds: patch.elapsed_seconds ?? undefined,
+    p_penalty_seconds: patch.penalty_seconds,
+    p_solved_count: patch.solved_count,
   };
 }
 
