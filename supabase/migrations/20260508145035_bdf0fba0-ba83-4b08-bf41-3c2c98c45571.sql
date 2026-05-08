@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.game_sessions;
