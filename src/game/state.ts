@@ -65,7 +65,10 @@ function setSessionId(id: string) {
   write(KEYS.sessionId, id);
 }
 
-async function createSessionRow(team: string): Promise<string | null> {
+async function createSessionRow(
+  team: string,
+  leader?: { name?: string; email?: string },
+): Promise<string | null> {
   if (typeof window === "undefined") return null;
   // Generate the id client-side so we don't need a SELECT policy on
   // game_sessions (we never want sessions readable by the public).
@@ -80,6 +83,8 @@ async function createSessionRow(team: string): Promise<string | null> {
       team_name: team,
       outcome: "in_progress",
       user_agent: navigator.userAgent.slice(0, 500),
+      leader_name: leader?.name?.trim() || null,
+      leader_email: leader?.email?.trim() || null,
     });
     if (error) throw error;
     return id;
@@ -152,7 +157,10 @@ function beaconUpdateSession(patch: SessionPatch) {
   }
 }
 
-export function startGame(name: string) {
+export function startGame(
+  name: string,
+  leader?: { name?: string; email?: string },
+) {
   write(KEYS.team, name);
   write(KEYS.start, Date.now());
   write(KEYS.penalty, 0);
@@ -162,7 +170,7 @@ export function startGame(name: string) {
   clearAllPuzzleState();
   // Create the cloud session row, fire-and-forget.
   void (async () => {
-    const id = await createSessionRow(name);
+    const id = await createSessionRow(name, leader);
     if (id) setSessionId(id);
   })();
 }
