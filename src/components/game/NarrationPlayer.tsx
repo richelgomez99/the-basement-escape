@@ -41,6 +41,7 @@ export function NarrationPlayer({
 }) {
   const [row, setRow] = useState<NarrationRow | null>(null);
   const [muted, setMutedState] = useState(getMuted());
+  const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playedRef = useRef<string>(""); // tracks which audio_url we've auto-played
 
