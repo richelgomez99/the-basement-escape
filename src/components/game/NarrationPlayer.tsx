@@ -176,7 +176,7 @@ export function NarrationPlayer({
           ref={audioRef}
           src={row.audio_url}
           preload="auto"
-          autoPlay={autoplay && !muted}
+          onPlay={handleAudioPlay}
           onEnded={handleAudioEnded}
         />
       )}
