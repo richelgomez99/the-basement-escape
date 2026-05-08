@@ -18,6 +18,7 @@ import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
 import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
+import { HintBox } from "@/components/game/HintBox";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlass from "@/assets/stained-glass.jpg";
 
