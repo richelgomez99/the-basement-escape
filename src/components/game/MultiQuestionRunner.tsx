@@ -134,6 +134,7 @@ export function MultiQuestionRunner({
           placeholder="Your answer"
           className="h-12 text-lg border-gold/40 bg-background/60"
         />
+        <p className="text-[11px] text-muted-foreground">{ANSWER_FORMAT_HINT}</p>
         {error && <div className="text-sm text-destructive">{error}</div>}
         <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
           {idx + 1 >= questions.length ? "Submit final answer" : "Next"}
