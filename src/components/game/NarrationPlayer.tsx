@@ -155,11 +155,26 @@ export function NarrationPlayer({
     }
   }
 
+  function togglePlay() {
+    const a = audioRef.current;
+    if (!a || !row?.audio_url) return;
+    if (playing) {
+      a.pause();
+      // If first auto-play is interrupted by user pause, resume the clock.
+      if (pausingRef.current) {
+        pausingRef.current = false;
+        resumeClock();
+      }
+    } else {
+      // Manual play (resume or replay) — never pauses the clock.
+      a.play().catch(() => {});
+    }
+  }
+
   function replay() {
     const a = audioRef.current;
     if (a && row?.audio_url) {
       a.currentTime = 0;
-      // Replays never pause the clock.
       a.play().catch(() => {});
     }
   }
