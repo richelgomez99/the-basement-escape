@@ -326,6 +326,7 @@ function StainedGlass() {
               The window reveals a word — read the letters and type it below.
             </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
+            {puzzle.hints && puzzle.hints.length > 0 && <HintBox hints={puzzle.hints} />}
           </>
         )
       ) : (
