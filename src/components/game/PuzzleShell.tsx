@@ -49,7 +49,7 @@ export function PuzzleShell({
 
         <div className="stone-panel rounded-xl p-6">{children}</div>
 
-        {!hasQuestions && <HintBox hints={puzzle.hints} />}
+        {!hasQuestions && !gatedHints && <HintBox hints={puzzle.hints} />}
       </main>
     </div>
   );
