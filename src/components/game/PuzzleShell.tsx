@@ -17,6 +17,10 @@ export function PuzzleShell({
   const hasQuestions =
     (puzzle.questions?.length ?? 0) > 0 ||
     (puzzle.musicQuestions?.length ?? 0) > 0;
+  // Puzzles where the answer prompt is gated behind a visual stage (path, stained
+  // glass). Their hints belong to the post-stage question, not the visual — so
+  // render them inside the stage component, never up front in the shell.
+  const gatedHints = puzzle.id === 4 || puzzle.id === 7;
   return (
     <div className="min-h-screen px-4 py-6 md:px-8">
       <header className="mx-auto flex max-w-4xl items-center justify-between">
@@ -45,7 +49,7 @@ export function PuzzleShell({
 
         <div className="stone-panel rounded-xl p-6">{children}</div>
 
-        {!hasQuestions && <HintBox hints={puzzle.hints} />}
+        {!hasQuestions && !gatedHints && <HintBox hints={puzzle.hints} />}
       </main>
     </div>
   );

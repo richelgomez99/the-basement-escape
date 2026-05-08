@@ -18,6 +18,7 @@ import { HiddenScene } from "@/components/game/HiddenScene";
 import { PathOfRighteous } from "@/components/game/PathOfRighteous";
 import { MultiQuestionRunner } from "@/components/game/MultiQuestionRunner";
 import { LetterUnlockedDialog } from "@/components/game/LetterUnlockedDialog";
+import { HintBox } from "@/components/game/HintBox";
 import cathedralMural from "@/assets/cathedral-mural.jpg";
 import stainedGlass from "@/assets/stained-glass.jpg";
 
@@ -325,6 +326,7 @@ function StainedGlass() {
               The window reveals a word — read the letters and type it below.
             </p>
             <AnswerForm puzzle={puzzle} placeholder="Type the revealed word" />
+            {puzzle.hints && puzzle.hints.length > 0 && <HintBox hints={puzzle.hints} />}
           </>
         )
       ) : (

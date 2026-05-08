@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnswerForm } from "./AnswerForm";
+import { HintBox } from "./HintBox";
 import { Button } from "@/components/ui/button";
 import type { PathConfig, Puzzle } from "@/game/content";
 import { PATH_RECALL_PENALTY_SECONDS, TRAP_PENALTY_SECONDS, safeColsForRow } from "@/game/content";
@@ -152,6 +153,7 @@ export function PathOfRighteous({
             </blockquote>
           )}
           <AnswerForm puzzle={puzzle} placeholder="The way is ______" />
+          {puzzle.hints && puzzle.hints.length > 0 && <HintBox hints={puzzle.hints} />}
         </div>
       )}
     </div>
