@@ -93,16 +93,20 @@ export function NarrationPlayer({
   const pausingRef = useRef(false);
 
   function handleAudioEnded() {
+    setPlaying(false);
     if (pausingRef.current) {
       pausingRef.current = false;
       resumeClock();
     }
   }
 
-  // Belt-and-suspenders: if playback ever starts (auto or manual first play)
-  // while we expected to pause, ensure the clock is actually paused.
   function handleAudioPlay() {
+    setPlaying(true);
     if (pausingRef.current) pauseClock();
+  }
+
+  function handleAudioPause() {
+    setPlaying(false);
   }
 
   // Pause the clock during EVERY auto-play of narration (resume on end / mute / unmount).
