@@ -11,6 +11,8 @@ const PW_KEY = "be_admin_pw";
 type SessionRow = {
   id: string;
   team_name: string;
+  leader_name: string | null;
+  leader_email: string | null;
   started_at: string;
   finished_at: string | null;
   outcome: string;
@@ -23,7 +25,7 @@ export const listSessions = createServerFn({ method: "GET" }).handler(async () =
   const { data, error } = await supabaseAdmin
     .from("game_sessions")
     .select(
-      "id,team_name,started_at,finished_at,outcome,elapsed_seconds,penalty_seconds,solved_count",
+      "id,team_name,leader_name,leader_email,started_at,finished_at,outcome,elapsed_seconds,penalty_seconds,solved_count",
     )
     .order("started_at", { ascending: false })
     .limit(500);
@@ -89,6 +91,8 @@ function AdminSessions() {
   function exportCsv() {
     const header = [
       "team_name",
+      "leader_name",
+      "leader_email",
       "started_at",
       "finished_at",
       "outcome",
@@ -99,6 +103,8 @@ function AdminSessions() {
     const rows = sessions.map((s) =>
       [
         JSON.stringify(s.team_name ?? ""),
+        JSON.stringify(s.leader_name ?? ""),
+        JSON.stringify(s.leader_email ?? ""),
         s.started_at,
         s.finished_at ?? "",
         s.outcome,
@@ -174,6 +180,8 @@ function AdminSessions() {
               <thead className="bg-background/40 text-left text-xs uppercase tracking-widest text-gold">
                 <tr>
                   <th className="px-3 py-2">Team</th>
+                  <th className="px-3 py-2">Leader</th>
+                  <th className="px-3 py-2">Email</th>
                   <th className="px-3 py-2">Started</th>
                   <th className="px-3 py-2">Finished</th>
                   <th className="px-3 py-2">Outcome</th>
@@ -186,6 +194,16 @@ function AdminSessions() {
                 {sessions.map((s) => (
                   <tr key={s.id} className="border-t border-border/40">
                     <td className="px-3 py-2 font-display">{s.team_name}</td>
+                    <td className="px-3 py-2">{s.leader_name ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {s.leader_email ? (
+                        <a href={`mailto:${s.leader_email}`} className="hover:text-gold">
+                          {s.leader_email}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {new Date(s.started_at).toLocaleString()}
                     </td>
