@@ -197,12 +197,13 @@ export function NarrationPlayer({
           src={row.audio_url}
           preload="auto"
           onPlay={handleAudioPlay}
+          onPause={handleAudioPause}
           onEnded={handleAudioEnded}
         />
       )}
       <button
         type="button"
-        onClick={muted ? toggleMute : row?.audio_url ? replay : undefined}
+        onClick={muted ? toggleMute : row?.audio_url ? togglePlay : undefined}
         className="inline-flex h-9 items-center gap-2 rounded-md border border-gold/40 bg-background/40 px-3 text-xs text-gold hover:bg-gold/10 disabled:opacity-50"
         disabled={generating || (!row?.audio_url && !muted)}
         title={
@@ -212,7 +213,9 @@ export function NarrationPlayer({
               ? "Generating narration…"
               : isError
                 ? "Narration unavailable"
-                : "Replay Puzzle Master"
+                : playing
+                  ? "Pause Puzzle Master"
+                  : "Play Puzzle Master"
         }
       >
         {generating ? (
@@ -228,7 +231,7 @@ export function NarrationPlayer({
         ) : (
           <>
             <Volume2 className="h-4 w-4" />
-            <span>Puzzle Master</span>
+            <span>{playing ? "Pause" : "Puzzle Master"}</span>
           </>
         )}
       </button>
