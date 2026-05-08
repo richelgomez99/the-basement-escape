@@ -8,6 +8,7 @@ import type { Puzzle } from "@/game/content";
 import { getPuzzles } from "@/game/content";
 import { markSolved } from "@/game/state";
 import { playSfx } from "@/game/sfx";
+import { ANSWER_FORMAT_HINT } from "@/game/answer";
 
 export function AnswerForm({
   puzzle,
@@ -56,6 +57,7 @@ export function AnswerForm({
           inputMode={inputMode}
           className="h-12 text-lg border-gold/40 bg-background/60"
         />
+        <p className="text-[11px] text-muted-foreground">{ANSWER_FORMAT_HINT}</p>
         {error && <div className="text-sm text-destructive">{error}</div>}
         <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
           Submit

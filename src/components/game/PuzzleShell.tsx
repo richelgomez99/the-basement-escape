@@ -55,9 +55,8 @@ export function PuzzleShell({
   );
 }
 
+import { isAnswerCorrect } from "@/game/answer";
+
 export function checkAnswer(input: string, puzzle: Puzzle): boolean {
-  const norm = input.trim().toLowerCase();
-  if (norm === puzzle.answer.toLowerCase()) return true;
-  if (puzzle.acceptable?.some((a) => a.toLowerCase() === norm)) return true;
-  return false;
+  return isAnswerCorrect(input, puzzle.answer, puzzle.acceptable);
 }

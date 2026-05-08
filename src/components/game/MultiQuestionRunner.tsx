@@ -9,37 +9,10 @@ import { playSfx } from "@/game/sfx";
 import { LetterUnlockedDialog } from "./LetterUnlockedDialog";
 import { HintBox } from "./HintBox";
 import { ClipAudio } from "./ClipAudio";
-
-function normalize(s: string) {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/[.!?'"]/g, "")
-    .replace(/\s+/g, " ");
-}
-
-function splitParts(s: string): string[] {
-  return normalize(s)
-    .split(/\s*(?:-|–|—|,|\/|&| by | and )\s*/g)
-    .map((p) => p.trim())
-    .filter(Boolean);
-}
+import { isAnswerCorrect, ANSWER_FORMAT_HINT } from "@/game/answer";
 
 function isCorrect(input: string, q: Question) {
-  const n = normalize(input);
-  const canonical = normalize(q.answer);
-  if (n === canonical) return true;
-  if ((q.acceptable ?? []).some((a) => normalize(a) === n)) return true;
-
-  const inputParts = splitParts(input).sort();
-  const candidates = [q.answer, ...(q.acceptable ?? [])];
-  for (const c of candidates) {
-    const cParts = splitParts(c).sort();
-    if (cParts.length >= 2 && cParts.length === inputParts.length) {
-      if (cParts.every((p, i) => p === inputParts[i])) return true;
-    }
-  }
-  return false;
+  return isAnswerCorrect(input, q.answer, q.acceptable);
 }
 
 export function MultiQuestionRunner({
@@ -161,6 +134,7 @@ export function MultiQuestionRunner({
           placeholder="Your answer"
           className="h-12 text-lg border-gold/40 bg-background/60"
         />
+        <p className="text-[11px] text-muted-foreground">{ANSWER_FORMAT_HINT}</p>
         {error && <div className="text-sm text-destructive">{error}</div>}
         <Button type="submit" className="w-full bg-gold text-gold-foreground hover:bg-gold/90">
           {idx + 1 >= questions.length ? "Submit final answer" : "Next"}
