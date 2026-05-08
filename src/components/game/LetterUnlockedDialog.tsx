@@ -40,10 +40,10 @@ export function LetterUnlockedDialog({
 
   const sub =
     variant === "solved"
-      ? "Write this letter down — you'll unscramble all nine into the final word."
+      ? "A letter for the final word."
       : variant === "recall"
         ? "The Oracle reveals the letter you'd already earned."
-        : "Here's the letter you earned. Write it down for the vault.";
+        : "The letter you earned.";
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -60,9 +60,6 @@ export function LetterUnlockedDialog({
           <div className="flex h-28 w-28 items-center justify-center rounded-xl border-2 border-gold bg-gold/10 font-display text-7xl text-gold gold-glow">
             {letter || "?"}
           </div>
-          <p className="text-xs text-muted-foreground text-center max-w-xs">
-            All {totalPuzzles} letters can be rearranged to spell a single word — the key to the vault.
-          </p>
         </div>
 
         <DialogFooter>
@@ -73,7 +70,7 @@ export function LetterUnlockedDialog({
               onContinue?.();
             }}
           >
-            {continueLabel ?? "Got it — wrote it down"}
+            {continueLabel ?? "Got it"}
           </Button>
         </DialogFooter>
       </DialogContent>
