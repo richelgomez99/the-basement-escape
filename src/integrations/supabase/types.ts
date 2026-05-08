@@ -20,6 +20,8 @@ export type Database = {
           elapsed_seconds: number | null
           finished_at: string | null
           id: string
+          leader_email: string | null
+          leader_name: string | null
           outcome: string
           penalty_seconds: number
           solved_count: number
@@ -33,6 +35,8 @@ export type Database = {
           elapsed_seconds?: number | null
           finished_at?: string | null
           id?: string
+          leader_email?: string | null
+          leader_name?: string | null
           outcome?: string
           penalty_seconds?: number
           solved_count?: number
@@ -46,6 +50,8 @@ export type Database = {
           elapsed_seconds?: number | null
           finished_at?: string | null
           id?: string
+          leader_email?: string | null
+          leader_name?: string | null
           outcome?: string
           penalty_seconds?: number
           solved_count?: number
