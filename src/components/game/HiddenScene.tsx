@@ -73,7 +73,7 @@ export function HiddenScene({ puzzle, scene }: { puzzle: Puzzle; scene: HiddenSc
         puzzle.questions && puzzle.questions.length > 0 ? (
           <MultiQuestionRunner puzzle={puzzle} questions={puzzle.questions} />
         ) : (
-          <AnswerForm puzzle={puzzle} placeholder="What do all five share?" />
+          <AnswerForm puzzle={puzzle} placeholder={`What do all ${scene.markers.length} share?`} />
         )
       ) : (
         <p className="text-center text-xs text-muted-foreground">
