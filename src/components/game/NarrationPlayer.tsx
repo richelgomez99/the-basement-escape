@@ -98,6 +98,12 @@ export function NarrationPlayer({
     }
   }
 
+  // Belt-and-suspenders: if playback ever starts (auto or manual first play)
+  // while we expected to pause, ensure the clock is actually paused.
+  function handleAudioPlay() {
+    if (pausingRef.current) pauseClock();
+  }
+
   // Pause the clock during EVERY auto-play of narration (resume on end / mute / unmount).
   // Manual replays do NOT pause the clock.
   useEffect(() => {
@@ -170,7 +176,7 @@ export function NarrationPlayer({
           ref={audioRef}
           src={row.audio_url}
           preload="auto"
-          autoPlay={autoplay && !muted}
+          onPlay={handleAudioPlay}
           onEnded={handleAudioEnded}
         />
       )}
